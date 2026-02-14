@@ -1,0 +1,145 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma
+prisma/migrations/**/migration.sql
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+.parcel-cache
+
+# Inngest
+.inngest
+
+# Clerk
+.clerk
+
+# AI/ML
+*.pkl
+*.h5
+*.pt
+*.pth
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Sensitive files
+secrets/
+*.key
+*.pem
+*.crt
+credentials.json
+
+# Build artifacts
+dist/
+build/
+out/
+
+# Package manager
+.pnpm-store/
+.yarn/
+.npm/
+
+# Testing
+playwright-report/
+test-results/
+.playwright/
+
+# Documentation build
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Claude Code
+.claude/todos/
+.claude/debug/
+.claude/file-history/
+.claude/history.jsonl
+.claude/shell-snapshots/
+.claude/session-env/
+.claude/sessions/
+.claude/cache/
+.claude/plans/
+.claude/telemetry/
+.claude/tasks/
+.claude/paste-cache/
+.claude/downloads/
+.claude/.credentials.json
+.claude/stats-cache.json
+.claude/settings.local.json
+
+# Keep Claude configuration
+!.claude/settings.json
+!.claude/commands/
+!.claude/rules.md
+!.claude/agents/
+
+# Specify
+.specify/memory/

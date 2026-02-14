@@ -1,0 +1,220 @@
+{
+  "project": {
+    "name": "jobbobber",
+    "description": "AI-powered talent matching platform with autonomous agent-to-agent negotiations",
+    "primary_language": "typescript",
+    "version": "0.1.0",
+    "status": "architecture",
+    "architecture": "Hybrid T3 Stack with Inngest orchestration"
+  },
+  "tech_stack": {
+    "frontend": [
+      "next.js@15",
+      "react@19",
+      "typescript@5",
+      "tailwindcss@3",
+      "shadcn-ui",
+      "trpc@11 (client)"
+    ],
+    "backend": [
+      "next.js-api-routes",
+      "trpc@11 (server)",
+      "inngest@3 (workflow orchestration)",
+      "zod (validation)"
+    ],
+    "database": [
+      "postgresql (neondb serverless)",
+      "prisma@5 (ORM)",
+      "pgvector (vector extension)"
+    ],
+    "infrastructure": [
+      "clerk (auth + organizations)",
+      "inngest (serverless workflows)",
+      "vercel (hosting + serverless)",
+      "vercel-flags@2 (feature flags + phased rollout)",
+      "vercel-blob (file storage)",
+      "github-actions (CI/CD)"
+    ],
+    "ai_ml": [
+      "anthropic-claude-sonnet-4.5 (development)",
+      "vercel-ai-gateway (unified API, budgets, monitoring, load-balancing)",
+      "openai-gpt-4-turbo (primary runtime LLM)",
+      "anthropic-claude-3-sonnet (fallback LLM)",
+      "vercel-ai-sdk@3 (user-facing chat + tool calling)",
+      "ai-sdk-tools (job search, profile retrieval during chat)",
+      "ai-sdk-stream-object (structured real-time outputs)",
+      "openai-sdk-direct (agent-to-agent logic via gateway)",
+      "openai-embeddings-3-large (vector search, primary)",
+      "cohere-embed-v3 (vector search fallback)",
+      "inngest@3 (agent workflow orchestration)",
+      "zod (structured output validation)"
+    ],
+    "testing": [
+      "vitest (unit + integration)",
+      "playwright (e2e)",
+      "testing-library-react"
+    ],
+    "monitoring": [
+      "sentry (error tracking)",
+      "vercel-analytics (performance)",
+      "posthog (product analytics - optional)"
+    ],
+    "developer_tools": [
+      "pnpm (package manager)",
+      "eslint@9",
+      "prettier",
+      "husky (git hooks)",
+      "lint-staged"
+    ]
+  },
+  "recommended_agents": {
+    "frontend": [
+      "react-component-architect",
+      "react-nextjs-expert",
+      "tailwind-css-expert"
+    ],
+    "backend_api": [
+      "backend-developer",
+      "api-architect"
+    ],
+    "database": [
+      "NOTE: Prisma doesn't have dedicated agent",
+      "backend-developer (for Prisma queries)",
+      "database-expert (for pgvector optimization)"
+    ],
+    "ai_orchestration": [
+      "backend-developer (for Inngest workflows)",
+      "NOTE: Custom agent patterns for LLM integration"
+    ],
+    "review": [
+      "code-reviewer",
+      "security-reviewer",
+      "performance-optimizer"
+    ],
+    "orchestration": [
+      "tech-lead-orchestrator",
+      "project-analyst"
+    ]
+  },
+  "commands": {
+    "dev": {
+      "all": "pnpm dev",
+      "nextjs": "pnpm dev",
+      "inngest": "pnpm inngest:dev",
+      "db_studio": "pnpm db:studio"
+    },
+    "build": {
+      "all": "pnpm build",
+      "check": "pnpm type-check && pnpm lint && pnpm test"
+    },
+    "test": {
+      "all": "pnpm test",
+      "unit": "pnpm test:unit",
+      "e2e": "pnpm test:e2e",
+      "coverage": "pnpm test:coverage",
+      "watch": "pnpm test:watch"
+    },
+    "lint": {
+      "check": "pnpm lint",
+      "fix": "pnpm lint:fix",
+      "format": "pnpm format:write"
+    },
+    "db": {
+      "push": "pnpm db:push",
+      "migrate": "pnpm db:migrate:dev",
+      "migrate_prod": "pnpm db:migrate:deploy",
+      "studio": "pnpm db:studio",
+      "seed": "pnpm db:seed",
+      "reset": "pnpm db:reset"
+    },
+    "type_check": {
+      "check": "pnpm type-check",
+      "watch": "pnpm type-check:watch"
+    }
+  },
+  "testing": {
+    "framework": "vitest",
+    "e2e_framework": "playwright",
+    "coverage_minimum": 80,
+    "run_before_commit": true,
+    "test_directory": "tests/",
+    "strategy": "Test AI agent logic separately from LLM API calls (use mocks)"
+  },
+  "conventions": {
+    "code_style": "prettier + eslint (Next.js config)",
+    "branch_naming": "feature/*, bugfix/*, hotfix/*",
+    "commit_format": "conventional commits",
+    "pre_commit_hooks": true,
+    "file_organization": "Feature-based (colocate related files)",
+    "naming": {
+      "components": "PascalCase",
+      "files": "kebab-case",
+      "functions": "camelCase",
+      "types": "PascalCase"
+    }
+  },
+  "architecture_notes": {
+    "type_safety": "Full-stack type safety via tRPC + Prisma",
+    "agent_architecture": {
+      "user_facing": "Vercel AI SDK with useChat hooks for streaming responses",
+      "tool_calling": "AI SDK native tools for job search, profile retrieval during chat",
+      "agent_to_agent": "Inngest workflows with OpenAI SDK via AI Gateway",
+      "structured_outputs": "Zod schemas + AI SDK streamObject for real-time typed outputs",
+      "philosophy": "Minimal abstractions, explicit code, full TypeScript control",
+      "no_langchain": "Avoiding heavy frameworks - using Vercel AI SDK + custom logic"
+    },
+    "ai_gateway": {
+      "purpose": "Unified API for multiple LLM providers with cost control and reliability",
+      "features": [
+        "Unified API - single interface for OpenAI, Anthropic, Cohere, etc.",
+        "Budgets - set monthly spending limits per feature/environment",
+        "Monitoring - track token usage, costs, latency in Vercel dashboard",
+        "Load-balancing - distribute requests across providers to avoid rate limits",
+        "Automatic fallbacks - switch to Anthropic if OpenAI is down",
+        "Caching - cache repeated evaluations (candidate + job pairs)"
+      ],
+      "benefits": [
+        "Cost control: Set $500/month budget for MVP phase",
+        "Reliability: Auto-fallback prevents downtime",
+        "Visibility: Track which features cost the most",
+        "Multi-provider: Easy to A/B test GPT-4 vs Claude",
+        "Rate limit protection: Load-balance when hitting limits"
+      ]
+    },
+    "feature_flags": {
+      "sdk": "Vercel Flags SDK for progressive rollout",
+      "phases": "MVP (basic matching) → Beta (agent-to-agent) → Full (custom prompts)",
+      "strategy": "Enable features gradually per user cohort (internal → beta → 10% → 100%)",
+      "edge_evaluated": "Flags evaluated at CDN edge for zero latency"
+    },
+    "agent_workflows": "Long-running AI conversations handled by Inngest (no timeout limits)",
+    "auth_strategy": "Clerk with organization support for employer multi-user teams",
+    "vector_search": "pgvector extension in NeonDB (no separate vector DB needed)",
+    "file_storage": "Vercel Blob for resumes and documents",
+    "real_time": "tRPC subscriptions + Server-Sent Events for match notifications",
+    "deployment": "Vercel platform with preview deployments per PR"
+  },
+  "key_features": {
+    "mvp_phase": [
+      "User authentication (Clerk)",
+      "Profile creation (job seekers + employers)",
+      "Basic AI matching (one-directional)",
+      "Match dashboard",
+      "Resume upload"
+    ],
+    "beta_phase": [
+      "Agent-to-agent conversations (Inngest)",
+      "Two-way matching",
+      "Private negotiation parameters",
+      "Interview scheduling",
+      "Match acceptance workflow"
+    ],
+    "full_launch": [
+      "Custom agent prompts",
+      "Advanced analytics",
+      "Team features for employers",
+      "Subscription billing",
+      "Performance optimization"
+    ]
+  }
+}

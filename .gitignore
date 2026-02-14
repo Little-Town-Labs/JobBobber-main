@@ -141,5 +141,6 @@ docs/.vitepress/cache
 !.claude/rules.md
 !.claude/agents/
 
-# Specify
-.specify/memory/
+# Specify (ignore all memory except constitution)
+.specify/memory/*
+!.specify/memory/constitution.md

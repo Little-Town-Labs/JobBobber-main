@@ -10,11 +10,23 @@
 
 This roadmap outlines all features planned for JobBobber across three phases: MVP (Months 1-3), Beta (Months 4-6), and Full Launch (Months 7-12). Features are organized by user type and technical domain.
 
+**Constitutional Alignment:**
+
+All features in this roadmap MUST comply with the [Project Constitution](../.specify/memory/constitution.md):
+- ✅ Type Safety First (tRPC + Prisma + Zod validation)
+- ✅ Test-Driven Development (80%+ coverage from day 1)
+- ✅ BYOK Architecture (all AI features use user API keys)
+- ✅ Minimal Abstractions (no LangChain/LangGraph)
+- ✅ Security & Privacy (encrypted keys, private params)
+- ✅ Phased Rollout with Feature Flags
+- ✅ Agent Autonomy (no human intervention)
+
 **Key Principles:**
 - **Start Simple**: MVP focuses on core matching loop only
 - **Iterate Fast**: Beta adds agent intelligence based on MVP learnings
 - **Scale Smart**: Full launch adds enterprise features and optimization
 - **Feature Flags**: Use Vercel Flags SDK to roll out features gradually
+- **Constitution First**: Every feature validates against constitutional principles
 
 ---
 
@@ -22,7 +34,7 @@ This roadmap outlines all features planned for JobBobber across three phases: MV
 
 **Goal**: Prove the core matching loop works
 **Timeline**: 3 months from project start
-**Success Metrics**: 100+ users, 500+ matches, 10+ interview placements
+**Success Metrics**: TBD (will be defined based on market research)
 
 ### Authentication & Onboarding
 
@@ -126,12 +138,20 @@ This roadmap outlines all features planned for JobBobber across three phases: MV
   - Tailwind CSS + shadcn/ui
   - Clerk authentication
 
+- [ ] **Type Safety Enforcement (CONSTITUTIONAL REQUIREMENT)**
+  - TypeScript strict mode enabled
+  - tRPC type validation configured
+  - Prisma type generation automated
+  - Zod schema validation for all external inputs
+  - CI/CD type checking (zero tolerance for type errors)
+  - No `any` types except verified third-party boundaries
+
 - [ ] **Database Schema**
   - Users table
   - Profiles table (job seekers)
   - Jobs table
   - Matches table
-  - User settings (API keys, preferences)
+  - User settings (encrypted API keys, preferences)
 
 - [ ] **Vercel AI SDK Integration**
   - Chat route handlers
@@ -151,6 +171,34 @@ This roadmap outlines all features planned for JobBobber across three phases: MV
   - PDF parsing
   - Secure file access
 
+### Testing & Quality (CONSTITUTIONAL REQUIREMENT)
+
+- [ ] **TDD Workflow Setup**
+  - Vitest configuration
+  - Test scaffolding helpers
+  - Mock utilities for LLM responses
+  - Pre-commit hooks for testing
+  - CI/CD test gates
+
+- [ ] **Unit Testing Framework**
+  - Test all agent logic with mocked LLM calls
+  - Test tRPC procedures
+  - Test database queries
+  - Test utility functions
+  - 80%+ code coverage REQUIRED
+
+- [ ] **Integration Testing**
+  - Test API endpoints end-to-end
+  - Test Inngest workflows
+  - Test Clerk authentication flows
+  - Test database operations
+
+- [ ] **E2E Testing Framework**
+  - Playwright setup and configuration
+  - Critical user flows (auth, profile creation, matching)
+  - Agent chat testing (mocked responses)
+  - Match acceptance workflow testing
+
 ### Deployment & Monitoring
 
 - [ ] **Vercel Deployment**
@@ -168,7 +216,7 @@ This roadmap outlines all features planned for JobBobber across three phases: MV
 
 **Goal**: Add agent intelligence and two-way matching
 **Timeline**: 3 months after MVP launch
-**Success Metrics**: 1,000+ users, 5,000+ matches, 100+ interview placements, 80%+ match acceptance
+**Success Metrics**: TBD (will be defined after MVP learnings)
 
 ### Job Seeker Features (Beta)
 
@@ -209,6 +257,13 @@ This roadmap outlines all features planned for JobBobber across three phases: MV
   - Job Seeker Agent evaluates jobs
   - Employer Agent evaluates candidates
   - Both must agree for match
+
+- [ ] **Agent Autonomy (CONSTITUTIONAL REQUIREMENT)**
+  - No human approval required during agent negotiations
+  - Agents make final match decisions autonomously
+  - Private parameters used strategically by agents
+  - Human intervention only at interview scheduling stage
+  - Autonomous decision-making validation
 
 - [ ] **Agent-to-Agent Conversations**
   - Multi-turn negotiations (Inngest workflows)
@@ -252,25 +307,13 @@ This roadmap outlines all features planned for JobBobber across three phases: MV
   - Gradual rollout (10% → 50% → 100%)
   - A/B testing different agent prompts
 
-### Testing & Quality
-
-- [ ] **E2E Testing**
-  - Playwright test suite
-  - Critical user flows
-  - Agent conversation testing (mocked)
-
-- [ ] **Unit Testing**
-  - 80%+ code coverage
-  - Agent logic tests (mocked LLM calls)
-  - Database query tests
-
 ---
 
 ## Phase 3: Full Launch (Months 7–12)
 
 **Goal**: Scale and optimize for growth
 **Timeline**: 6 months after beta
-**Success Metrics**: 10,000+ users, 50,000+ matches, 1,000+ interview placements, $50k+ MRR
+**Success Metrics**: TBD (will be defined based on beta performance)
 
 ### Job Seeker Features (Full)
 
@@ -470,6 +513,15 @@ Features for later phases:
 ---
 
 ## Changelog
+
+### Version 1.1 (2026-02-14)
+- **BREAKING**: Moved Testing & Quality from Phase 2 to Phase 1 (MVP)
+  - Rationale: Constitution requires TDD from day 1 (Principle II)
+- Added Type Safety Enforcement to MVP (Constitutional Requirement - Principle I)
+- Added Agent Autonomy Validation to Beta (Constitutional Requirement - Principle VII)
+- Removed specific success metrics (marked as TBD)
+- Added constitutional compliance references
+- Clarified that all features must align with constitution
 
 ### Version 1.0 (2026-02-14)
 - Initial roadmap created

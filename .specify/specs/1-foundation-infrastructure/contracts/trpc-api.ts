@@ -23,6 +23,11 @@
 export interface TRPCContext {
   /** Prisma client singleton */
   db: unknown; // PrismaClient — typed in implementation
+  /**
+   * Inngest client — attached for procedures that fire async events.
+   * Usage: ctx.inngest.send({ name: "job/posting.activated", data: { jobPostingId } })
+   */
+  inngest: unknown; // Inngest — typed in implementation
   /** Clerk userId: non-null when a valid session exists */
   userId: string | null;
   /** Clerk orgId: non-null when user is acting in an organization context (Employer) */
@@ -79,7 +84,7 @@ export interface AdminContext extends EmployerContext {
 
 export interface PaginationInput {
   cursor?: string; // cuid of last seen record
-  limit?: number;  // default 20, max 100
+  limit?: number; // default 20, max 100
 }
 
 export interface PaginationMeta {
@@ -91,9 +96,43 @@ export interface PaginationMeta {
 export type SortDirection = "asc" | "desc";
 export type ExperienceLevel = "ENTRY" | "MID" | "SENIOR" | "EXECUTIVE";
 export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT";
+/**
+ * API contract name: WorkLocationType
+ * Prisma schema name: LocationType (enum in schema.prisma, field `locationType` on JobPosting)
+ *
+ * Values are identical — the name difference is intentional: "work location" is clearer
+ * in the API surface than the generic "location type" used in the DB layer.
+ * Implementers: map/alias between these names when building the jobPostings router.
+ * Do NOT rename the Prisma enum — that would require a migration.
+ */
 export type WorkLocationType = "REMOTE" | "HYBRID" | "ONSITE";
-export type JobPostingStatus = "DRAFT" | "ACTIVE" | "PAUSED" | "CLOSED" | "FILLED";
+export type JobPostingStatus =
+  | "DRAFT"
+  | "ACTIVE"
+  | "PAUSED"
+  | "CLOSED"
+  | "FILLED";
 export type MatchConfidence = "STRONG" | "GOOD" | "POTENTIAL";
+/**
+ * API-layer combined match status — derived from the Prisma schema's two separate fields:
+ *   Match.seekerStatus: MatchPartyStatus   (PENDING | ACCEPTED | DECLINED | EXPIRED)
+ *   Match.employerStatus: MatchPartyStatus (PENDING | ACCEPTED | DECLINED | EXPIRED)
+ *
+ * Derivation logic (implement in matches router):
+ *
+ *   seekerStatus  | employerStatus → MatchStatus
+ *   ─────────────────────────────────────────────
+ *   PENDING       | PENDING        → "PENDING"
+ *   ACCEPTED      | PENDING        → "SEEKER_ACCEPTED"
+ *   DECLINED      | *              → "SEEKER_DECLINED"
+ *   PENDING       | ACCEPTED       → "EMPLOYER_ACCEPTED"
+ *   *             | DECLINED       → "EMPLOYER_DECLINED"
+ *   ACCEPTED      | ACCEPTED       → "MUTUALLY_ACCEPTED"  ← reveals seekerContactInfo
+ *   EXPIRED       | *  OR  * | EXPIRED → "EXPIRED"
+ *
+ * "MUTUALLY_ACCEPTED" is the only state where `seekerContactInfo` is non-null in the response.
+ * This derivation is computed at read-time — not stored in the DB.
+ */
 export type MatchStatus =
   | "PENDING"
   | "SEEKER_ACCEPTED"
@@ -104,9 +143,9 @@ export type MatchStatus =
   | "EXPIRED";
 
 export interface PublicSalaryRange {
-  min: number;       // cents, integer
-  max: number;       // cents, integer; must be >= min
-  currency: string;  // ISO 4217, default "USD"
+  min: number; // cents, integer
+  max: number; // cents, integer; must be >= min
+  currency: string; // ISO 4217, default "USD"
   period: "ANNUAL" | "HOURLY"; // default "ANNUAL"
 }
 
@@ -211,7 +250,14 @@ export interface PublicEmployerProfile {
   name: string;
   description: string | null;
   industry: string | null;
-  size: "1_TO_10" | "11_TO_50" | "51_TO_200" | "201_TO_500" | "501_TO_2000" | "2000_PLUS" | null;
+  size:
+    | "1_TO_10"
+    | "11_TO_50"
+    | "51_TO_200"
+    | "201_TO_500"
+    | "501_TO_2000"
+    | "2000_PLUS"
+    | null;
   websiteUrl: string | null;
   logoUrl: string | null;
   linkedinUrl: string | null;
@@ -280,14 +326,14 @@ export interface PublicJobPosting {
 }
 
 export interface JobPostingsListFilter {
-  query?: string;                       // free-text search
+  query?: string; // free-text search
   skills?: string[];
   experienceLevels?: ExperienceLevel[];
   employmentTypes?: EmploymentType[];
   workLocationTypes?: WorkLocationType[];
   countries?: string[];
-  minSalary?: number;                   // cents
-  status?: JobPostingStatus;            // default "ACTIVE"
+  minSalary?: number; // cents
+  status?: JobPostingStatus; // default "ACTIVE"
 }
 
 export interface CreateJobPostingInput {
@@ -347,7 +393,7 @@ export interface MatchSummary {
   seekerId: string;
   seekerDisplayName: string;
   confidence: MatchConfidence;
-  matchScore: number;       // 0–100
+  matchScore: number; // 0–100
   matchReasoning: string;
   status: MatchStatus;
   seekerAcceptedAt: string | null;
@@ -396,7 +442,7 @@ export interface SeekerSettingsOutput {
   priorities: Array<{ label: string; rank: number }>;
   exclusions: string[];
   preferredLlmProvider: "openai" | "anthropic" | null;
-  hasValidApiKey: boolean;              // true/false — never returns the key itself
+  hasValidApiKey: boolean; // true/false — never returns the key itself
   updatedAt: string;
 }
 
@@ -404,7 +450,7 @@ export interface JobSettingsOutput {
   id: string;
   jobPostingId: string;
   orgId: string;
-  truMaxSalarycents: number | null;     // never in public API
+  truMaxSalarycents: number | null; // never in public API
   willingToTrain: boolean;
   trainableSkills: string[];
   urgency: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";

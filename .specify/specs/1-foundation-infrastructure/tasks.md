@@ -11,9 +11,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Tasks | 40 |
+| Total Tasks | 41 |
 | Phases | 6 |
-| Quality Gates | 4 |
+| Quality Gates | 5 |
 | Estimated Effort | ~48 hours |
 | Critical Path | T1.1 → T1.3 → T1.4T → T1.4I → T2.1 → T2.2 → T2.3T → T2.3I → T3.1T → T3.1I → T3.2I → T4.1 → T4.2T → T4.2I → T5.1T → T5.1I → T6.1 → T6.2 |
 
@@ -384,10 +384,11 @@ Write tests for the health router before implementing it.
 
 **Test File**: `tests/unit/server/api/routers/health.test.ts`
 
-**Test Cases**:
-- [ ] `health.ping` returns `{ pong: true }` — unauthenticated call succeeds
-- [ ] `health.status` returns object with `status: "ok"`, `db: boolean`, `timestamp: string`
-- [ ] `health.status` returns `db: false` when DB connection fails (mock `db.$queryRaw` to throw)
+**Test Cases** (aligned with `contracts/trpc-api.ts` HealthPingOutput / HealthDeepCheckOutput):
+- [ ] `health.ping` returns `{ status: "ok", timestamp: string }` — unauthenticated call succeeds
+- [ ] `health.deepCheck` returns `{ healthy: true, checks: [...], timestamp: string }`
+- [ ] `health.deepCheck` returns `healthy: false` and `status: "unreachable"` on the `"database"`
+  check when DB connection fails (mock `db.$queryRaw` to throw)
 
 **Confirm tests FAIL** before T3.2I.
 
@@ -406,9 +407,11 @@ pnpm add @trpc/client @trpc/react-query @trpc/next
 Implement all 7 routers as type-correct stubs. Business logic is added in later features.
 Each procedure must match the contract in `contracts/trpc-api.ts`.
 
-**Health router** (`src/server/api/routers/health.ts`):
-- [ ] `ping`: returns `{ pong: true }`
-- [ ] `status`: queries `db.$queryRaw\`SELECT 1\`` to test DB connectivity; returns status object
+**Health router** (`src/server/api/routers/health.ts`)
+(procedure names from `contracts/trpc-api.ts` — use `ping` and `deepCheck`, NOT `status`):
+- [ ] `ping`: returns `{ status: "ok", timestamp: new Date().toISOString() }`
+- [ ] `deepCheck`: queries `db.$queryRaw\`SELECT 1\`` to test DB connectivity; returns
+  `HealthDeepCheckOutput` shape with `healthy`, `checks`, `timestamp`
 
 **All remaining routers** (jobSeekers, employers, jobPostings, matches, settings, insights):
 - [ ] Each procedure accepts the correct Zod input schema from `contracts/trpc-api.ts`
@@ -447,7 +450,7 @@ Write and run a Playwright test that hits `/api/trpc/health.ping` on the running
 
 **Acceptance Criteria**:
 - [ ] `GET /api/trpc/health.ping` returns HTTP 200
-- [ ] Response body matches `{ result: { data: { pong: true } } }`
+- [ ] Response body matches `{ result: { data: { status: "ok", timestamp: "..." } } }`
 - [ ] Test runs in CI (`pnpm test:e2e`) with server started by `pnpm dev`
 
 **Quality Gate ✓** — tRPC is reachable end-to-end. Phase 3 complete.
@@ -645,6 +648,39 @@ npx @sentry/wizard@latest -i nextjs
 - [ ] `SENTRY_DSN` in `.env.example`; `SENTRY_AUTH_TOKEN` in `.env.example` (CI-only)
 - [ ] Error boundary in root `layout.tsx` (Sentry `ErrorBoundary` or Next.js `error.tsx`)
 - [ ] Verify Sentry captures a test exception in development before completing this task
+- [ ] **FR-028 (performance metrics)**: Enable Sentry Performance Monitoring:
+  - `tracesSampleRate: 1.0` in development; `tracesSampleRate: 0.1` in production
+  - `@sentry/nextjs` instruments Next.js page loads and API routes automatically
+  - Verify API response times appear in Sentry Performance dashboard
+
+---
+
+### T5.4 — Security review: encryption utility
+**Status**: 🔴 Blocked by T5.2
+**Effort**: 0.5h
+**Depends on**: T5.2
+**Parallel with**: T5.3
+
+**Description**:
+Run the `security-reviewer` agent on `src/lib/encryption.ts` and `tests/unit/lib/encryption.test.ts`
+before merging Feature 1. AES-256-GCM for BYOK key storage is security-critical; any implementation
+flaw could expose user API keys.
+
+**Delegate to**: `security-reviewer` agent
+
+**Review Scope**:
+- `src/lib/encryption.ts`
+- `tests/unit/lib/encryption.test.ts`
+
+**Acceptance Criteria**:
+- [ ] No CRITICAL or HIGH severity findings
+- [ ] IV derivation is unique per user (different userId → different IV confirmed)
+- [ ] No plaintext key material logged or returned in error messages
+- [ ] `import "server-only"` confirmed (encryption.ts must never bundle to client)
+- [ ] Ciphertext format reviewed for correct IV+authTag+ciphertext concatenation
+- [ ] MEDIUM findings documented in a `// SECURITY NOTE` comment inline if accepted
+
+**Quality Gate ✓** — Encryption reviewed. Phase 5 complete.
 
 ---
 
@@ -703,6 +739,7 @@ Write `README.md` covering everything a developer needs to go from clone to runn
 | **QG-2: Database Ready** | T2.4 | All 9 tables exist; seed produces correct row counts |
 | **QG-3: API Reachable** | T3.3 | E2E health check returns 200 |
 | **QG-4: Deployment Live** | T6.1 | Production URL serves the app; migrations applied |
+| **QG-5: Security Green** | T5.4 | Encryption utility passes security review; no HIGH/CRITICAL findings |
 
 ---
 
@@ -727,7 +764,7 @@ T1.1 (scaffold)
                                                   ├─ T4.2T → T4.2I (webhook)
                                                   └─ T4.3 (inngest)
                                                               └─ T5.1T → T5.1I (flags)
-                                                                            ├─ T5.2 (encryption)
+                                                                            ├─ T5.2 (encryption) → T5.4 (security review) ── QG-5
                                                                             └─ T5.3 (sentry)
                                                                                   └─ T6.1 (vercel) ── QG-4
                                                                                         └─ T6.2 (readme)

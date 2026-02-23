@@ -5,7 +5,8 @@
     "primary_language": "typescript",
     "version": "0.1.0",
     "status": "architecture",
-    "architecture": "Hybrid T3 Stack with Inngest orchestration"
+    "architecture": "Hybrid T3 Stack with Inngest orchestration",
+    "methodology": "specification-driven-development"
   },
   "tech_stack": {
     "frontend": [
@@ -68,6 +69,11 @@
     ]
   },
   "recommended_agents": {
+    "orchestration": [
+      "spec-kit-orchestrator (for multi-phase specification workflows)",
+      "tech-lead-orchestrator (for complex multi-step tasks)",
+      "project-analyst (for tech stack detection)"
+    ],
     "frontend": [
       "react-component-architect",
       "react-nextjs-expert",
@@ -95,6 +101,22 @@
       "tech-lead-orchestrator",
       "project-analyst"
     ]
+  },
+  "spec_kit": {
+    "workflow": [
+      "/speckit-constitution",
+      "/speckit-roadmap",
+      "/speckit-specify",
+      "/speckit-clarify",
+      "/speckit-plan",
+      "/speckit-analyze",
+      "/speckit-tasks",
+      "/speckit-implement"
+    ],
+    "constitution": ".specify/memory/constitution.md",
+    "roadmap": ".specify/roadmap.md",
+    "specs_directory": ".specify/specs/",
+    "templates_directory": ".specify/templates/"
   },
   "commands": {
     "dev": {

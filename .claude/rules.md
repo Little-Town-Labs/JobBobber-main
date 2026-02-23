@@ -2,6 +2,63 @@
 
 This file contains project-specific patterns, conventions, and instructions for working on the JobBobber codebase.
 
+## Development Methodology
+
+**This project uses Specification-Driven Development (SDD)** via the spec-kit framework.
+
+### SDD Workflow
+
+Always follow the spec-kit workflow for new features:
+
+1. `/speckit-specify [N-feature-name]` - Define WHAT to build (specification)
+2. `/speckit-clarify` - Resolve ambiguities (if needed)
+3. `/speckit-plan` - Define HOW to build (technical design)
+4. `/speckit-analyze` - Validate consistency across artifacts
+5. `/speckit-tasks` - Break plan into executable tasks
+6. `/speckit-implement` - Execute implementation with TDD
+
+**Key Principles:**
+- **Specifications before code** - Never implement without a spec
+- **Tests before implementation** - TDD is mandatory (see constitution)
+- **Document all decisions** - Use `research.md` for technology choices
+- **Validate continuously** - Run `/speckit-analyze` before implementation
+- **Constitutional compliance** - Check governance at every phase
+
+### Project Structure for SDD
+
+```
+.specify/
+├── memory/constitution.md      # Project governance principles
+├── roadmap.md                  # Feature roadmap from PRD (symlink to docs/)
+├── specs/                      # Feature specifications
+│   └── [N-feature-name]/
+│       ├── spec.md             # WHAT to build
+│       ├── plan.md             # HOW to build
+│       ├── tasks.md            # Executable task breakdown
+│       ├── data-model.md       # Database schema (if applicable)
+│       ├── research.md         # Technology decisions
+│       └── contracts/          # API contracts (OpenAPI, GraphQL)
+└── templates/                  # Spec-kit templates
+```
+
+### When to Use SDD
+
+**USE for:**
+- Greenfield features (new major functionality)
+- Complex refactoring (multi-file changes)
+- Architectural decisions (database design, API design)
+- Team coordination (when specifications help alignment)
+
+**SKIP for:**
+- Simple bug fixes (< 10 lines changed)
+- Typo corrections
+- Documentation updates
+- Trivial changes
+
+See global `~/.claude/rules/spec-driven.md` for complete SDD methodology.
+
+---
+
 ## Architecture Overview
 
 **Stack**: Hybrid T3 Stack (Next.js + tRPC + Prisma + Inngest)

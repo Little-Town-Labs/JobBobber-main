@@ -44,10 +44,8 @@
     "NEXT_PUBLIC_APP_URL": "http://localhost:3000"
   },
   "hooks": {
-    "PreToolUse": {
-      "Edit|Write": []
-    },
-    "PostToolUse": {}
+    "PreToolUse": [],
+    "PostToolUse": []
   },
   "companyAnnouncements": [
     "JobBobber: AI-powered talent matching with autonomous agent negotiations",

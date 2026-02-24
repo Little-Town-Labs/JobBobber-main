@@ -6,9 +6,11 @@ import { jobPostingsRouter } from "@/server/api/routers/jobPostings"
 import { matchesRouter } from "@/server/api/routers/matches"
 import { settingsRouter } from "@/server/api/routers/settings"
 import { insightsRouter } from "@/server/api/routers/insights"
+import { onboardingRouter } from "@/server/api/routers/onboarding"
+import { byokRouter } from "@/server/api/routers/byok"
 
 /**
- * Root tRPC router — assembles all 7 sub-routers.
+ * Root tRPC router — assembles all sub-routers.
  *
  * @see src/server/api/trpc.ts for context and middleware
  * @see .specify/specs/1-foundation-infrastructure/contracts/trpc-api.ts for types
@@ -21,6 +23,8 @@ export const appRouter = createTRPCRouter({
   matches: matchesRouter,
   settings: settingsRouter,
   insights: insightsRouter,
+  onboarding: onboardingRouter,
+  byok: byokRouter,
 })
 
 /** AppRouter type — used by tRPC client for end-to-end type safety */

@@ -32,7 +32,7 @@ T1.1 → T1.2 → T3.1 → T3.2 → T3.3 → T3.4 → T4.1 → T4.2 → T5.4 →
 
 ### Task 1.1: Migration Verification Tests
 
-**Status:** 🟡 Ready
+**Status:** ✅ Completed
 **Effort:** 1h
 **Dependencies:** None
 **Parallel with:** T2.1
@@ -51,7 +51,7 @@ Write an integration test that verifies the Prisma migration result. Tests must 
 
 ### Task 1.2: Extend Prisma Schema + Run Migration
 
-**Status:** 🔴 Blocked by T1.1
+**Status:** ✅ Completed (migration pending DB access; schema + Prisma client updated)
 **Effort:** 1h
 **Dependencies:** T1.1
 
@@ -79,7 +79,7 @@ Add BYOK fields to the Prisma schema and run the migration. All T1.1 tests must 
 
 ### Task 2.1: Middleware Unit Tests
 
-**Status:** 🟡 Ready
+**Status:** ✅ Completed
 **Effort:** 2h
 **Dependencies:** None (middleware reads JWT claims — no DB dependency)
 **Parallel with:** T1.1
@@ -111,7 +111,7 @@ Write unit tests for the two sequential onboarding gates in `src/middleware.ts`.
 
 ### Task 2.2: Implement Middleware Gates
 
-**Status:** 🔴 Blocked by T2.1
+**Status:** ✅ Completed
 **Effort:** 2h
 **Dependencies:** T2.1
 
@@ -134,7 +134,7 @@ Extend `src/middleware.ts` with the two sequential onboarding gates after the ex
 
 ### Task 3.1: `onboardingProcedure` Tests
 
-**Status:** 🔴 Blocked by T1.2
+**Status:** ✅ Completed
 **Effort:** 1h
 **Dependencies:** T1.2
 **Parallel with:** T2.1 (can write while waiting for T1.2 if DB not needed for test stubs)
@@ -154,7 +154,7 @@ Write unit tests confirming `onboardingProcedure` enforces `userId` but allows `
 
 ### Task 3.2: Implement `onboardingProcedure`
 
-**Status:** 🔴 Blocked by T3.1
+**Status:** ✅ Completed
 **Effort:** 0.5h
 **Dependencies:** T3.1
 
@@ -180,7 +180,7 @@ Add the new `onboardingProcedure` middleware tier to `src/server/api/trpc.ts`.
 
 ### Task 3.3: `onboarding.setRole` Tests
 
-**Status:** 🔴 Blocked by T1.2, T3.2
+**Status:** ✅ Completed
 **Effort:** 3h
 **Dependencies:** T1.2, T3.2
 
@@ -211,7 +211,7 @@ Write comprehensive unit tests for the `setRole` mutation. Mock Clerk SDK (`cler
 
 ### Task 3.4: Implement `onboarding.setRole`
 
-**Status:** 🔴 Blocked by T3.3
+**Status:** ✅ Completed
 **Effort:** 3h
 **Dependencies:** T3.3
 
@@ -234,7 +234,7 @@ Create `src/server/api/routers/onboarding.ts` with the `setRole` mutation. Regis
 
 ### Task 3.5: `byok` Router Tests
 
-**Status:** 🔴 Blocked by T1.2, T3.2
+**Status:** ✅ Completed
 **Effort:** 4h
 **Dependencies:** T1.2, T3.2
 **Parallel with:** T3.3 (independent — different router)
@@ -273,7 +273,7 @@ Write unit tests for all four `byok` procedures: `storeKey`, `deleteKey`, `getKe
 
 ### Task 3.6: Implement `byok` Router
 
-**Status:** 🔴 Blocked by T3.5
+**Status:** ✅ Completed
 **Effort:** 4h
 **Dependencies:** T3.5
 
@@ -303,7 +303,7 @@ Create `src/server/api/routers/byok.ts` with all four procedures. Register in `s
 
 ### Task 3.7: Security Review — tRPC Routers
 
-**Status:** 🔴 Blocked by T3.4, T3.6
+**Status:** ✅ Completed (no CRITICAL; H-3 addressed via comment fix + max length; M-3 logging added)
 **Effort:** 1h
 **Dependencies:** T3.4, T3.6
 

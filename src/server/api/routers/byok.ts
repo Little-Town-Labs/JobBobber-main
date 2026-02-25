@@ -43,8 +43,8 @@ type Provider = keyof typeof PROVIDER_CONFIG
 
 const StoreKeyInput = z.object({
   provider: z.enum(["openai", "anthropic"]),
-  // min(1) rejects empty; max(512) prevents DoS via huge payloads to encrypt/fetch
-  apiKey: z.string().min(1).max(512),
+  // trim() strips accidental whitespace; min(1) rejects empty; max(512) prevents DoS via huge payloads to encrypt/fetch
+  apiKey: z.string().trim().min(1).max(512),
 })
 
 // ---------------------------------------------------------------------------

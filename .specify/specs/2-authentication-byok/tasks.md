@@ -324,7 +324,7 @@ Run `/security-review` on the two new routers and the updated `trpc.ts`. Focus o
 
 ### Task 4.1: Role Selection Component Tests
 
-**Status:** 🔴 Blocked by T3.4
+**Status:** ✅ Completed
 **Effort:** 2h
 **Dependencies:** T3.4
 
@@ -347,7 +347,7 @@ Write React Testing Library unit tests for `RoleSelectorForm` client component. 
 
 ### Task 4.2: Implement Onboarding Layout + Role Page
 
-**Status:** 🔴 Blocked by T4.1
+**Status:** ✅ Completed
 **Effort:** 3h
 **Dependencies:** T4.1
 
@@ -374,7 +374,7 @@ Create the onboarding route group layout and the role selection page.
 
 ### Task 4.3: BYOK Setup Form Tests
 
-**Status:** 🔴 Blocked by T3.6
+**Status:** ✅ Completed
 **Effort:** 2h
 **Dependencies:** T3.6
 **Parallel with:** T4.1 (can run concurrently — different component)
@@ -398,7 +398,7 @@ Write React Testing Library tests for `ByokSetupForm` client component. Mock `tr
 
 ### Task 4.4: Implement BYOK Setup Page
 
-**Status:** 🔴 Blocked by T4.3
+**Status:** ✅ Completed
 **Effort:** 2.5h
 **Dependencies:** T4.3
 
@@ -422,7 +422,7 @@ Create the BYOK setup page and form component.
 
 ### Task 4.5: Account Key Management Tests
 
-**Status:** 🔴 Blocked by T3.6
+**Status:** ✅ Completed
 **Effort:** 1.5h
 **Dependencies:** T3.6
 **Parallel with:** T4.1, T4.3
@@ -444,7 +444,7 @@ Write tests for `ApiKeyManager` client component and the account key settings pa
 
 ### Task 4.6: Implement Account Key Settings Page
 
-**Status:** 🔴 Blocked by T4.5
+**Status:** ✅ Completed
 **Effort:** 2h
 **Dependencies:** T4.5
 
@@ -470,7 +470,7 @@ Create the account API key settings page and management component.
 
 ### Task 5.1: Security Hardening
 
-**Status:** 🔴 Blocked by T3.7, T4.2, T4.4, T4.6
+**Status:** ✅ Completed (apiKey .trim() added; no console.log; error states use role="alert"; handleDelete error handled; isError guard added; apiKey cleared after submit)
 **Effort:** 2h
 **Dependencies:** T3.7, T4.2, T4.4, T4.6
 
@@ -489,7 +489,7 @@ Apply the security measures from plan.md Phase 5.
 
 ### Task 5.2: Integration Tests
 
-**Status:** 🔴 Blocked by T3.4, T3.6
+**Status:** ✅ Completed (tests/integration/onboarding.test.ts — 4 suites, 7 tests; skipped when DATABASE_URL absent)
 **Effort:** 3h
 **Dependencies:** T3.4, T3.6
 
@@ -515,7 +515,7 @@ Write integration tests using Vitest + real DB (test DB from Feature 1 setup). T
 
 ### Task 5.3: E2E Tests
 
-**Status:** 🔴 Blocked by T4.2, T4.4, T4.6
+**Status:** ✅ Completed (tests/e2e/onboarding.spec.ts — 7 flows written; requires PLAYWRIGHT_E2E_ENABLED + Clerk test tenant to run)
 **Effort:** 3h
 **Dependencies:** T4.2, T4.4, T4.6
 
@@ -544,7 +544,7 @@ Write Playwright E2E tests covering the critical onboarding flows from the quick
 
 ### Task 5.4: Final Code Review
 
-**Status:** 🔴 Blocked by T5.1, T5.2, T5.3
+**Status:** ✅ Completed (code-reviewer run; 3 HIGH issues resolved: handleDelete error handling, isError guard, apiKey state cleared after submit; 0 CRITICAL)
 **Effort:** 1h
 **Dependencies:** T5.1, T5.2, T5.3
 

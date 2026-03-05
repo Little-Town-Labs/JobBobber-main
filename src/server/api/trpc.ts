@@ -29,6 +29,7 @@ export interface TRPCContext {
   orgId: string | null
   orgRole: "org:admin" | "org:member" | null
   userRole: "JOB_SEEKER" | "EMPLOYER" | null
+  hasByokKey?: boolean
 }
 
 interface CreateContextOptions {
@@ -40,7 +41,7 @@ export async function createTRPCContext({ req: _req }: CreateContextOptions): Pr
     userId: string | null
     orgId: string | null
     orgRole: "org:admin" | "org:member" | null
-    sessionClaims?: { metadata?: { role?: "JOB_SEEKER" | "EMPLOYER" } }
+    sessionClaims?: { metadata?: { role?: "JOB_SEEKER" | "EMPLOYER"; hasByokKey?: boolean } }
   }>)
 
   return {
@@ -50,6 +51,7 @@ export async function createTRPCContext({ req: _req }: CreateContextOptions): Pr
     orgId: orgId ?? null,
     orgRole: orgRole ?? null,
     userRole: (sessionClaims?.metadata?.role as "JOB_SEEKER" | "EMPLOYER" | undefined) ?? null,
+    hasByokKey: sessionClaims?.metadata?.hasByokKey ?? false,
   }
 }
 
@@ -76,6 +78,16 @@ export const createCallerFactory = t.createCallerFactory
 // ---------------------------------------------------------------------------
 // Middleware chain
 // ---------------------------------------------------------------------------
+
+// onboardingProcedure tier: requires userId only; userRole may be null.
+// Used exclusively by onboardingRouter.setRole (which CREATES the role —
+// cannot require userRole to already exist).
+const enforceSession = t.middleware(({ ctx, next }) => {
+  if (!ctx.userId) {
+    throw new TRPCError({ code: "UNAUTHORIZED" })
+  }
+  return next({ ctx: { ...ctx, userId: ctx.userId } })
+})
 
 const enforceAuthenticated = t.middleware(({ ctx, next }) => {
   if (!ctx.userId || !ctx.userRole) {
@@ -137,6 +149,9 @@ const enforceAdmin = t.middleware(async ({ ctx, next }) => {
 // ---------------------------------------------------------------------------
 
 export const publicProcedure = t.procedure
+// onboardingProcedure: userId required; userRole may be null.
+// Use ONLY for the onboardingRouter — all other routers use protectedProcedure+.
+export const onboardingProcedure = t.procedure.use(enforceSession)
 export const protectedProcedure = t.procedure.use(enforceAuthenticated)
 export const seekerProcedure = protectedProcedure.use(enforceSeeker)
 export const employerProcedure = protectedProcedure.use(enforceEmployer)
@@ -149,7 +164,16 @@ export const adminProcedure = employerProcedure.use(enforceAdmin)
 type PartialCtx = Pick<TRPCContext, "userId" | "orgId" | "orgRole" | "userRole">
 
 function makeTestCtx(partial: PartialCtx): TRPCContext {
-  return { db, inngest: null, ...partial }
+  return { db, inngest: null as never, ...partial }
+}
+
+async function callOnboarding(partial: PartialCtx) {
+  const caller = createCallerFactory(
+    createTRPCRouter({
+      probe: onboardingProcedure.query(() => "ok"),
+    }),
+  )(makeTestCtx(partial))
+  return caller.probe()
 }
 
 async function callProtected(partial: PartialCtx) {
@@ -189,6 +213,7 @@ async function callAdmin(partial: PartialCtx) {
 }
 
 export const testHelpers = {
+  callOnboarding,
   callProtected,
   callSeeker,
   callEmployer,

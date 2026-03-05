@@ -151,6 +151,10 @@ describe("adminProcedure middleware", () => {
       logoUrl: null,
       createdAt: new Date(),
       updatedAt: new Date(),
+      byokApiKeyEncrypted: null,
+      byokProvider: null,
+      byokKeyValidatedAt: null,
+      byokMaskedKey: null,
     })
 
     const { testHelpers } = await import("@/server/api/trpc")
@@ -163,6 +167,45 @@ describe("adminProcedure middleware", () => {
         userRole: "EMPLOYER",
       }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// T3.1 — onboardingProcedure middleware
+// ---------------------------------------------------------------------------
+
+describe("onboardingProcedure middleware", () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it("rejects callers with no userId with UNAUTHORIZED", async () => {
+    const { testHelpers } = await import("@/server/api/trpc")
+    await expect(
+      testHelpers.callOnboarding({ userId: null, orgId: null, orgRole: null, userRole: null }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" })
+  })
+
+  it("allows through when userId is set and userRole is null (new user, no role yet)", async () => {
+    const { testHelpers } = await import("@/server/api/trpc")
+    const result = await testHelpers.callOnboarding({
+      userId: "user_abc",
+      orgId: null,
+      orgRole: null,
+      userRole: null, // role not yet assigned — this is the onboarding scenario
+    })
+    expect(result).toBe("ok")
+  })
+
+  it("allows through when both userId and userRole are set", async () => {
+    const { testHelpers } = await import("@/server/api/trpc")
+    const result = await testHelpers.callOnboarding({
+      userId: "user_abc",
+      orgId: null,
+      orgRole: null,
+      userRole: "JOB_SEEKER",
+    })
+    expect(result).toBe("ok")
   })
 })
 

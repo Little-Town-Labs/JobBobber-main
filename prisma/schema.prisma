@@ -115,7 +115,8 @@ model JobSeeker {
   experience           Json[]   @default([])
   education            Json[]   @default([])
   skills               String[]
-  urls                 String[]
+  urls                 String[] // DEPRECATED in Feature 3 — use profileUrls instead
+  profileUrls          Json[]   @default([]) // Structured URL objects: { id, label, url }
   location             String?
   relocationPreference String?
   profileCompleteness  Float    @default(0)
@@ -129,10 +130,11 @@ model JobSeeker {
   profileEmbedding Unsupported("vector(1536)")?
 
   // Relations
-  settings      SeekerSettings?
-  conversations AgentConversation[]
-  matches       Match[]
-  feedback      FeedbackInsights[]
+  settings        SeekerSettings?
+  conversations   AgentConversation[]
+  matches         Match[]
+  feedback        FeedbackInsights[]
+  extractionCache ExtractionCache[]
 
   @@index([clerkUserId])
   @@index([isActive])
@@ -342,6 +344,24 @@ model Match {
   @@index([employerId, employerStatus])
   @@index([jobPostingId, employerId])
   @@map("matches")
+}
+
+/// Short-lived cache for AI resume extraction results (Feature 3).
+/// Stores the proposed fields returned by generateObject() for up to 15 minutes
+/// while the user reviews them. Deleted after applyExtraction or on expiry.
+/// TTL enforced by comparing expiresAt to now() on read; hourly cron cleans stale rows.
+model ExtractionCache {
+  id        String    @id @default(cuid())
+  seekerId  String
+  proposed  Json
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  seeker JobSeeker @relation(fields: [seekerId], references: [id], onDelete: Cascade)
+
+  @@index([seekerId])
+  @@index([expiresAt])
+  @@map("extraction_cache")
 }
 
 /// Aggregate AI-generated feedback for a user (seeker or employer).

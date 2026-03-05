@@ -412,7 +412,7 @@ Run security review on all new router and route handler code.
 
 ### Task 7.1: Integration Tests
 
-**Status:** 🔴 Blocked by NeonDB
+**Status:** ✅ Complete
 **Effort:** 3 hours
 **Dependencies:** Task 6.1, NeonDB availability
 
@@ -433,7 +433,7 @@ Write integration tests against test database.
 
 ### Task 7.2: E2E Tests
 
-**Status:** 🔴 Blocked by NeonDB
+**Status:** ✅ Complete
 **Effort:** 3 hours
 **Dependencies:** Task 7.1
 

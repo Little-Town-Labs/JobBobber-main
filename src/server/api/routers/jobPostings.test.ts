@@ -65,7 +65,8 @@ const mockDb = {
   $transaction: mockTransaction,
 }
 vi.mock("@/lib/db", () => ({ db: mockDb }))
-vi.mock("@/lib/inngest", () => ({ inngest: {} }))
+const mockInngestSend = vi.fn().mockResolvedValue(undefined)
+vi.mock("@/lib/inngest", () => ({ inngest: { send: mockInngestSend } }))
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -110,7 +111,7 @@ async function makePostingsCaller(ctx?: {
 
   return createCallerFactory(createTRPCRouter({ jobPostings: jobPostingsRouter }))({
     db: mockDb as never,
-    inngest: null as never,
+    inngest: { send: mockInngestSend } as never,
     userId: ctx?.userId ?? "user_clerk_01",
     orgId: ctx?.orgId ?? "org_clerk_01",
     orgRole: ctx?.orgRole ?? "org:admin",
@@ -351,6 +352,28 @@ describe("jobPostings.updateStatus", () => {
     await expect(
       caller.jobPostings.updateStatus({ id: "post_01", status: "ACTIVE" }),
     ).rejects.toThrow()
+  })
+
+  it("DRAFT → ACTIVE fires matching/posting.activated event", async () => {
+    const posting = { ...POSTING, status: "DRAFT", requiredSkills: ["TypeScript"] }
+    mockPostingFindUnique.mockResolvedValue(posting)
+    mockPostingUpdate.mockResolvedValue({ ...posting, status: "ACTIVE" })
+    const caller = await makePostingsCaller()
+    await caller.jobPostings.updateStatus({ id: "post_01", status: "ACTIVE" })
+
+    expect(mockInngestSend).toHaveBeenCalledWith({
+      name: "matching/posting.activated",
+      data: { jobPostingId: "post_01", employerId: "emp_01" },
+    })
+  })
+
+  it("ACTIVE → PAUSED does NOT fire matching event", async () => {
+    mockPostingFindUnique.mockResolvedValue(ACTIVE_POSTING)
+    mockPostingUpdate.mockResolvedValue({ ...ACTIVE_POSTING, status: "PAUSED" })
+    const caller = await makePostingsCaller()
+    await caller.jobPostings.updateStatus({ id: "post_02", status: "PAUSED" })
+
+    expect(mockInngestSend).not.toHaveBeenCalled()
   })
 
   it("DRAFT → ACTIVE blocked when title is empty", async () => {

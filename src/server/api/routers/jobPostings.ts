@@ -190,10 +190,20 @@ export const jobPostingsRouter = createTRPCRouter({
             "Title, description, and at least one required skill are needed to activate this posting",
         })
       }
+      const previousStatus = posting.status
       const updated = await ctx.db.jobPosting.update({
         where: { id: input.id },
         data: { status: input.status },
       })
+
+      // Fire matching workflow on DRAFT → ACTIVE transition only
+      if (previousStatus === "DRAFT" && input.status === "ACTIVE") {
+        await ctx.inngest.send({
+          name: "matching/posting.activated",
+          data: { jobPostingId: input.id, employerId: ctx.employer.id },
+        })
+      }
+
       return toFullJobPosting(updated)
     }),
 

@@ -8,6 +8,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { TRPCError } from "@trpc/server"
+import { createMockEmployer } from "tests/helpers/create-entities"
 
 // ---------------------------------------------------------------------------
 // Mock @clerk/nextjs/server BEFORE importing the module under test
@@ -135,28 +136,9 @@ describe("adminProcedure middleware", () => {
 
   it("rejects org:member callers with FORBIDDEN", async () => {
     const { db } = await import("@/lib/db")
-    vi.mocked(db.employer.findUnique).mockResolvedValue({
-      id: "emp_01",
-      clerkOrgId: "org_xyz",
-      name: "Acme",
-      industry: null,
-      size: null,
-      description: null,
-      culture: null,
-      headquarters: null,
-      locations: [],
-      websiteUrl: null,
-      urls: {},
-      benefits: [],
-      logoUrl: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      byokApiKeyEncrypted: null,
-      byokProvider: null,
-      byokKeyValidatedAt: null,
-      byokMaskedKey: null,
-      notifPrefs: {},
-    })
+    vi.mocked(db.employer.findUnique).mockResolvedValue(
+      createMockEmployer({ id: "emp_01", clerkOrgId: "org_xyz", name: "Acme" }) as never,
+    )
 
     const { testHelpers } = await import("@/server/api/trpc")
 

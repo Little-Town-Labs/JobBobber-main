@@ -5,6 +5,11 @@
  * These tests are expected to FAIL until the procedures are implemented.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest"
+import {
+  createMockEmployer,
+  createMockJobSeeker,
+  createMockMatch,
+} from "tests/helpers/create-entities"
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn().mockResolvedValue({ userId: null }),
@@ -20,45 +25,24 @@ const mockMatchCount = vi.fn()
 const mockMatchGroupBy = vi.fn()
 const mockConversationFindMany = vi.fn()
 
-const EMPLOYER = {
+const EMPLOYER = createMockEmployer({
   id: "emp_01",
   clerkOrgId: "org_clerk_01",
   name: "Acme Corp",
   industry: "Technology",
   size: "51-200",
   description: "We build things",
-  culture: null,
-  headquarters: null,
-  locations: [],
-  websiteUrl: null,
-  urls: {},
-  benefits: [],
-  logoUrl: null,
-  byokApiKeyEncrypted: null,
-  byokProvider: null,
-  byokKeyValidatedAt: null,
-  byokMaskedKey: null,
-  createdAt: new Date("2025-01-01"),
-  updatedAt: new Date("2025-06-01"),
-}
+})
 
-const SEEKER = {
+const SEEKER = createMockJobSeeker({
   id: "seeker_01",
   clerkUserId: "user_seeker_01",
   name: "Jane Doe",
   headline: "Engineer",
   skills: ["TypeScript"],
-  experience: [],
-  education: [],
   location: "NYC",
   profileCompleteness: 80,
-  isActive: true,
-  resumeUrl: null,
-  resumeOriginalName: null,
-  resumeParsedData: null,
-  createdAt: new Date("2025-01-01"),
-  updatedAt: new Date("2025-06-01"),
-}
+})
 
 const mockDb = {
   employer: { findUnique: vi.fn().mockResolvedValue(EMPLOYER) },
@@ -76,21 +60,15 @@ const mockDb = {
 vi.mock("@/lib/db", () => ({ db: mockDb }))
 vi.mock("@/lib/inngest", () => ({ inngest: {} }))
 
-const BASE_MATCH = {
+const BASE_MATCH = createMockMatch({
   id: "match_01",
   conversationId: "conv_01",
   jobPostingId: "post_01",
   seekerId: "seeker_01",
   employerId: "emp_01",
-  confidenceScore: "STRONG" as const,
+  confidenceScore: "STRONG",
   matchSummary: "Great fit.",
-  seekerStatus: "PENDING" as const,
-  employerStatus: "PENDING" as const,
-  seekerContactInfo: null,
-  seekerAvailability: null,
-  createdAt: new Date("2026-01-01"),
-  updatedAt: new Date("2026-01-01"),
-}
+})
 
 async function makeMatchesCaller(ctx?: {
   userId?: string | null

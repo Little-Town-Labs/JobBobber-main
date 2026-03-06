@@ -5,5 +5,13 @@
  * serve handler in src/app/api/inngest/route.ts.
  */
 import { evaluateCandidates } from "./evaluate-candidates"
+import {
+  sendMatchCreatedNotification,
+  sendMutualAcceptNotification,
+} from "./send-match-notification"
 
-export const functions = [evaluateCandidates]
+export const functions = [
+  evaluateCandidates,
+  sendMatchCreatedNotification,
+  sendMutualAcceptNotification,
+]

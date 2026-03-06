@@ -197,6 +197,9 @@ model Employer {
   byokKeyValidatedAt  DateTime? // Timestamp of last successful validation
   byokMaskedKey       String?   // last 4 chars of plaintext: "sk-...xxxx" — non-sensitive display value
 
+  // Feature 6: notification preferences (match-dashboard)
+  notifPrefs  Json     @default("{}")
+
   members     EmployerMember[]
   jobPostings JobPosting[]
   matches     Match[]

@@ -21,6 +21,8 @@ export const matchesRouter = createTRPCRouter({
         jobPostingId: z.string().min(1),
         cursor: z.string().optional(),
         limit: z.number().int().min(1).max(100).default(20),
+        status: z.enum(["PENDING", "ACCEPTED", "DECLINED"]).optional(),
+        sort: z.enum(["confidence", "newest"]).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -32,9 +34,17 @@ export const matchesRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Posting not found" })
       }
 
+      const where: Record<string, unknown> = { jobPostingId: input.jobPostingId }
+      if (input.status) where.employerStatus = input.status
+
+      const orderBy =
+        input.sort === "newest"
+          ? { createdAt: "desc" as const }
+          : { confidenceScore: "desc" as const }
+
       const items = await ctx.db.match.findMany({
-        where: { jobPostingId: input.jobPostingId },
-        orderBy: { confidenceScore: "desc" },
+        where,
+        orderBy,
         take: input.limit + 1,
         ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
       })
@@ -54,14 +64,23 @@ export const matchesRouter = createTRPCRouter({
         .object({
           cursor: z.string().optional(),
           limit: z.number().int().min(1).max(100).default(20),
+          status: z.enum(["PENDING", "ACCEPTED", "DECLINED"]).optional(),
+          sort: z.enum(["confidence", "newest"]).optional(),
         })
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const { cursor, limit = 20 } = input ?? {}
+      const { cursor, limit = 20, status, sort } = input ?? {}
+
+      const where: Record<string, unknown> = { seekerId: ctx.seeker.id }
+      if (status) where.seekerStatus = status
+
+      const orderBy =
+        sort === "newest" ? { createdAt: "desc" as const } : { confidenceScore: "desc" as const }
+
       const items = await ctx.db.match.findMany({
-        where: { seekerId: ctx.seeker.id },
-        orderBy: { createdAt: "desc" },
+        where,
+        orderBy,
         take: limit + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       })
@@ -145,7 +164,17 @@ export const matchesRouter = createTRPCRouter({
 
         // Check for mutual accept
         if (input.status === "ACCEPTED" && updated.employerStatus === "ACCEPTED") {
-          return toMatchResponse(await populateContactInfo(ctx.db, updated.id, match.seekerId))
+          const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
+          await ctx.inngest?.send?.({
+            name: "notification/mutual.accept",
+            data: {
+              matchId: match.id,
+              seekerId: match.seekerId,
+              employerId: match.employerId,
+              jobPostingId: match.jobPostingId,
+            },
+          })
+          return toMatchResponse(populated)
         }
 
         return toMatchResponse(updated)
@@ -170,7 +199,17 @@ export const matchesRouter = createTRPCRouter({
 
         // Check for mutual accept
         if (input.status === "ACCEPTED" && updated.seekerStatus === "ACCEPTED") {
-          return toMatchResponse(await populateContactInfo(ctx.db, updated.id, match.seekerId))
+          const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
+          await ctx.inngest?.send?.({
+            name: "notification/mutual.accept",
+            data: {
+              matchId: match.id,
+              seekerId: match.seekerId,
+              employerId: match.employerId,
+              jobPostingId: match.jobPostingId,
+            },
+          })
+          return toMatchResponse(populated)
         }
 
         return toMatchResponse(updated)
@@ -220,6 +259,47 @@ export const matchesRouter = createTRPCRouter({
         matchesCreated: matches,
         error: null,
       }
+    }),
+
+  /** Get match status counts for the authenticated seeker */
+  getStatusCounts: seekerProcedure.query(async ({ ctx }) => {
+    const where = { seekerId: ctx.seeker.id }
+    const [all, groups] = await Promise.all([
+      ctx.db.match.count({ where }),
+      ctx.db.match.groupBy({ where, by: ["seekerStatus"], _count: { _all: true } }),
+    ])
+
+    const counts = { all, pending: 0, accepted: 0, declined: 0 }
+    for (const g of groups) {
+      const key = g.seekerStatus.toLowerCase() as "pending" | "accepted" | "declined"
+      if (key in counts) counts[key] = g._count._all
+    }
+    return counts
+  }),
+
+  /** Get match status counts for a specific job posting (employer view) */
+  getPostingStatusCounts: employerProcedure
+    .input(z.object({ jobPostingId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const posting = await ctx.db.jobPosting.findUnique({
+        where: { id: input.jobPostingId },
+      })
+      if (!posting || posting.employerId !== ctx.employer.id) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Posting not found" })
+      }
+
+      const where = { jobPostingId: input.jobPostingId }
+      const [all, groups] = await Promise.all([
+        ctx.db.match.count({ where }),
+        ctx.db.match.groupBy({ where, by: ["employerStatus"], _count: { _all: true } }),
+      ])
+
+      const counts = { all, pending: 0, accepted: 0, declined: 0 }
+      for (const g of groups) {
+        const key = g.employerStatus.toLowerCase() as "pending" | "accepted" | "declined"
+        if (key in counts) counts[key] = g._count._all
+      }
+      return counts
     }),
 })
 

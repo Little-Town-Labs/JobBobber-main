@@ -155,6 +155,7 @@ describe("adminProcedure middleware", () => {
       byokProvider: null,
       byokKeyValidatedAt: null,
       byokMaskedKey: null,
+      notifPrefs: {},
     })
 
     const { testHelpers } = await import("@/server/api/trpc")

@@ -75,7 +75,13 @@ export function ExperienceForm({ experience }: ExperienceFormProps) {
     }
 
     try {
-      await updateProfile.mutateAsync({ experience: entries })
+      await updateProfile.mutateAsync({
+        experience: entries.map((e) => ({
+          ...e,
+          endDate: e.endDate ?? "present",
+          description: e.description || undefined,
+        })),
+      })
       setSuccess(true)
     } catch {
       setError("Failed to save. Please try again.")

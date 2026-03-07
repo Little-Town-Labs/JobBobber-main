@@ -72,7 +72,13 @@ export function EducationForm({ education }: EducationFormProps) {
     }
 
     try {
-      await updateProfile.mutateAsync({ education: entries })
+      await updateProfile.mutateAsync({
+        education: entries.map((e) => ({
+          ...e,
+          endDate: e.endDate ?? undefined,
+          description: e.description || undefined,
+        })),
+      })
       setSuccess(true)
     } catch {
       setError("Failed to save. Please try again.")

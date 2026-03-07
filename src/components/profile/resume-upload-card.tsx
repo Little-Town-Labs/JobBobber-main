@@ -67,14 +67,16 @@ export function ResumeUploadCard({
     setIsUploading(true)
     try {
       // Get signed upload URL
-      const { uploadUrl } = await getUploadUrl.mutateAsync({
+      const { blobPath } = await getUploadUrl.mutateAsync({
         filename: file.name,
-        mimeType: file.type,
+        mimeType: file.type as
+          | "application/pdf"
+          | "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         sizeBytes: file.size,
       })
 
       // PUT directly to Vercel Blob
-      const uploadResponse = await fetch(uploadUrl, {
+      const uploadResponse = await fetch(blobPath, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
@@ -84,9 +86,9 @@ export function ResumeUploadCard({
       }
 
       // Confirm upload (persist URL)
-      const updatedProfile = await confirmUpload.mutateAsync({ blobUrl: uploadUrl.split("?")[0] })
-      const confirmedUrl =
-        (updatedProfile as { resumeUrl?: string }).resumeUrl ?? uploadUrl.split("?")[0]
+      const blobUrl = blobPath.split("?")[0] ?? blobPath
+      const updatedProfile = await confirmUpload.mutateAsync({ blobUrl })
+      const confirmedUrl = (updatedProfile as { resumeUrl?: string }).resumeUrl ?? blobUrl
       setResumeUrl(confirmedUrl)
       onResumeUpdated?.(confirmedUrl)
     } catch {

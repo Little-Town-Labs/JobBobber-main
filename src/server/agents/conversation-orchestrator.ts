@@ -40,7 +40,8 @@ export interface TurnResult {
   terminationReason?: string
 }
 
-type AgentFn = (...args: unknown[]) => Promise<AgentTurnOutput | null>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AgentFn = (...args: any[]) => Promise<AgentTurnOutput | null>
 
 export interface RunTurnParams {
   input: OrchestratorInput

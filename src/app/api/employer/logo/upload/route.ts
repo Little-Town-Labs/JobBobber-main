@@ -47,5 +47,5 @@ export async function POST(request: Request): Promise<Response> {
     onUploadCompleted: async () => {
       // Intentionally empty — URL persisted via tRPC employers.updateLogo.
     },
-  })
+  }) as unknown as Response
 }

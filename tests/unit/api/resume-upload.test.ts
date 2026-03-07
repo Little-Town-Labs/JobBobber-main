@@ -123,10 +123,10 @@ describe("POST /api/resume/upload", () => {
     await POST(makeRequest())
 
     expect(tokenConfig).not.toBeNull()
-    expect((tokenConfig as Record<string, unknown>).allowedContentTypes).toContain(
+    expect((tokenConfig as unknown as Record<string, unknown>).allowedContentTypes).toContain(
       "application/pdf",
     )
-    expect((tokenConfig as Record<string, unknown>).allowedContentTypes).toContain(
+    expect((tokenConfig as unknown as Record<string, unknown>).allowedContentTypes).toContain(
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
   })
@@ -146,6 +146,8 @@ describe("POST /api/resume/upload", () => {
     const { POST } = await import("@/app/api/resume/upload/route")
     await POST(makeRequest())
 
-    expect((tokenConfig as Record<string, unknown>).maximumSizeInBytes).toBe(10 * 1024 * 1024)
+    expect((tokenConfig as unknown as Record<string, unknown>).maximumSizeInBytes).toBe(
+      10 * 1024 * 1024,
+    )
   })
 })

@@ -40,7 +40,7 @@ const mockQueryRaw = vi.mocked(db.$queryRaw)
 function createCaller() {
   return appRouter.createCaller({
     db: db as never,
-    inngest: null,
+    inngest: null as never,
     userId: null,
     orgId: null,
     orgRole: null,

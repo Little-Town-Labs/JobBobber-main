@@ -8,6 +8,7 @@
  */
 import { inngest } from "@/lib/inngest"
 import { db } from "@/lib/db"
+import { type Prisma } from "@prisma/client"
 import { decrypt } from "@/lib/encryption"
 import {
   runConversationTurn,
@@ -309,7 +310,7 @@ export function buildConversationWorkflow() {
       await step.run(`persist-turn-${turn}`, async () => {
         await db.agentConversation.update({
           where: { id: conversation.id },
-          data: { messages: allMessages as unknown[] },
+          data: { messages: allMessages as Prisma.InputJsonValue[] },
         })
       })
 
@@ -373,7 +374,7 @@ export function buildConversationWorkflow() {
           status: finalStatus,
           completedAt: new Date(),
           outcome: `${outcome}. LLM calls: ${allMessages.length}`,
-          messages: allMessages as unknown[],
+          messages: allMessages as Prisma.InputJsonValue[],
         },
       })
 

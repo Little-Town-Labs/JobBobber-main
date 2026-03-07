@@ -62,7 +62,7 @@ const listSchema = z
     experienceLevel: z.enum(["ENTRY", "MID", "SENIOR", "EXECUTIVE"]).optional(),
     locationType: z.enum(["REMOTE", "HYBRID", "ONSITE"]).optional(),
   })
-  .default({})
+  .default({ limit: 20 })
 
 const listMineSchema = z
   .object({
@@ -70,11 +70,11 @@ const listMineSchema = z
     limit: z.number().int().min(1).max(100).default(20),
     status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "FILLED"]).optional(),
   })
-  .default({})
+  .default({ limit: 20 })
 
 export const jobPostingsRouter = createTRPCRouter({
   listMine: employerProcedure.input(listMineSchema).query(async ({ ctx, input }) => {
-    const { cursor, limit, status } = input
+    const { cursor, limit = 20, status } = input ?? {}
     const where = {
       employerId: ctx.employer.id,
       ...(status ? { status } : {}),
@@ -95,7 +95,7 @@ export const jobPostingsRouter = createTRPCRouter({
   }),
 
   list: publicProcedure.input(listSchema).query(async ({ ctx, input }) => {
-    const { cursor, limit, experienceLevel, locationType } = input
+    const { cursor, limit = 20, experienceLevel, locationType } = input ?? {}
     const where = {
       status: "ACTIVE" as const,
       ...(experienceLevel ? { experienceLevel } : {}),
@@ -140,7 +140,7 @@ export const jobPostingsRouter = createTRPCRouter({
     }),
 
   create: employerProcedure.input(createPostingSchema).mutation(async ({ ctx, input }) => {
-    const posting = await ctx.db.$transaction(async (tx: typeof ctx.db) => {
+    const posting = await ctx.db.$transaction(async (tx) => {
       const created = await tx.jobPosting.create({
         data: {
           ...input,

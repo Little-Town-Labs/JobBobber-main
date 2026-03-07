@@ -4,6 +4,7 @@
  * @see .specify/specs/5-basic-ai-matching/spec.md
  */
 import { z } from "zod"
+import { Prisma, type PrismaClient } from "@prisma/client"
 import { TRPCError } from "@trpc/server"
 import {
   createTRPCRouter,
@@ -304,16 +305,7 @@ export const matchesRouter = createTRPCRouter({
 })
 
 /** Populate contact info on mutual accept */
-async function populateContactInfo(
-  db: {
-    jobSeeker: {
-      findUnique: (args: unknown) => Promise<{ name: string; location: string | null } | null>
-    }
-    match: { update: (args: unknown) => Promise<unknown> }
-  },
-  matchId: string,
-  seekerId: string,
-) {
+async function populateContactInfo(db: PrismaClient, matchId: string, seekerId: string) {
   const seeker = await db.jobSeeker.findUnique({
     where: { id: seekerId },
     select: { name: true, location: true },
@@ -322,7 +314,9 @@ async function populateContactInfo(
   return db.match.update({
     where: { id: matchId },
     data: {
-      seekerContactInfo: seeker ? { name: seeker.name, location: seeker.location } : null,
+      seekerContactInfo: seeker
+        ? ({ name: seeker.name, location: seeker.location } as Prisma.InputJsonValue)
+        : Prisma.JsonNull,
     },
   })
 }

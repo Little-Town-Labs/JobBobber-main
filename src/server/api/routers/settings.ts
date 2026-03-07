@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
+import { type Prisma, type PrismaClient } from "@prisma/client"
 import { createTRPCRouter, seekerProcedure, employerProcedure } from "@/server/api/trpc"
 import { assertFlagEnabled, PRIVATE_PARAMS } from "@/lib/flags"
 
@@ -66,10 +67,14 @@ export const settingsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await assertFlagEnabled(PRIVATE_PARAMS)
 
+      const data = {
+        ...input,
+        salaryRules: input.salaryRules as Prisma.InputJsonValue | undefined,
+      }
       const result = await ctx.db.seekerSettings.upsert({
         where: { seekerId: ctx.seeker.id },
-        create: { seekerId: ctx.seeker.id, ...input },
-        update: input,
+        create: { seekerId: ctx.seeker.id, ...data } as Prisma.SeekerSettingsUncheckedCreateInput,
+        update: data as Prisma.SeekerSettingsUncheckedUpdateInput,
         select: seekerSettingsSelect,
       })
 
@@ -110,11 +115,15 @@ export const settingsRouter = createTRPCRouter({
 
       await assertPostingOwnership(ctx, input.jobPostingId)
 
-      const { jobPostingId, ...data } = input
+      const { jobPostingId, ...rawData } = input
+      const jobData = {
+        ...rawData,
+        minQualOverride: rawData.minQualOverride as Prisma.InputJsonValue | undefined,
+      }
       const result = await ctx.db.jobSettings.upsert({
         where: { jobPostingId },
-        create: { jobPostingId, ...data },
-        update: data,
+        create: { jobPostingId, ...jobData } as Prisma.JobSettingsUncheckedCreateInput,
+        update: jobData as Prisma.JobSettingsUncheckedUpdateInput,
         select: jobSettingsSelect,
       })
 
@@ -125,7 +134,7 @@ export const settingsRouter = createTRPCRouter({
 /** Verify that the job posting belongs to the authenticated employer. */
 async function assertPostingOwnership(
   ctx: {
-    db: { jobPosting: { findUnique: (args: unknown) => Promise<{ employerId: string } | null> } }
+    db: PrismaClient
     employer: { id: string }
   },
   jobPostingId: string,

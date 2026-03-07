@@ -11,6 +11,8 @@ describe("env validation", () => {
     // Reset modules before each test so env.ts re-evaluates
     vi.resetModules()
     process.env = { ...originalEnv }
+    // Ensure validation runs even when CI sets SKIP_ENV_VALIDATION=true
+    delete process.env["SKIP_ENV_VALIDATION"]
   })
 
   afterEach(() => {

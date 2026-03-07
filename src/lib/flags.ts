@@ -17,42 +17,49 @@ export const SEEKER_PROFILE = flag<boolean>({
   key: "seeker-profile",
   defaultValue: false,
   description: "Enable seeker profile onboarding and editing (Feature 2)",
+  decide: () => false,
 })
 
 export const EMPLOYER_PROFILE = flag<boolean>({
   key: "employer-profile",
   defaultValue: false,
   description: "Enable employer org profile onboarding and editing (Feature 3)",
+  decide: () => false,
 })
 
 export const AI_MATCHING = flag<boolean>({
   key: "ai-matching",
   defaultValue: false,
   description: "Enable AI agent-to-agent matching conversations (Feature 6)",
+  decide: () => false,
 })
 
 export const MATCH_DASHBOARD = flag<boolean>({
   key: "match-dashboard",
   defaultValue: false,
   description: "Enable match review dashboard for seekers and employers (Feature 7)",
+  decide: () => false,
 })
 
 export const FEEDBACK_INSIGHTS = flag<boolean>({
   key: "feedback-insights",
   defaultValue: false,
   description: "Enable AI-generated feedback insights panel (Feature 9)",
+  decide: () => false,
 })
 
 export const AGENT_CONVERSATIONS = flag<boolean>({
   key: "agent-conversations",
   defaultValue: false,
   description: "Enable multi-turn agent-to-agent conversations for matching (Feature 9)",
+  decide: () => false,
 })
 
 export const PRIVATE_PARAMS = flag<boolean>({
   key: "private-params",
   defaultValue: false,
   description: "Enable private negotiation parameters for seekers and employers (Feature 8)",
+  decide: () => false,
 })
 
 /**

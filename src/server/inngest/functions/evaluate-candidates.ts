@@ -68,6 +68,9 @@ export const evaluateCandidates = inngest.createFunction(
       return { status: "FAILED" as const, error: context.error, matchesCreated: 0 }
     }
 
+    // Narrow the union type after error check
+    const { posting, apiKey, provider } = context as Extract<typeof context, { error: null }>
+
     // Step 2: Find eligible candidates
     const candidateIds = await step.run("find-candidates", async () => {
       // Find already-matched candidates to exclude
@@ -134,12 +137,7 @@ export const evaluateCandidates = inngest.createFunction(
               profileCompleteness: seeker.profileCompleteness,
             }
 
-            const evaluation = await evaluateCandidate(
-              context.posting!,
-              candidate,
-              context.apiKey!,
-              context.provider!,
-            )
+            const evaluation = await evaluateCandidate(posting, candidate, apiKey, provider)
 
             if (evaluation && evaluation.score >= MATCH_SCORE_THRESHOLD) {
               qualified.push(seeker.id)
@@ -153,7 +151,7 @@ export const evaluateCandidates = inngest.createFunction(
 
       // Dispatch conversation events only for qualified candidates
       for (const seekerId of qualifiedIds) {
-        await step.sendEvent({
+        await step.sendEvent(`dispatch-conversation-${seekerId}`, {
           name: "conversations/start",
           data: { jobPostingId, seekerId, employerId },
         })
@@ -196,12 +194,7 @@ export const evaluateCandidates = inngest.createFunction(
             profileCompleteness: seeker.profileCompleteness,
           }
 
-          const evaluation = await evaluateCandidate(
-            context.posting!,
-            candidate,
-            context.apiKey!,
-            context.provider!,
-          )
+          const evaluation = await evaluateCandidate(posting, candidate, apiKey, provider)
 
           if (!evaluation) {
             batchSkipped++

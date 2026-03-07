@@ -117,11 +117,13 @@ function makeSeeker(id: string, overrides?: Record<string, unknown>) {
 }
 
 function makeEvaluation(score: number) {
+  const confidence = score >= 70 ? "STRONG" : score >= 30 ? "GOOD" : "POTENTIAL"
   return {
     score,
+    confidence: confidence as "STRONG" | "GOOD" | "POTENTIAL",
     matchSummary: `Score is ${score}`,
-    strengths: ["good"],
-    gaps: [],
+    strengthAreas: ["good"],
+    gapAreas: [],
   }
 }
 
@@ -334,7 +336,8 @@ describe("evaluate-candidates workflow", () => {
 
     // Verify step.run was called for 2 batches (plus fetch-context and find-candidates)
     const batchCalls = mockStep.run.mock.calls.filter(
-      ([name]: [string]) => typeof name === "string" && name.startsWith("evaluate-batch-"),
+      (args: unknown[]) =>
+        typeof args[0] === "string" && (args[0] as string).startsWith("evaluate-batch-"),
     )
     expect(batchCalls).toHaveLength(2)
   })

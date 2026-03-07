@@ -51,7 +51,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm next lint
+        run: pnpm eslint .
 
       - name: Format check
         run: pnpm format:check

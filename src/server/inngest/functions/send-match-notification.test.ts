@@ -158,7 +158,8 @@ describe("send-match-notification: match.created", () => {
       notifPrefs: { matchCreated: true, mutualAccept: true },
     })
 
-    const clerkInstance = await (clerkClient as unknown as ReturnType<typeof vi.fn>)()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkInstance = await (clerkClient as any)()
     clerkInstance.users.getUser.mockResolvedValue({
       emailAddresses: [{ emailAddress: "seeker@test.com" }],
     })
@@ -175,7 +176,7 @@ describe("send-match-notification: match.created", () => {
       }),
     )
     // Verify email content includes confidence and posting title
-    const emailArg = sendMock.mock.calls[0][0]
+    const emailArg = sendMock.mock.calls[0]![0]
     expect(emailArg.subject || emailArg.html || emailArg.text).toBeDefined()
   })
 
@@ -254,7 +255,8 @@ describe("send-match-notification: mutual.accept", () => {
       notifPrefs: { matchCreated: true, mutualAccept: true },
     })
 
-    const clerkInstance = await (clerkClient as unknown as ReturnType<typeof vi.fn>)()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkInstance = await (clerkClient as any)()
     clerkInstance.users.getUser
       .mockResolvedValueOnce({
         emailAddresses: [{ emailAddress: "seeker@test.com" }],
@@ -298,7 +300,8 @@ describe("send-match-notification: mutual.accept", () => {
       notifPrefs: { matchCreated: true, mutualAccept: true },
     })
 
-    const clerkInstance = await (clerkClient as unknown as ReturnType<typeof vi.fn>)()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkInstance = await (clerkClient as any)()
     clerkInstance.users.getUser.mockResolvedValue({
       emailAddresses: [{ emailAddress: "employer@test.com" }],
     })
@@ -337,7 +340,8 @@ describe("send-match-notification: mutual.accept", () => {
       notifPrefs: { matchCreated: true, mutualAccept: false },
     })
 
-    const clerkInstance = await (clerkClient as unknown as ReturnType<typeof vi.fn>)()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkInstance = await (clerkClient as any)()
     clerkInstance.users.getUser.mockResolvedValue({
       emailAddresses: [{ emailAddress: "seeker@test.com" }],
     })
@@ -385,7 +389,8 @@ describe("send-match-notification: error resilience", () => {
       notifPrefs: { matchCreated: true, mutualAccept: true },
     })
 
-    const clerkInstance = await (clerkClient as unknown as ReturnType<typeof vi.fn>)()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkInstance = await (clerkClient as any)()
     clerkInstance.users.getUser.mockResolvedValue({
       emailAddresses: [{ emailAddress: "seeker@test.com" }],
     })

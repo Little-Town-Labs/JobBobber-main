@@ -275,7 +275,7 @@ describe("resume.confirmUpload", () => {
 
     expect(mockJobSeekerUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ parsedResume: null }),
+        data: expect.objectContaining({ parsedResume: expect.anything() }),
       }),
     )
   })
@@ -308,8 +308,12 @@ describe("resume.confirmUpload", () => {
 // ---------------------------------------------------------------------------
 
 // Mock pdf-parse and mammoth for resume content extraction
-const mockPdfParse = vi.fn()
-vi.mock("pdf-parse", () => ({ default: mockPdfParse }))
+const mockPdfParseGetText = vi.fn()
+vi.mock("pdf-parse", () => ({
+  PDFParse: class {
+    getText = mockPdfParseGetText
+  },
+}))
 const mockMammoth = { extractRawText: vi.fn() }
 vi.mock("mammoth", () => mockMammoth)
 
@@ -327,7 +331,7 @@ describe("resume.triggerExtraction", () => {
       arrayBuffer: () => Promise.resolve(new ArrayBuffer(10)),
     })
     vi.stubGlobal("fetch", mockFetch)
-    mockPdfParse.mockResolvedValue({ text: "Resume content from PDF" })
+    mockPdfParseGetText.mockResolvedValue({ text: "Resume content from PDF" })
   })
 
   it("throws PRECONDITION_FAILED if SeekerSettings.byokApiKeyEncrypted is null", async () => {

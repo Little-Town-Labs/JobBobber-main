@@ -12,8 +12,10 @@ interface MatchResponse {
   matchSummary: string
   seekerStatus: string
   employerStatus: string
-  seekerContactInfo: Record<string, unknown> | null
-  seekerAvailability: Record<string, unknown> | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  seekerContactInfo: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  seekerAvailability: any
   isMutualAccept: boolean
   createdAt: string
   updatedAt: string

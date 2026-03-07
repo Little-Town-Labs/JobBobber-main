@@ -36,7 +36,19 @@ import { db } from "@/lib/db"
 import { decrypt } from "@/lib/encryption"
 import { buildConversationWorkflow } from "./run-agent-conversation"
 
-const mockDb = vi.mocked(db)
+const mockDb = db as unknown as {
+  agentConversation: {
+    findFirst: ReturnType<typeof vi.fn>
+    create: ReturnType<typeof vi.fn>
+    update: ReturnType<typeof vi.fn>
+  }
+  jobPosting: { findUnique: ReturnType<typeof vi.fn> }
+  jobSeeker: { findUnique: ReturnType<typeof vi.fn> }
+  employer: { findUnique: ReturnType<typeof vi.fn> }
+  seekerSettings: { findUnique: ReturnType<typeof vi.fn> }
+  jobSettings: { findUnique: ReturnType<typeof vi.fn> }
+  match: { create: ReturnType<typeof vi.fn> }
+}
 const mockDecrypt = vi.mocked(decrypt)
 
 // Mock step runner

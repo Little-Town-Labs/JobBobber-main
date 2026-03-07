@@ -73,7 +73,7 @@ export async function POST(req: Request): Promise<Response> {
 
   switch (event.type) {
     case "user.created": {
-      const { id, first_name, last_name } = event.data
+      const { id, first_name, last_name } = event.data as ClerkUserCreatedEvent["data"]
       const displayName = [first_name, last_name].filter(Boolean).join(" ") || "New User"
 
       await db.jobSeeker.upsert({
@@ -91,7 +91,7 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     case "organization.created": {
-      const { id, name } = event.data
+      const { id, name } = event.data as ClerkOrgCreatedEvent["data"]
 
       await db.employer.upsert({
         where: { clerkOrgId: id },

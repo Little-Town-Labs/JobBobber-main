@@ -5,6 +5,7 @@ import { generateObject } from "ai"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createTRPCRouter, seekerProcedure } from "@/server/api/trpc"
+import { Prisma } from "@prisma/client"
 import { decrypt } from "@/lib/encryption"
 import { computeProfileCompleteness } from "@/lib/profile-completeness"
 import { toFullProfile } from "@/server/api/helpers/profile-mapper"
@@ -95,8 +96,8 @@ function sanitiseErrorMessage(err: unknown, apiKey: string): string {
 const ExtractionOutputSchema = z.object({
   headline: z.string().max(255).optional(),
   skills: z.array(z.string()).optional(),
-  experience: z.array(z.record(z.unknown())).optional(),
-  education: z.array(z.record(z.unknown())).optional(),
+  experience: z.array(z.record(z.string(), z.unknown())).optional(),
+  education: z.array(z.record(z.string(), z.unknown())).optional(),
   bio: z.string().max(2000).optional(),
   location: z.string().max(255).optional(),
 })
@@ -173,7 +174,7 @@ export const resumeRouter = createTRPCRouter({
       where: { id: ctx.seeker.id },
       data: {
         resumeUrl: input.blobUrl,
-        parsedResume: null,
+        parsedResume: Prisma.JsonNull,
         profileCompleteness,
       },
     })
@@ -214,7 +215,7 @@ export const resumeRouter = createTRPCRouter({
       const provider = settings.byokProvider ?? "openai"
       let apiKey: string
       try {
-        apiKey = await decrypt(settings.byokApiKeyEncrypted)
+        apiKey = await decrypt(settings.byokApiKeyEncrypted, ctx.seeker.clerkUserId)
       } catch {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -233,9 +234,10 @@ export const resumeRouter = createTRPCRouter({
         const buffer = Buffer.from(await response.arrayBuffer())
 
         if (contentType.includes("pdf")) {
-          const pdfParse = (await import("pdf-parse")).default
-          const pdf = await pdfParse(buffer)
-          resumeText = pdf.text
+          const { PDFParse } = await import("pdf-parse")
+          const parser = new PDFParse({ data: new Uint8Array(buffer) })
+          const result = await parser.getText()
+          resumeText = result.text
         } else {
           const mammoth = await import("mammoth")
           const result = await mammoth.extractRawText({ buffer })
@@ -259,7 +261,7 @@ export const resumeRouter = createTRPCRouter({
           model,
           schema: ExtractionOutputSchema,
           prompt: `Extract structured profile information from this resume:\n\n${resumeText}`,
-          maxTokens: 2000,
+          maxOutputTokens: 2000,
           abortSignal: controller.signal,
         })
 
@@ -268,7 +270,7 @@ export const resumeRouter = createTRPCRouter({
         const cache = await ctx.db.extractionCache.create({
           data: {
             seekerId: ctx.seeker.id,
-            proposed: object as Record<string, unknown>,
+            proposed: object as unknown as Prisma.InputJsonValue,
             expiresAt: new Date(Date.now() + EXTRACTION_TTL_MS),
           },
         })

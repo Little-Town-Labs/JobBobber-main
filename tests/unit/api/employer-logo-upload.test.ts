@@ -114,7 +114,8 @@ describe("POST /api/employer/logo/upload", () => {
     await POST(makeRequest())
 
     expect(tokenConfig).not.toBeNull()
-    const types = (tokenConfig as Record<string, unknown>).allowedContentTypes as string[]
+    const types = (tokenConfig as unknown as Record<string, unknown>)
+      .allowedContentTypes as string[]
     expect(types).toContain("image/png")
     expect(types).toContain("image/jpeg")
     expect(types).toContain("image/webp")
@@ -136,6 +137,8 @@ describe("POST /api/employer/logo/upload", () => {
     const { POST } = await import("@/app/api/employer/logo/upload/route")
     await POST(makeRequest())
 
-    expect((tokenConfig as Record<string, unknown>).maximumSizeInBytes).toBe(2 * 1024 * 1024)
+    expect((tokenConfig as unknown as Record<string, unknown>).maximumSizeInBytes).toBe(
+      2 * 1024 * 1024,
+    )
   })
 })

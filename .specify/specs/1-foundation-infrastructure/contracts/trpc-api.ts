@@ -22,43 +22,43 @@
  */
 export interface TRPCContext {
   /** Prisma client singleton */
-  db: unknown; // PrismaClient — typed in implementation
+  db: unknown // PrismaClient — typed in implementation
   /**
    * Inngest client — attached for procedures that fire async events.
    * Usage: ctx.inngest.send({ name: "job/posting.activated", data: { jobPostingId } })
    */
-  inngest: unknown; // Inngest — typed in implementation
+  inngest: unknown // Inngest — typed in implementation
   /** Clerk userId: non-null when a valid session exists */
-  userId: string | null;
+  userId: string | null
   /** Clerk orgId: non-null when user is acting in an organization context (Employer) */
-  orgId: string | null;
+  orgId: string | null
   /** Clerk organization role: "org:admin" | "org:member" | null */
-  orgRole: "org:admin" | "org:member" | null;
+  orgRole: "org:admin" | "org:member" | null
   /** Platform role from Clerk publicMetadata — set at onboarding */
-  userRole: "JOB_SEEKER" | "EMPLOYER" | null;
+  userRole: "JOB_SEEKER" | "EMPLOYER" | null
 }
 
 /** Context after protectedProcedure middleware — session guaranteed */
 export interface AuthenticatedContext extends TRPCContext {
-  userId: string;
-  userRole: "JOB_SEEKER" | "EMPLOYER";
+  userId: string
+  userRole: "JOB_SEEKER" | "EMPLOYER"
 }
 
 /** Context after seekerProcedure middleware */
 export interface SeekerContext extends AuthenticatedContext {
-  userRole: "JOB_SEEKER";
+  userRole: "JOB_SEEKER"
 }
 
 /** Context after employerProcedure middleware — org context guaranteed */
 export interface EmployerContext extends AuthenticatedContext {
-  userRole: "EMPLOYER";
-  orgId: string;
-  orgRole: "org:admin" | "org:member";
+  userRole: "EMPLOYER"
+  orgId: string
+  orgRole: "org:admin" | "org:member"
 }
 
 /** Context after adminProcedure middleware — org admin role guaranteed */
 export interface AdminContext extends EmployerContext {
-  orgRole: "org:admin";
+  orgRole: "org:admin"
 }
 
 // =============================================================================
@@ -83,19 +83,19 @@ export interface AdminContext extends EmployerContext {
 // =============================================================================
 
 export interface PaginationInput {
-  cursor?: string; // cuid of last seen record
-  limit?: number; // default 20, max 100
+  cursor?: string // cuid of last seen record
+  limit?: number // default 20, max 100
 }
 
 export interface PaginationMeta {
-  nextCursor: string | null;
-  hasMore: boolean;
-  total?: number; // expensive COUNT — opt-in only
+  nextCursor: string | null
+  hasMore: boolean
+  total?: number // expensive COUNT — opt-in only
 }
 
-export type SortDirection = "asc" | "desc";
-export type ExperienceLevel = "ENTRY" | "MID" | "SENIOR" | "EXECUTIVE";
-export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT";
+export type SortDirection = "asc" | "desc"
+export type ExperienceLevel = "ENTRY" | "MID" | "SENIOR" | "EXECUTIVE"
+export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT"
 /**
  * API contract name: WorkLocationType
  * Prisma schema name: LocationType (enum in schema.prisma, field `locationType` on JobPosting)
@@ -105,14 +105,9 @@ export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT";
  * Implementers: map/alias between these names when building the jobPostings router.
  * Do NOT rename the Prisma enum — that would require a migration.
  */
-export type WorkLocationType = "REMOTE" | "HYBRID" | "ONSITE";
-export type JobPostingStatus =
-  | "DRAFT"
-  | "ACTIVE"
-  | "PAUSED"
-  | "CLOSED"
-  | "FILLED";
-export type MatchConfidence = "STRONG" | "GOOD" | "POTENTIAL";
+export type WorkLocationType = "REMOTE" | "HYBRID" | "ONSITE"
+export type JobPostingStatus = "DRAFT" | "ACTIVE" | "PAUSED" | "CLOSED" | "FILLED"
+export type MatchConfidence = "STRONG" | "GOOD" | "POTENTIAL"
 /**
  * API-layer combined match status — derived from the Prisma schema's two separate fields:
  *   Match.seekerStatus: MatchPartyStatus   (PENDING | ACCEPTED | DECLINED | EXPIRED)
@@ -140,13 +135,13 @@ export type MatchStatus =
   | "EMPLOYER_ACCEPTED"
   | "EMPLOYER_DECLINED"
   | "MUTUALLY_ACCEPTED"
-  | "EXPIRED";
+  | "EXPIRED"
 
 export interface PublicSalaryRange {
-  min: number; // cents, integer
-  max: number; // cents, integer; must be >= min
-  currency: string; // ISO 4217, default "USD"
-  period: "ANNUAL" | "HOURLY"; // default "ANNUAL"
+  min: number // cents, integer
+  max: number // cents, integer; must be >= min
+  currency: string // ISO 4217, default "USD"
+  period: "ANNUAL" | "HOURLY" // default "ANNUAL"
 }
 
 // =============================================================================
@@ -158,18 +153,18 @@ export interface PublicSalaryRange {
 // -----------------------------------------------------------------------------
 
 export interface HealthPingOutput {
-  status: "ok";
-  timestamp: string; // ISO 8601
+  status: "ok"
+  timestamp: string // ISO 8601
 }
 
 export interface HealthDeepCheckOutput {
-  healthy: boolean;
+  healthy: boolean
   checks: Array<{
-    name: "database" | "clerk";
-    status: "ok" | "degraded" | "unreachable";
-    latencyMs: number;
-  }>;
-  timestamp: string;
+    name: "database" | "clerk"
+    status: "ok" | "degraded" | "unreachable"
+    latencyMs: number
+  }>
+  timestamp: string
 }
 
 /**
@@ -182,46 +177,46 @@ export interface HealthDeepCheckOutput {
 // -----------------------------------------------------------------------------
 
 export interface PublicJobSeekerProfile {
-  id: string;
-  displayName: string;
-  headline: string;
-  bio: string;
-  skills: string[];
-  experienceLevel: ExperienceLevel;
-  yearsOfExperience: number;
-  preferredWorkTypes: WorkLocationType[];
-  preferredEmploymentTypes: EmploymentType[];
+  id: string
+  displayName: string
+  headline: string
+  bio: string
+  skills: string[]
+  experienceLevel: ExperienceLevel
+  yearsOfExperience: number
+  preferredWorkTypes: WorkLocationType[]
+  preferredEmploymentTypes: EmploymentType[]
   location: {
-    city?: string;
-    state?: string;
-    country: string; // ISO 3166-1 alpha-2
-    openToRelocation: boolean;
-  };
-  portfolioUrls: string[];
-  resumeUrl: string | null;
-  completenessScore: number; // 0–100
-  isActivelyLooking: boolean;
-  createdAt: string;
-  updatedAt: string;
+    city?: string
+    state?: string
+    country: string // ISO 3166-1 alpha-2
+    openToRelocation: boolean
+  }
+  portfolioUrls: string[]
+  resumeUrl: string | null
+  completenessScore: number // 0–100
+  isActivelyLooking: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface UpdateJobSeekerProfileInput {
-  displayName?: string;
-  headline?: string;
-  bio?: string;
-  skills?: string[];
-  experienceLevel?: ExperienceLevel;
-  yearsOfExperience?: number;
-  preferredWorkTypes?: WorkLocationType[];
-  preferredEmploymentTypes?: EmploymentType[];
+  displayName?: string
+  headline?: string
+  bio?: string
+  skills?: string[]
+  experienceLevel?: ExperienceLevel
+  yearsOfExperience?: number
+  preferredWorkTypes?: WorkLocationType[]
+  preferredEmploymentTypes?: EmploymentType[]
   location?: {
-    city?: string;
-    state?: string;
-    country: string;
-    openToRelocation: boolean;
-  };
-  portfolioUrls?: string[];
-  isActivelyLooking?: boolean;
+    city?: string
+    state?: string
+    country: string
+    openToRelocation: boolean
+  }
+  portfolioUrls?: string[]
+  isActivelyLooking?: boolean
 }
 
 /**
@@ -245,37 +240,30 @@ export interface UpdateJobSeekerProfileInput {
 // -----------------------------------------------------------------------------
 
 export interface PublicEmployerProfile {
-  id: string;
-  clerkOrgId: string;
-  name: string;
-  description: string | null;
-  industry: string | null;
-  size:
-    | "1_TO_10"
-    | "11_TO_50"
-    | "51_TO_200"
-    | "201_TO_500"
-    | "501_TO_2000"
-    | "2000_PLUS"
-    | null;
-  websiteUrl: string | null;
-  logoUrl: string | null;
-  linkedinUrl: string | null;
-  headquarters: { city?: string; country: string } | null;
-  benefits: string[];
-  cultureHighlights: string[];
-  activeJobPostingCount: number;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  clerkOrgId: string
+  name: string
+  description: string | null
+  industry: string | null
+  size: "1_TO_10" | "11_TO_50" | "51_TO_200" | "201_TO_500" | "501_TO_2000" | "2000_PLUS" | null
+  websiteUrl: string | null
+  logoUrl: string | null
+  linkedinUrl: string | null
+  headquarters: { city?: string; country: string } | null
+  benefits: string[]
+  cultureHighlights: string[]
+  activeJobPostingCount: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface EmployerMemberEntry {
-  id: string;
-  clerkUserId: string;
-  email: string;
-  displayName: string;
-  orgRole: "org:admin" | "org:member";
-  joinedAt: string;
+  id: string
+  clerkUserId: string
+  email: string
+  displayName: string
+  orgRole: "org:admin" | "org:member"
+  joinedAt: string
 }
 
 /**
@@ -304,50 +292,50 @@ export interface EmployerMemberEntry {
 // -----------------------------------------------------------------------------
 
 export interface PublicJobPosting {
-  id: string;
-  employerId: string;
-  employerName: string;
-  employerLogoUrl: string | null;
-  title: string;
-  description: string;
-  requiredSkills: string[];
-  preferredSkills: string[];
-  experienceLevel: ExperienceLevel;
-  employmentType: EmploymentType;
-  workLocationType: WorkLocationType;
-  location: { city?: string; state?: string; country: string };
-  publicSalaryRange: PublicSalaryRange | null;
-  whyApply: string | null;
-  status: JobPostingStatus;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt: string | null;
-  closedAt: string | null;
+  id: string
+  employerId: string
+  employerName: string
+  employerLogoUrl: string | null
+  title: string
+  description: string
+  requiredSkills: string[]
+  preferredSkills: string[]
+  experienceLevel: ExperienceLevel
+  employmentType: EmploymentType
+  workLocationType: WorkLocationType
+  location: { city?: string; state?: string; country: string }
+  publicSalaryRange: PublicSalaryRange | null
+  whyApply: string | null
+  status: JobPostingStatus
+  createdAt: string
+  updatedAt: string
+  publishedAt: string | null
+  closedAt: string | null
 }
 
 export interface JobPostingsListFilter {
-  query?: string; // free-text search
-  skills?: string[];
-  experienceLevels?: ExperienceLevel[];
-  employmentTypes?: EmploymentType[];
-  workLocationTypes?: WorkLocationType[];
-  countries?: string[];
-  minSalary?: number; // cents
-  status?: JobPostingStatus; // default "ACTIVE"
+  query?: string // free-text search
+  skills?: string[]
+  experienceLevels?: ExperienceLevel[]
+  employmentTypes?: EmploymentType[]
+  workLocationTypes?: WorkLocationType[]
+  countries?: string[]
+  minSalary?: number // cents
+  status?: JobPostingStatus // default "ACTIVE"
 }
 
 export interface CreateJobPostingInput {
-  title: string;
-  description: string;
-  requiredSkills: string[];
-  preferredSkills?: string[];
-  experienceLevel: ExperienceLevel;
-  employmentType: EmploymentType;
-  workLocationType: WorkLocationType;
-  location: { city?: string; state?: string; country: string };
-  publicSalaryRange?: PublicSalaryRange;
-  whyApply?: string;
-  initialStatus?: "DRAFT" | "ACTIVE"; // default "DRAFT"
+  title: string
+  description: string
+  requiredSkills: string[]
+  preferredSkills?: string[]
+  experienceLevel: ExperienceLevel
+  employmentType: EmploymentType
+  workLocationType: WorkLocationType
+  location: { city?: string; state?: string; country: string }
+  publicSalaryRange?: PublicSalaryRange
+  whyApply?: string
+  initialStatus?: "DRAFT" | "ACTIVE" // default "DRAFT"
 }
 
 /**
@@ -386,28 +374,28 @@ export interface CreateJobPostingInput {
 // -----------------------------------------------------------------------------
 
 export interface MatchSummary {
-  id: string;
-  jobPostingId: string;
-  jobTitle: string;
-  employerName: string;
-  seekerId: string;
-  seekerDisplayName: string;
-  confidence: MatchConfidence;
-  matchScore: number; // 0–100
-  matchReasoning: string;
-  status: MatchStatus;
-  seekerAcceptedAt: string | null;
-  employerAcceptedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  jobPostingId: string
+  jobTitle: string
+  employerName: string
+  seekerId: string
+  seekerDisplayName: string
+  confidence: MatchConfidence
+  matchScore: number // 0–100
+  matchReasoning: string
+  status: MatchStatus
+  seekerAcceptedAt: string | null
+  employerAcceptedAt: string | null
+  createdAt: string
+  updatedAt: string
   /**
    * Populated ONLY when status === "MUTUALLY_ACCEPTED".
    * Null in all other states — contact info withheld until both accept.
    */
   seekerContactInfo: {
-    email: string;
-    availability: string | null;
-  } | null;
+    email: string
+    availability: string | null
+  } | null
 }
 
 /**
@@ -434,29 +422,29 @@ export interface MatchSummary {
 // -----------------------------------------------------------------------------
 
 export interface SeekerSettingsOutput {
-  id: string;
-  seekerId: string;
-  minSalarycents: number | null;
-  salaryFlexibilityPercent: number | null; // 0–100
-  dealBreakers: string[];
-  priorities: Array<{ label: string; rank: number }>;
-  exclusions: string[];
-  preferredLlmProvider: "openai" | "anthropic" | null;
-  hasValidApiKey: boolean; // true/false — never returns the key itself
-  updatedAt: string;
+  id: string
+  seekerId: string
+  minSalarycents: number | null
+  salaryFlexibilityPercent: number | null // 0–100
+  dealBreakers: string[]
+  priorities: Array<{ label: string; rank: number }>
+  exclusions: string[]
+  preferredLlmProvider: "openai" | "anthropic" | null
+  hasValidApiKey: boolean // true/false — never returns the key itself
+  updatedAt: string
 }
 
 export interface JobSettingsOutput {
-  id: string;
-  jobPostingId: string;
-  orgId: string;
-  truMaxSalarycents: number | null; // never in public API
-  willingToTrain: boolean;
-  trainableSkills: string[];
-  urgency: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-  priorityAttributes: string[];
-  minimumQualificationOverride: string | null;
-  updatedAt: string;
+  id: string
+  jobPostingId: string
+  orgId: string
+  truMaxSalarycents: number | null // never in public API
+  willingToTrain: boolean
+  trainableSkills: string[]
+  urgency: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+  priorityAttributes: string[]
+  minimumQualificationOverride: string | null
+  updatedAt: string
 }
 
 /**

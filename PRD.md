@@ -125,13 +125,13 @@ Humans provide information. AI does the work. Humans meet for interviews.
 
 ### 6.1 Authentication & User Management
 
-| Requirement | Details |
-|---|---|
-| Auth Provider | Clerk |
-| Job Seeker Accounts | Individual accounts, one profile per person |
-| Employer Accounts | Organizational accounts with role-based access (Admin, Job Poster, Viewer) |
-| Role Management | Employer admins can invite/remove team members, assign roles |
-| SSO Support | Future consideration for enterprise employers |
+| Requirement         | Details                                                                    |
+| ------------------- | -------------------------------------------------------------------------- |
+| Auth Provider       | Clerk                                                                      |
+| Job Seeker Accounts | Individual accounts, one profile per person                                |
+| Employer Accounts   | Organizational accounts with role-based access (Admin, Job Poster, Viewer) |
+| Role Management     | Employer admins can invite/remove team members, assign roles               |
+| SSO Support         | Future consideration for enterprise employers                              |
 
 ### 6.2 Job Seeker Profile
 
@@ -476,23 +476,23 @@ Employer Agent: Discovery search → identifies candidate pool
 
 ## 10. Technology Stack
 
-| Layer | Technology | Rationale |
-|---|---|---|
-| **Frontend** | Vue 3 + Vite | Modern reactive framework, fast dev experience |
-| **Styling** | Tailwind CSS | Utility-first, rapid UI development |
-| **Authentication** | Clerk | Managed auth with org/role support, SSO-ready |
-| **Database** | NeonDB (PostgreSQL) | Serverless Postgres, scalable, cost-efficient |
-| **ORM** | Drizzle or Prisma | Type-safe database access (TBD) |
-| **Backend/API** | Node.js (Express or Nitro) | JavaScript ecosystem alignment with Vue |
-| **AI/LLM (Development)** | Anthropic Claude (Claude Max) | Platform development and code generation |
-| **AI/LLM (Agentic)** | OpenAI API (or TBD provider) | Agent reasoning, conversation, evaluation at runtime |
-| **Agent Framework** | LangChain / LangGraph / CrewAI (TBD) | Multi-agent orchestration and workflow management |
-| **Vector Database** | Pinecone / pgvector (NeonDB extension) | Semantic search for profile-to-job matching |
-| **File Storage** | AWS S3 / Cloudflare R2 | Resume and document storage |
-| **Search** | pgvector + semantic embeddings | Profile and job posting similarity search |
-| **Job Queue** | BullMQ / Inngest | Async agent conversation processing |
-| **Hosting** | Vercel / AWS / Railway (TBD) | Frontend and API deployment |
-| **Monitoring** | Sentry + PostHog | Error tracking and product analytics |
+| Layer                    | Technology                             | Rationale                                            |
+| ------------------------ | -------------------------------------- | ---------------------------------------------------- |
+| **Frontend**             | Vue 3 + Vite                           | Modern reactive framework, fast dev experience       |
+| **Styling**              | Tailwind CSS                           | Utility-first, rapid UI development                  |
+| **Authentication**       | Clerk                                  | Managed auth with org/role support, SSO-ready        |
+| **Database**             | NeonDB (PostgreSQL)                    | Serverless Postgres, scalable, cost-efficient        |
+| **ORM**                  | Drizzle or Prisma                      | Type-safe database access (TBD)                      |
+| **Backend/API**          | Node.js (Express or Nitro)             | JavaScript ecosystem alignment with Vue              |
+| **AI/LLM (Development)** | Anthropic Claude (Claude Max)          | Platform development and code generation             |
+| **AI/LLM (Agentic)**     | OpenAI API (or TBD provider)           | Agent reasoning, conversation, evaluation at runtime |
+| **Agent Framework**      | LangChain / LangGraph / CrewAI (TBD)   | Multi-agent orchestration and workflow management    |
+| **Vector Database**      | Pinecone / pgvector (NeonDB extension) | Semantic search for profile-to-job matching          |
+| **File Storage**         | AWS S3 / Cloudflare R2                 | Resume and document storage                          |
+| **Search**               | pgvector + semantic embeddings         | Profile and job posting similarity search            |
+| **Job Queue**            | BullMQ / Inngest                       | Async agent conversation processing                  |
+| **Hosting**              | Vercel / AWS / Railway (TBD)           | Frontend and API deployment                          |
+| **Monitoring**           | Sentry + PostHog                       | Error tracking and product analytics                 |
 
 ### Technology Decisions to Finalize
 
@@ -580,18 +580,18 @@ Employer Agent: Discovery search → identifies candidate pool
 
 #### Job Seeker Tiers
 
-| Tier | Price | Features |
-|---|---|---|
-| **Free** | $0/mo | Profile creation, limited agent activity (capped agent conversations/month), basic match notifications, basic dashboard |
-| **Pro** | $39/mo | Unlimited agent activity, full private settings, priority agent processing, match analytics, aggregate feedback insights, custom agent prompting, advanced URL analysis |
+| Tier     | Price  | Features                                                                                                                                                                |
+| -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Free** | $0/mo  | Profile creation, limited agent activity (capped agent conversations/month), basic match notifications, basic dashboard                                                 |
+| **Pro**  | $39/mo | Unlimited agent activity, full private settings, priority agent processing, match analytics, aggregate feedback insights, custom agent prompting, advanced URL analysis |
 
 #### Employer Tiers
 
-| Tier | Price | Features |
-|---|---|---|
-| **Free** | $0/mo | Company profile, 1 active job posting, limited agent conversations/month, basic matching and notifications |
-| **Business** | $99/mo | Limited number of active job postings (with ability to purchase additional postings à la carte), unlimited agent conversations, multi-member accounts, pipeline dashboard, aggregate feedback insights, full private job settings |
-| **Enterprise** | Contact for pricing | Unlimited job postings, priority matching, access to future features, dedicated support, API access, custom integrations, SLA |
+| Tier           | Price               | Features                                                                                                                                                                                                                          |
+| -------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Free**       | $0/mo               | Company profile, 1 active job posting, limited agent conversations/month, basic matching and notifications                                                                                                                        |
+| **Business**   | $99/mo              | Limited number of active job postings (with ability to purchase additional postings à la carte), unlimited agent conversations, multi-member accounts, pipeline dashboard, aggregate feedback insights, full private job settings |
+| **Enterprise** | Contact for pricing | Unlimited job postings, priority matching, access to future features, dedicated support, API access, custom integrations, SLA                                                                                                     |
 
 ### Pricing Strategy Notes
 
@@ -607,23 +607,23 @@ Employer Agent: Discovery search → identifies candidate pool
 
 ### Primary KPIs
 
-| Metric | Definition | Target (Year 1) |
-|---|---|---|
-| **Time-to-Match** | Average time from profile activation to first accepted match | < 7 days |
-| **Match Acceptance Rate** | % of agent-recommended matches accepted by both parties | > 40% |
-| **Interview-to-Hire Rate** | % of platform-facilitated interviews that result in a hire | > 25% |
-| **Job Seeker Activation** | % of registered job seekers with complete profiles | > 60% |
-| **Employer Activation** | % of registered employers with at least 1 active posting | > 70% |
+| Metric                     | Definition                                                   | Target (Year 1) |
+| -------------------------- | ------------------------------------------------------------ | --------------- |
+| **Time-to-Match**          | Average time from profile activation to first accepted match | < 7 days        |
+| **Match Acceptance Rate**  | % of agent-recommended matches accepted by both parties      | > 40%           |
+| **Interview-to-Hire Rate** | % of platform-facilitated interviews that result in a hire   | > 25%           |
+| **Job Seeker Activation**  | % of registered job seekers with complete profiles           | > 60%           |
+| **Employer Activation**    | % of registered employers with at least 1 active posting     | > 70%           |
 
 ### Secondary KPIs
 
-| Metric | Definition |
-|---|---|
+| Metric                         | Definition                                               |
+| ------------------------------ | -------------------------------------------------------- |
 | **Agent Conversation Quality** | Average conversation depth (turns) and relevance scoring |
-| **Profile Completeness** | Average completeness score across all user types |
-| **Platform NPS** | Net Promoter Score from both job seekers and employers |
-| **Churn Rate** | Monthly subscriber churn by tier and user type |
-| **Cost per Match** | Infrastructure + LLM cost per successful match |
+| **Profile Completeness**       | Average completeness score across all user types         |
+| **Platform NPS**               | Net Promoter Score from both job seekers and employers   |
+| **Churn Rate**                 | Monthly subscriber churn by tier and user type           |
+| **Cost per Match**             | Infrastructure + LLM cost per successful match           |
 
 ---
 
@@ -660,16 +660,16 @@ Employer Agent: Discovery search → identifies candidate pool
 
 ## 15. Risks & Mitigations
 
-| Risk | Impact | Likelihood | Mitigation |
-|---|---|---|---|
-| **Cold start problem** — not enough candidates or employers | High | High | Launch with targeted industry verticals; seed candidate pool with partnerships; offer generous free tiers |
-| **Agent hallucination / fabrication** | High | Medium | Strict guardrails; agents only reference verified profile data; conversation auditing |
-| **Private data leakage via agents** | Critical | Low–Medium | Rigorous prompt engineering; red-team testing; agent output filtering |
-| **Match quality is poor** | High | Medium | Human feedback loops on match outcomes; continuous model tuning; A/B test agent strategies |
-| **LLM cost at scale** | Medium | High | Optimize conversation length; use smaller models for screening, larger for deep evaluation; caching and batching |
-| **Adversarial custom prompts** | Medium | Medium | Sandbox prompt execution; content filtering; prompt injection detection |
-| **Bias in matching** | Critical | Medium | Regular bias audits; diverse training/testing data; third-party fairness assessments |
-| **User trust in fully automated agents** | High | Medium | Transparent conversation logs; match explanations; gradual trust-building through accuracy |
+| Risk                                                        | Impact   | Likelihood | Mitigation                                                                                                       |
+| ----------------------------------------------------------- | -------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Cold start problem** — not enough candidates or employers | High     | High       | Launch with targeted industry verticals; seed candidate pool with partnerships; offer generous free tiers        |
+| **Agent hallucination / fabrication**                       | High     | Medium     | Strict guardrails; agents only reference verified profile data; conversation auditing                            |
+| **Private data leakage via agents**                         | Critical | Low–Medium | Rigorous prompt engineering; red-team testing; agent output filtering                                            |
+| **Match quality is poor**                                   | High     | Medium     | Human feedback loops on match outcomes; continuous model tuning; A/B test agent strategies                       |
+| **LLM cost at scale**                                       | Medium   | High       | Optimize conversation length; use smaller models for screening, larger for deep evaluation; caching and batching |
+| **Adversarial custom prompts**                              | Medium   | Medium     | Sandbox prompt execution; content filtering; prompt injection detection                                          |
+| **Bias in matching**                                        | Critical | Medium     | Regular bias audits; diverse training/testing data; third-party fairness assessments                             |
+| **User trust in fully automated agents**                    | High     | Medium     | Transparent conversation logs; match explanations; gradual trust-building through accuracy                       |
 
 ---
 
@@ -702,12 +702,12 @@ Employer Agent: Discovery search → identifies candidate pool
 
 ## Appendix A: Competitive Landscape
 
-| Platform | Strength | Weakness vs. JobBobber |
-|---|---|---|
-| **LinkedIn** | Massive network, brand recognition | Noise-heavy, static profiles, manual search, no AI matching |
-| **Indeed / ZipRecruiter** | Large job board, resume matching | Keyword-based matching, no deep evaluation, one-directional |
-| **Hired / Vettery** | Curated matching, employer-pays | Limited to tech, human curation doesn't scale |
-| **AI Recruiting Tools (HireVue, etc.)** | AI-assisted screening | Employer-side only, no candidate advocacy agent |
+| Platform                                | Strength                           | Weakness vs. JobBobber                                      |
+| --------------------------------------- | ---------------------------------- | ----------------------------------------------------------- |
+| **LinkedIn**                            | Massive network, brand recognition | Noise-heavy, static profiles, manual search, no AI matching |
+| **Indeed / ZipRecruiter**               | Large job board, resume matching   | Keyword-based matching, no deep evaluation, one-directional |
+| **Hired / Vettery**                     | Curated matching, employer-pays    | Limited to tech, human curation doesn't scale               |
+| **AI Recruiting Tools (HireVue, etc.)** | AI-assisted screening              | Employer-side only, no candidate advocacy agent             |
 
 JobBobber's differentiator is **dual-agent advocacy** — both sides have an AI agent working in their interest, creating a balanced, intelligent, and efficient matching marketplace.
 
@@ -715,18 +715,18 @@ JobBobber's differentiator is **dual-agent advocacy** — both sides have an AI 
 
 ## Appendix B: Glossary
 
-| Term | Definition |
-|---|---|
-| **Job Seeker Agent** | AI agent that represents and advocates for a job seeker during the matching process |
-| **Employer Agent** | AI agent that represents an employer and its job postings during the matching process |
-| **Agent-to-Agent Conversation** | An automated dialogue between a Job Seeker Agent and an Employer Agent to evaluate match potential |
-| **Match** | A platform-generated recommendation that a job seeker and employer should proceed to a human interview |
-| **Private Settings** | User-configured parameters visible only to their own AI agent, never disclosed to other parties |
-| **Custom Agent Prompt** | User-authored instructions that influence their agent's behavior and strategy |
-| **Match Summary** | AI-generated explanation of why a match was recommended, including key alignment points |
-| **Confidence Score** | Platform rating of match quality (Strong, Good, Potential) |
+| Term                            | Definition                                                                                                                                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Job Seeker Agent**            | AI agent that represents and advocates for a job seeker during the matching process                                                                                                                          |
+| **Employer Agent**              | AI agent that represents an employer and its job postings during the matching process                                                                                                                        |
+| **Agent-to-Agent Conversation** | An automated dialogue between a Job Seeker Agent and an Employer Agent to evaluate match potential                                                                                                           |
+| **Match**                       | A platform-generated recommendation that a job seeker and employer should proceed to a human interview                                                                                                       |
+| **Private Settings**            | User-configured parameters visible only to their own AI agent, never disclosed to other parties                                                                                                              |
+| **Custom Agent Prompt**         | User-authored instructions that influence their agent's behavior and strategy                                                                                                                                |
+| **Match Summary**               | AI-generated explanation of why a match was recommended, including key alignment points                                                                                                                      |
+| **Confidence Score**            | Platform rating of match quality (Strong, Good, Potential)                                                                                                                                                   |
 | **Aggregate Feedback Insights** | Private, AI-generated summary derived from all agent conversations showing a user what makes them attractive and what patterns cause rejections — without revealing specifics of any individual conversation |
 
 ---
 
-*This is a living document. It will be updated as decisions are made on open questions and as the product evolves through each phase.*
+_This is a living document. It will be updated as decisions are made on open questions and as the product evolves through each phase._

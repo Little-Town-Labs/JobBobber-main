@@ -25,10 +25,12 @@
 **Description**: [Brief description]
 
 **Pros**:
+
 - [Advantage 1]
 - [Advantage 2]
 
 **Cons**:
+
 - [Disadvantage 1]
 - [Disadvantage 2]
 
@@ -48,12 +50,12 @@
 
 ## Comparison Matrix
 
-| Criteria | Option 1 | Option 2 | Option 3 |
-|----------|----------|----------|----------|
-| Performance | [Score/Rating] | [Score/Rating] | [Score/Rating] |
-| Cost | [Score/Rating] | [Score/Rating] | [Score/Rating] |
-| Complexity | [Score/Rating] | [Score/Rating] | [Score/Rating] |
-| Community Support | [Score/Rating] | [Score/Rating] | [Score/Rating] |
+| Criteria           | Option 1       | Option 2       | Option 3       |
+| ------------------ | -------------- | -------------- | -------------- |
+| Performance        | [Score/Rating] | [Score/Rating] | [Score/Rating] |
+| Cost               | [Score/Rating] | [Score/Rating] | [Score/Rating] |
+| Complexity         | [Score/Rating] | [Score/Rating] | [Score/Rating] |
+| Community Support  | [Score/Rating] | [Score/Rating] | [Score/Rating] |
 | Constitutional Fit | [Score/Rating] | [Score/Rating] | [Score/Rating] |
 
 ---
@@ -66,10 +68,12 @@
 [Detailed explanation of why this option was chosen, including constitutional alignment]
 
 **Risk Assessment**:
+
 - [Risk 1 and mitigation]
 - [Risk 2 and mitigation]
 
 **Next Steps**:
+
 1. [Action item 1]
 2. [Action item 2]
 

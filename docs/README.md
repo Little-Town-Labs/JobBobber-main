@@ -6,42 +6,45 @@ Welcome to the JobBobber documentation! This directory contains detailed technic
 
 ### Core Documents (Project Root)
 
-| Document | Description |
-|----------|-------------|
-| **[README.md](../README.md)** | Main project overview, business model, and getting started guide |
-| **[PRD.md](../PRD.md)** | Complete Product Requirements Document with detailed specifications |
-| **[CLAUDE.md](../CLAUDE.md)** | Claude Code preferences and development workflow |
-| **[project-config.json](../project-config.json)** | Machine-readable tech stack and configuration |
-| **[.gitignore](../.gitignore)** | Git ignore patterns for the project |
+| Document                                          | Description                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------- |
+| **[README.md](../README.md)**                     | Main project overview, business model, and getting started guide    |
+| **[PRD.md](../PRD.md)**                           | Complete Product Requirements Document with detailed specifications |
+| **[CLAUDE.md](../CLAUDE.md)**                     | Claude Code preferences and development workflow                    |
+| **[project-config.json](../project-config.json)** | Machine-readable tech stack and configuration                       |
+| **[.gitignore](../.gitignore)**                   | Git ignore patterns for the project                                 |
 
 ### Technical Documentation (/docs)
 
-| Document | Description |
-|----------|-------------|
+| Document                                           | Description                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------- |
 | **[AGENT_ARCHITECTURE.md](AGENT_ARCHITECTURE.md)** | AI agent system architecture, patterns, and implementation guide |
-| **[ROADMAP.md](ROADMAP.md)** | Detailed feature roadmap organized by phase (MVP → Beta → Full) |
-| **[README.md](README.md)** | This file - documentation index |
+| **[ROADMAP.md](ROADMAP.md)**                       | Detailed feature roadmap organized by phase (MVP → Beta → Full)  |
+| **[README.md](README.md)**                         | This file - documentation index                                  |
 
 ### Configuration Files (/.)claude)
 
-| File | Description |
-|------|-------------|
+| File                                                  | Description                                                 |
+| ----------------------------------------------------- | ----------------------------------------------------------- |
 | **[.claude/settings.json](../.claude/settings.json)** | Claude Code project settings (permissions, hooks, env vars) |
-| **[.claude/rules.md](../.claude/rules.md)** | Project-specific coding patterns and best practices |
+| **[.claude/rules.md](../.claude/rules.md)**           | Project-specific coding patterns and best practices         |
 
 ## Quick Navigation
 
 ### For Business Understanding
+
 1. Start with [../README.md](../README.md) for high-level overview
 2. Read [../PRD.md](../PRD.md) for complete product requirements
 3. Review [ROADMAP.md](ROADMAP.md) for feature breakdown by phase
 
 ### For Technical Implementation
+
 1. Review [../project-config.json](../project-config.json) for tech stack
 2. Read [AGENT_ARCHITECTURE.md](AGENT_ARCHITECTURE.md) for agent system design
 3. Check [../.claude/rules.md](../.claude/rules.md) for coding patterns
 
 ### For Development Setup
+
 1. Follow [../README.md#getting-started](../README.md#getting-started) for installation
 2. Configure environment variables as per [../README.md#configuration](../README.md#configuration)
 3. Review [CLAUDE.md](../CLAUDE.md) for Claude Code workflow
@@ -67,6 +70,7 @@ Welcome to the JobBobber documentation! This directory contains detailed technic
 ## Contributing to Documentation
 
 Good documentation:
+
 - ✅ Is clear and concise
 - ✅ Uses examples and code snippets
 - ✅ Stays up-to-date with the codebase
@@ -74,6 +78,7 @@ Good documentation:
 - ✅ Is organized logically
 
 Poor documentation:
+
 - ❌ Is vague or ambiguous
 - ❌ Goes stale and contradicts the code
 - ❌ Uses jargon without explanation
@@ -82,6 +87,7 @@ Poor documentation:
 ## Questions?
 
 If you can't find what you're looking for, check:
+
 1. GitHub Discussions for Q&A
 2. PRD.md for product-specific questions
 3. AGENT_ARCHITECTURE.md for technical questions

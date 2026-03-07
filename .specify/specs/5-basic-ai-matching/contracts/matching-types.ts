@@ -24,10 +24,7 @@ export const agentEvaluationSchema = z.object({
     .min(1)
     .max(10)
     .describe("Areas where candidate excels for this role"),
-  gapAreas: z
-    .array(z.string().max(200))
-    .max(10)
-    .describe("Areas where candidate falls short"),
+  gapAreas: z.array(z.string().max(200)).max(10).describe("Areas where candidate falls short"),
 })
 
 export type AgentEvaluation = z.infer<typeof agentEvaluationSchema>
@@ -36,9 +33,7 @@ export type AgentEvaluation = z.infer<typeof agentEvaluationSchema>
 // Confidence mapping
 // ---------------------------------------------------------------------------
 
-export function scoreToConfidence(
-  score: number,
-): "STRONG" | "GOOD" | "POTENTIAL" | null {
+export function scoreToConfidence(score: number): "STRONG" | "GOOD" | "POTENTIAL" | null {
   if (score >= 70) return "STRONG"
   if (score >= 50) return "GOOD"
   if (score >= 30) return "POTENTIAL"

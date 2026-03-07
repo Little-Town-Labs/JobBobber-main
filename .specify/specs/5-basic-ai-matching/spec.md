@@ -16,6 +16,7 @@ Basic AI Matching is the core value proposition of JobBobber's MVP. When an empl
 This is one-directional matching only: the Employer Agent evaluates static job seeker profiles. No agent-to-agent conversations, no job seeker agent involvement, and no private negotiation parameters are used in the MVP. Those capabilities are deferred to Features 8-10 (Phase 2).
 
 **Business Value:**
+
 - Proves the core matching loop works end-to-end
 - Validates that BYOK-powered AI can produce useful match results
 - Gives both parties actionable match data to drive platform engagement
@@ -32,6 +33,7 @@ This is one-directional matching only: the Employer Agent evaluates static job s
 **So that** I receive a ranked list of candidates without manual screening
 
 **Acceptance Criteria:**
+
 - [ ] When a job posting transitions from DRAFT to ACTIVE, a background matching workflow is triggered
 - [ ] The workflow evaluates all eligible job seeker profiles (active profiles with at least name and one skill)
 - [ ] Matching only runs if the employer has a valid BYOK API key configured
@@ -49,6 +51,7 @@ This is one-directional matching only: the Employer Agent evaluates static job s
 **So that** I can quickly identify the most promising candidates
 
 **Acceptance Criteria:**
+
 - [ ] Matches are displayed sorted by score (highest first)
 - [ ] Each match shows: candidate name, match score (0-100), confidence level (Strong/Good/Potential), and a brief explanation
 - [ ] Employer can accept or decline each match
@@ -66,6 +69,7 @@ This is one-directional matching only: the Employer Agent evaluates static job s
 **So that** I can review the opportunity and decide whether to proceed
 
 **Acceptance Criteria:**
+
 - [ ] Job seeker sees new matches on their dashboard
 - [ ] Each match shows: company name, job title, match score, confidence level, and match summary
 - [ ] Job seeker can accept or decline each match
@@ -83,6 +87,7 @@ This is one-directional matching only: the Employer Agent evaluates static job s
 **So that** we can proceed to schedule an interview
 
 **Acceptance Criteria:**
+
 - [ ] When both parties accept, the match status changes to "mutual accept"
 - [ ] Employer receives the job seeker's contact information and availability
 - [ ] Job seeker receives the employer's contact information
@@ -100,6 +105,7 @@ This is one-directional matching only: the Employer Agent evaluates static job s
 **So that** matching decisions are fair and legally compliant
 
 **Acceptance Criteria:**
+
 - [ ] Agent evaluation prompt explicitly instructs the model to ignore protected characteristics (race, gender, age, disability, religion, national origin)
 - [ ] Match reasoning never references protected characteristics
 - [ ] Agent focuses exclusively on skills, experience, qualifications, and role alignment
@@ -117,6 +123,7 @@ This is one-directional matching only: the Employer Agent evaluates static job s
 **So that** partial results are preserved and I'm informed of any issues
 
 **Acceptance Criteria:**
+
 - [ ] If the BYOK API key is invalid or expired, the workflow reports the error and stops
 - [ ] If the LLM returns malformed output for a single candidate, that candidate is skipped and the rest continue
 - [ ] If the LLM provider is rate-limited, the workflow retries with backoff
@@ -137,6 +144,7 @@ When a job posting transitions from DRAFT to ACTIVE status, the system initiates
 ### FR-2: Candidate Discovery
 
 The matching workflow identifies all eligible job seeker profiles. An eligible profile must be:
+
 - Marked as active (`isActive = true`)
 - Has a non-empty name
 - Has at least one skill listed
@@ -144,6 +152,7 @@ The matching workflow identifies all eligible job seeker profiles. An eligible p
 ### FR-3: BYOK Key Resolution
 
 The matching workflow uses the employer's BYOK API key for all LLM calls. The key is:
+
 - Decrypted from storage at workflow execution time
 - Used via the platform's AI SDK integration
 - Never logged or exposed in workflow state
@@ -153,6 +162,7 @@ If no valid key exists, the workflow terminates with a clear error status.
 ### FR-4: Agent Evaluation
 
 For each eligible candidate, the Employer Agent:
+
 1. Receives the job posting details (title, description, required skills, preferred skills, experience level, employment type, location type)
 2. Receives the candidate profile (name, headline, skills, experience, education, location)
 3. Generates a structured evaluation containing:
@@ -165,6 +175,7 @@ For each eligible candidate, the Employer Agent:
 ### FR-5: Output Validation
 
 All agent output is validated against a strict schema before storage. If validation fails:
+
 - The candidate is skipped
 - An error is logged
 - The workflow continues with remaining candidates
@@ -174,6 +185,7 @@ Invalid LLM responses are never stored.
 ### FR-6: Match Record Creation
 
 For candidates scoring >= 30, a Match record is created containing:
+
 - Reference to the job posting
 - Reference to the job seeker
 - Reference to the employer
@@ -184,6 +196,7 @@ For candidates scoring >= 30, a Match record is created containing:
 ### FR-7: Match Status Management
 
 Each match has independent status for both parties:
+
 - **PENDING**: Initial state, awaiting review
 - **ACCEPTED**: Party has accepted the match
 - **DECLINED**: Party has declined the match
@@ -194,6 +207,7 @@ Status transitions are one-way (PENDING -> ACCEPTED/DECLINED/EXPIRED). No revers
 ### FR-8: Mutual Accept Flow
 
 When both parties have ACCEPTED:
+
 - Job seeker's contact information and availability are revealed to the employer
 - Employer contact information is revealed to the job seeker
 - Match record is updated to reflect mutual acceptance
@@ -201,6 +215,7 @@ When both parties have ACCEPTED:
 ### FR-9: Workflow Observability
 
 The matching workflow exposes status to the employer:
+
 - **QUEUED**: Workflow has been triggered, not yet started
 - **RUNNING**: Currently evaluating candidates
 - **COMPLETED**: All candidates evaluated, matches created
@@ -298,23 +313,23 @@ The following capabilities are explicitly excluded from this feature and deferre
 
 ## Success Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Match score accuracy | >60% of accepted matches have score >= 50 | Track accept rates by score band |
-| Workflow completion rate | >95% of workflows complete without failure | Monitor workflow status |
-| Time to first match | <10 minutes from posting activation | Measure workflow duration |
-| Employer engagement | >50% of employers review their matches within 48h | Track dashboard views |
-| Mutual accept rate | >20% of matches result in mutual acceptance | Track match status changes |
+| Metric                   | Target                                            | Measurement                      |
+| ------------------------ | ------------------------------------------------- | -------------------------------- |
+| Match score accuracy     | >60% of accepted matches have score >= 50         | Track accept rates by score band |
+| Workflow completion rate | >95% of workflows complete without failure        | Monitor workflow status          |
+| Time to first match      | <10 minutes from posting activation               | Measure workflow duration        |
+| Employer engagement      | >50% of employers review their matches within 48h | Track dashboard views            |
+| Mutual accept rate       | >20% of matches result in mutual acceptance       | Track match status changes       |
 
 ---
 
 ## Glossary
 
-| Term | Definition |
-|------|-----------|
-| Employer Agent | The AI agent that evaluates job seeker profiles on behalf of an employer |
-| Match Score | 0-100 integer representing overall candidate-role alignment |
-| Confidence Level | Categorical bucket: STRONG (70-100), GOOD (50-69), POTENTIAL (30-49) |
-| BYOK | Bring Your Own Key — employer provides their own LLM API key |
-| Mutual Accept | Both employer and job seeker have accepted the match |
-| Workflow | Asynchronous background process managed by the workflow engine |
+| Term             | Definition                                                               |
+| ---------------- | ------------------------------------------------------------------------ |
+| Employer Agent   | The AI agent that evaluates job seeker profiles on behalf of an employer |
+| Match Score      | 0-100 integer representing overall candidate-role alignment              |
+| Confidence Level | Categorical bucket: STRONG (70-100), GOOD (50-69), POTENTIAL (30-49)     |
+| BYOK             | Bring Your Own Key — employer provides their own LLM API key             |
+| Mutual Accept    | Both employer and job seeker have accepted the match                     |
+| Workflow         | Asynchronous background process managed by the workflow engine           |

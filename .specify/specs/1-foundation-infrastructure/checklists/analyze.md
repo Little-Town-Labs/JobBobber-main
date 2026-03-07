@@ -8,15 +8,15 @@
 
 ## Summary
 
-| Check | Result |
-|-------|--------|
+| Check                     | Result                                             |
+| ------------------------- | -------------------------------------------------- |
 | Constitutional Compliance | ✅ Compliant (0 violations, 1 documented deferral) |
-| Spec → Plan Alignment | ✅ 28/28 FRs addressed (1 FR partially addressed) |
-| Plan → Tasks Coverage | ⚠️ 3 gaps found |
-| Data Model Consistency | ⚠️ 2 inconsistencies found |
-| API Contract Validity | ⚠️ 3 inconsistencies found |
-| Cross-Artifact Naming | ⚠️ 2 naming mismatches |
-| Completeness | ✅ All required artifacts present |
+| Spec → Plan Alignment     | ✅ 28/28 FRs addressed (1 FR partially addressed)  |
+| Plan → Tasks Coverage     | ⚠️ 3 gaps found                                    |
+| Data Model Consistency    | ⚠️ 2 inconsistencies found                         |
+| API Contract Validity     | ⚠️ 3 inconsistencies found                         |
+| Cross-Artifact Naming     | ⚠️ 2 naming mismatches                             |
+| Completeness              | ✅ All required artifacts present                  |
 
 **Total Issues**: 6
 **Critical**: 0
@@ -28,6 +28,7 @@
 ## 1. Constitutional Compliance
 
 ### Principle I: Type Safety First
+
 **Status**: ✅ Compliant
 
 - `plan.md`: TypeScript strict mode from step 1; tRPC + Zod at all API boundaries; `env.ts` fails build on missing vars
@@ -35,6 +36,7 @@
 - `contracts/trpc-api.ts`: All inputs/outputs typed; no `any` in public interfaces
 
 ### Principle II: Test-Driven Development
+
 **Status**: ✅ Compliant
 
 - `tasks.md` enforces TDD with paired `T`/`I` tasks; every non-trivial file has a test task that must FAIL before implementation starts
@@ -42,6 +44,7 @@
 - AI agent logic is not present in this feature — deferred to Feature 9
 
 ### Principle III: BYOK Architecture
+
 **Status**: ✅ Compliant
 
 - No `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` in environment variable lists (data-model.md, research.md, plan.md)
@@ -50,6 +53,7 @@
 - Constitution requires "Key validation REQUIRED before saving" — noted as `// TODO Feature 2` in stub
 
 ### Principle IV: Minimal Abstractions
+
 **Status**: ✅ Compliant
 
 - No LangChain, LangGraph, or heavy AI frameworks in any artifact
@@ -57,6 +61,7 @@
 - Inngest chosen over heavier alternatives (research.md TD-006)
 
 ### Principle V: Security & Privacy
+
 **Status**: ✅ Compliant
 
 - `SeekerSettings` and `JobSettings` are separate Prisma models; never included in public procedures
@@ -67,6 +72,7 @@
 - **Gap**: No explicit security review task in tasks.md — addressed below
 
 ### Principle VI: Feature Flags
+
 **Status**: ✅ Compliant
 
 - All 5 feature flags defined with `defaultValue: false` (T5.1I)
@@ -74,6 +80,7 @@
 - `VERCEL_FLAGS_SECRET` in env.example
 
 ### Principle VII: Agent Autonomy
+
 **Status**: ✅ Compliant (scaffolded for Feature 9+)
 
 - Inngest client registered; `/api/inngest` route handler ready
@@ -83,6 +90,7 @@
 ### Documented Deferral
 
 **Tailwind CSS 3 + shadcn/ui** (locked in constitution Technical Constraints):
+
 - Feature 1 produces no user-facing UI; Tailwind+shadcn deferred to Feature 3/4
 - Acceptable: plan.md explicitly states "no user-facing UI — its output is a developer-ready project"
 - Resolution: add setup steps to Feature 3 (job seeker profile) spec
@@ -95,36 +103,36 @@
 
 All 28 functional requirements from `spec.md` are addressed:
 
-| FR | Requirement | Plan Coverage |
-|----|-------------|---------------|
-| FR-001 | Single dev start command | T1.1 (Next.js scaffold) |
-| FR-002 | Hot reload | T1.1 (Next.js App Router native) |
-| FR-003 | Seed command | T2.4 (prisma seed.ts) |
-| FR-004 | README documentation | T6.2 |
-| FR-005 | TypeScript strict mode | T1.1, T1.5 (CI typecheck) |
-| FR-006 | Type-safe data flow DB→API→client | T3.1I, T3.2I (tRPC + Prisma) |
+| FR     | Requirement                            | Plan Coverage                             |
+| ------ | -------------------------------------- | ----------------------------------------- |
+| FR-001 | Single dev start command               | T1.1 (Next.js scaffold)                   |
+| FR-002 | Hot reload                             | T1.1 (Next.js App Router native)          |
+| FR-003 | Seed command                           | T2.4 (prisma seed.ts)                     |
+| FR-004 | README documentation                   | T6.2                                      |
+| FR-005 | TypeScript strict mode                 | T1.1, T1.5 (CI typecheck)                 |
+| FR-006 | Type-safe data flow DB→API→client      | T3.1I, T3.2I (tRPC + Prisma)              |
 | FR-007 | External input validation with schemas | T1.2I (env.ts), T3.2I (Zod in procedures) |
-| FR-008 | CI type-check step | T1.5 |
-| FR-009 | Automated tests on every PR | T1.5 (CI) |
-| FR-010 | 80% coverage threshold | T1.4I (vitest.config.ts), T1.5 |
-| FR-011 | Linter on every PR | T1.3, T1.5 |
-| FR-012 | Auto-format + pre-commit hook | T1.3 (Husky + lint-staged) |
-| FR-013 | Merge blocked if CI failing | T1.5 (branch protection) |
-| FR-014 | Preview deployment per PR | T6.1 (Vercel) |
-| FR-015 | Auto production deploy on main merge | T6.1 |
-| FR-016 | Zero-downtime deployment | T6.1 (Vercel instant rollback) |
-| FR-017 | Deployment traceable to commit | T6.1 (Vercel dashboard) |
-| FR-018 | Feature flag support | T5.1I (Vercel Flags SDK) |
-| FR-019 | Feature flags default OFF | T5.1I (`defaultValue: false`) |
-| FR-020 | Flags evaluated at request time | T5.1I (edge evaluation) |
-| FR-021 | Gradual rollout support | T5.1I (Vercel Flags SDK supports %) |
-| FR-022 | Version-controlled schema migrations | T2.1, T2.2 (Prisma migrations) |
-| FR-023 | All 9 entities in schema | T2.1 (complete Prisma schema) |
-| FR-024 | Auto-apply migrations in preview/prod | T6.1 (`prisma migrate deploy` in build) |
-| FR-025 | Migration locking (prevent concurrent) | T2.2 (Prisma advisory lock built-in) |
-| FR-026 | Production error capture | T5.3 (Sentry) |
-| FR-027 | Alert on new error types | T5.3 (Sentry issue alerts) |
-| FR-028 | **Performance metrics** | ⚠️ Partially addressed — see Issue #1 |
+| FR-008 | CI type-check step                     | T1.5                                      |
+| FR-009 | Automated tests on every PR            | T1.5 (CI)                                 |
+| FR-010 | 80% coverage threshold                 | T1.4I (vitest.config.ts), T1.5            |
+| FR-011 | Linter on every PR                     | T1.3, T1.5                                |
+| FR-012 | Auto-format + pre-commit hook          | T1.3 (Husky + lint-staged)                |
+| FR-013 | Merge blocked if CI failing            | T1.5 (branch protection)                  |
+| FR-014 | Preview deployment per PR              | T6.1 (Vercel)                             |
+| FR-015 | Auto production deploy on main merge   | T6.1                                      |
+| FR-016 | Zero-downtime deployment               | T6.1 (Vercel instant rollback)            |
+| FR-017 | Deployment traceable to commit         | T6.1 (Vercel dashboard)                   |
+| FR-018 | Feature flag support                   | T5.1I (Vercel Flags SDK)                  |
+| FR-019 | Feature flags default OFF              | T5.1I (`defaultValue: false`)             |
+| FR-020 | Flags evaluated at request time        | T5.1I (edge evaluation)                   |
+| FR-021 | Gradual rollout support                | T5.1I (Vercel Flags SDK supports %)       |
+| FR-022 | Version-controlled schema migrations   | T2.1, T2.2 (Prisma migrations)            |
+| FR-023 | All 9 entities in schema               | T2.1 (complete Prisma schema)             |
+| FR-024 | Auto-apply migrations in preview/prod  | T6.1 (`prisma migrate deploy` in build)   |
+| FR-025 | Migration locking (prevent concurrent) | T2.2 (Prisma advisory lock built-in)      |
+| FR-026 | Production error capture               | T5.3 (Sentry)                             |
+| FR-027 | Alert on new error types               | T5.3 (Sentry issue alerts)                |
+| FR-028 | **Performance metrics**                | ⚠️ Partially addressed — see Issue #1     |
 
 ---
 
@@ -149,6 +157,7 @@ Sentry Performance Monitoring (tracing), which is a separate opt-in configuratio
 **Locations**: `tasks.md` T3.2T, T3.3; `plan.md`; `contracts/trpc-api.ts`
 
 **Problem**: Three-way inconsistency in the `health.ping` output type:
+
 - `tasks.md` T3.2T test cases: `health.ping` returns `{ pong: true }`
 - `plan.md` stub description: `ping`: returns `{ pong: true }`
 - `contracts/trpc-api.ts` HealthPingOutput: `{ status: "ok"; timestamp: string }`
@@ -201,12 +210,14 @@ explicitly so the implementer knows to alias/map rather than search for a bug.
 **Locations**: `contracts/trpc-api.ts` (MatchStatus type), `data-model.md` (Match model)
 
 **Problem**: The schema stores match state as two separate fields:
+
 ```
 Match.seekerStatus: MatchPartyStatus   // PENDING | ACCEPTED | DECLINED | EXPIRED
 Match.employerStatus: MatchPartyStatus // PENDING | ACCEPTED | DECLINED | EXPIRED
 ```
 
 The contract exposes a single derived `MatchStatus` with composite states:
+
 ```
 "SEEKER_ACCEPTED" | "EMPLOYER_ACCEPTED" | "MUTUALLY_ACCEPTED" | ...
 ```
@@ -244,6 +255,7 @@ don't need to appear in the context type. But `inngest` does — procedures that
 ### Entity Coverage (FR-023)
 
 All 9 entities from spec.md present in data-model.md:
+
 - [x] JobSeeker
 - [x] SeekerSettings (PRIVATE)
 - [x] Employer
@@ -277,14 +289,14 @@ the stub implementation in Feature 1 will return `null` / a default value.
 
 ### Endpoint → User Story Coverage
 
-| User Story | Related FRs | Procedure(s) | Status |
-|-----------|-------------|-------------|--------|
-| US-1 (dev starts immediately) | FR-001–FR-004 | `health.ping`, `health.deepCheck` | ✅ |
-| US-2 (safe CI) | FR-005–FR-013 | (CI pipeline, not API) | ✅ |
-| US-3 (reliable deployment) | FR-014–FR-017 | (Vercel, not API) | ✅ |
-| US-4 (feature flags) | FR-018–FR-021 | `assertFlagEnabled()` per handler | ✅ |
-| US-5 (DB schema) | FR-022–FR-025 | (Prisma/migration, not API) | ✅ |
-| US-6 (error monitoring) | FR-026–FR-028 | (Sentry, not API) | ✅ |
+| User Story                    | Related FRs   | Procedure(s)                      | Status |
+| ----------------------------- | ------------- | --------------------------------- | ------ |
+| US-1 (dev starts immediately) | FR-001–FR-004 | `health.ping`, `health.deepCheck` | ✅     |
+| US-2 (safe CI)                | FR-005–FR-013 | (CI pipeline, not API)            | ✅     |
+| US-3 (reliable deployment)    | FR-014–FR-017 | (Vercel, not API)                 | ✅     |
+| US-4 (feature flags)          | FR-018–FR-021 | `assertFlagEnabled()` per handler | ✅     |
+| US-5 (DB schema)              | FR-022–FR-025 | (Prisma/migration, not API)       | ✅     |
+| US-6 (error monitoring)       | FR-026–FR-028 | (Sentry, not API)                 | ✅     |
 
 All contracts for the stub procedures use correct Zod input shapes and output types.
 
@@ -293,6 +305,7 @@ All contracts for the stub procedures use correct Zod input shapes and output ty
 ## 6. Completeness Audit
 
 ### Required Artifacts
+
 - [x] `.specify/memory/constitution.md`
 - [x] `spec.md`
 - [x] `plan.md`
@@ -303,6 +316,7 @@ All contracts for the stub procedures use correct Zod input shapes and output ty
 - [x] `checklists/requirements.md`
 
 ### Optional Artifacts
+
 - [x] `research.md` (technology decisions)
 - [ ] `quickstart.md` (developer getting-started guide) — deferred to T6.2 (README covers this)
 
@@ -313,6 +327,7 @@ All contracts for the stub procedures use correct Zod input shapes and output ty
 **Status**: ✅ READY FOR IMPLEMENTATION (after inline fixes below)
 
 All 6 issues are addressed:
+
 - Issues #1, #2, #3 fixed in `tasks.md`
 - Issues #4, #5, #6 fixed in `contracts/trpc-api.ts`
 

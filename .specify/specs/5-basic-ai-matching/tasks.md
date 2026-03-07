@@ -389,11 +389,11 @@ Task 1.1 → 1.2 → 2.1 → 2.2 → 6.1 → 7.1 → 7.2
 
 ### User Story → Task Mapping
 
-| User Story | Tasks |
-|------------|-------|
+| User Story                       | Tasks              |
+| -------------------------------- | ------------------ |
 | US1: Employer Activates Matching | 2.1, 2.2, 3.1, 3.2 |
-| US2: Employer Reviews Matches | 4.1, 4.2, 5.1-5.4 |
-| US3: Seeker Receives Matches | 4.1, 4.2, 5.1-5.4 |
-| US4: Mutual Accept | 4.1, 4.2 |
-| US5: Ethical Guardrails | 1.1, 1.2 |
-| US6: Error Handling | 2.1, 2.2 |
+| US2: Employer Reviews Matches    | 4.1, 4.2, 5.1-5.4  |
+| US3: Seeker Receives Matches     | 4.1, 4.2, 5.1-5.4  |
+| US4: Mutual Accept               | 4.1, 4.2           |
+| US5: Ethical Guardrails          | 1.1, 1.2           |
+| US6: Error Handling              | 2.1, 2.2           |

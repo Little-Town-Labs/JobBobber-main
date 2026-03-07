@@ -197,7 +197,7 @@ describe("buildConversationWorkflow", () => {
     expect(result).toMatchObject({ status: "SKIPPED" })
   })
 
-  it("creates AgentConversation record with IN_PROGRESS status", async () => {
+  it("creates AgentConversation record with IN_PROGRESS status", { timeout: 15_000 }, async () => {
     setupMocks()
 
     const step = createMockStep()

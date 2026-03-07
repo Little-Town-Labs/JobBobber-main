@@ -56,6 +56,7 @@ Implement one-directional AI matching: when an employer activates a job posting,
 
 **Context:** Need to call LLM and get structured output.
 **Options:**
+
 1. Vercel AI SDK `generateObject` with Zod schema
 2. Direct OpenAI/Anthropic SDK calls with manual JSON parsing
 3. Vercel AI SDK `generateText` with JSON mode
@@ -80,6 +81,7 @@ Implement one-directional AI matching: when an employer activates a job posting,
 
 **Context:** BYOK key could be OpenAI or Anthropic.
 **Chosen:** Dynamic provider selection based on `employer.byokProvider`:
+
 - `"openai"` → `@ai-sdk/openai` createOpenAI
 - `"anthropic"` → `@ai-sdk/anthropic` createAnthropic
 
@@ -100,11 +102,13 @@ Both packages already in dependencies.
 Build the evaluation agent as a self-contained module.
 
 **Files:**
+
 - `src/server/agents/employer-agent.ts` — evaluation prompt builder, LLM call wrapper, output validation
 - `src/server/agents/employer-agent.test.ts` — unit tests with mocked LLM
 - `src/lib/matching-schemas.ts` — Zod schemas for evaluation input/output (from contracts)
 
 **Key decisions:**
+
 - `evaluateCandidate(posting, candidate, apiKey, provider)` → returns `AgentEvaluation | null`
 - Uses `generateObject` from `ai` package with dynamic provider
 - Returns `null` on validation failure (logged, not thrown)
@@ -115,16 +119,19 @@ Build the evaluation agent as a self-contained module.
 Build the matching workflow that orchestrates evaluations.
 
 **Files:**
+
 - `src/server/inngest/functions/evaluate-candidates.ts` — main workflow
 - `src/server/inngest/functions/evaluate-candidates.test.ts` — workflow tests
 
 **Workflow steps (Inngest steps for resumability):**
+
 1. `fetch-context` — Load posting, employer, decrypt BYOK key
 2. `find-candidates` — Query eligible job seekers, exclude already-matched
 3. `evaluate-batch` — For each candidate: evaluate, create records if score >= 30
 4. `complete` — Update workflow metadata, report completion
 
 **Key decisions:**
+
 - Each candidate evaluation is its own Inngest step (resumable on failure)
 - Batch size of 10 candidates per step invocation (avoid step explosion for large pools)
 - 3 retries per batch with exponential backoff
@@ -135,10 +142,12 @@ Build the matching workflow that orchestrates evaluations.
 Wire the Inngest event into the existing `updateStatus` procedure.
 
 **Files:**
+
 - `src/server/api/routers/jobPostings.ts` — add `inngest.send()` when DRAFT → ACTIVE
 - `src/server/api/routers/jobPostings.test.ts` — update tests for event firing
 
 **Key decisions:**
+
 - Event sent after successful status update (not in a transaction — Inngest is eventually consistent)
 - Event includes `jobPostingId` and `employerId`
 - Only fires on DRAFT → ACTIVE transition (not PAUSED → ACTIVE reactivation in MVP)
@@ -148,11 +157,13 @@ Wire the Inngest event into the existing `updateStatus` procedure.
 Expose match data to both employers and seekers.
 
 **Files:**
+
 - `src/server/api/routers/matches.ts` — expand existing stub with real procedures
 - `src/server/api/routers/matches.test.ts` — unit tests with mocked DB
 - `src/server/api/helpers/match-mapper.ts` — map Prisma Match to response types
 
 **Procedures:**
+
 - `listForPosting` — employerProcedure, paginated, sorted by score desc
 - `listForSeeker` — seekerProcedure, paginated, sorted by createdAt desc
 - `getById` — protectedProcedure, ownership check (seeker or employer)
@@ -160,6 +171,7 @@ Expose match data to both employers and seekers.
 - `getWorkflowStatus` — employerProcedure, returns workflow progress
 
 **Key decisions:**
+
 - Contact info populated on Match only when both sides accept (mutual accept)
 - Contact info sourced from JobSeeker profile at accept time (not stored in advance)
 - Match expiry handled by a scheduled Inngest cron (not in this feature — simple PENDING state for now)
@@ -169,6 +181,7 @@ Expose match data to both employers and seekers.
 Create match listing and detail UI for both user types.
 
 **Files:**
+
 - `src/components/matches/match-card.tsx` — match summary card
 - `src/components/matches/match-list.tsx` — paginated match list
 - `src/components/matches/match-detail.tsx` — full match view with accept/decline
@@ -177,6 +190,7 @@ Create match listing and detail UI for both user types.
 - `src/app/(seeker)/matches/page.tsx` — seeker match list
 
 **Key decisions:**
+
 - Match card shows: name, score, confidence badge, summary excerpt
 - Detail view shows: full summary, strength areas, gap areas, accept/decline buttons
 - Mutual accept state shows contact info
@@ -195,6 +209,7 @@ Create match listing and detail UI for both user types.
 ## Testing Strategy
 
 ### Unit Tests (Phase 1, 4)
+
 - Agent evaluation with mocked `generateObject` — valid output, invalid output, schema validation
 - Score-to-confidence mapping
 - Prompt builder produces expected structure
@@ -203,6 +218,7 @@ Create match listing and detail UI for both user types.
 - Mutual accept logic (both accept → contact info revealed)
 
 ### Integration Tests (Phase 2, 3)
+
 - Inngest workflow with mocked LLM — full workflow from trigger to match creation
 - Workflow handles BYOK key not found, invalid key, LLM errors
 - Workflow skips already-matched candidates
@@ -210,6 +226,7 @@ Create match listing and detail UI for both user types.
 - Matches router CRUD against test database
 
 ### Mock Strategy
+
 - `generateObject` mocked to return predetermined evaluations
 - Encryption module mocked (same as existing tests)
 - Inngest client mocked for event sending in tRPC tests
@@ -219,35 +236,35 @@ Create match listing and detail UI for both user types.
 
 ## Security Considerations
 
-| Concern | Mitigation |
-|---------|-----------|
-| BYOK key exposure in workflow state | Decrypt in first step, pass in memory only, never serialize to Inngest step output |
-| Private negotiation params | Not accessed at all in MVP (SeekerSettings, JobSettings private fields untouched) |
-| Contact info pre-reveal | Match.seekerContactInfo populated only on mutual accept write |
-| Agent discrimination | System prompt explicitly forbids, output validated for protected characteristic mentions |
+| Concern                               | Mitigation                                                                                      |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| BYOK key exposure in workflow state   | Decrypt in first step, pass in memory only, never serialize to Inngest step output              |
+| Private negotiation params            | Not accessed at all in MVP (SeekerSettings, JobSettings private fields untouched)               |
+| Contact info pre-reveal               | Match.seekerContactInfo populated only on mutual accept write                                   |
+| Agent discrimination                  | System prompt explicitly forbids, output validated for protected characteristic mentions        |
 | LLM prompt injection via profile data | Profile data injected as structured JSON (not concatenated strings), system prompt is immutable |
 
 ---
 
 ## Performance Considerations
 
-| Scenario | Target | Approach |
-|----------|--------|----------|
-| Single evaluation | < 10s | Single LLM call per candidate |
-| 100 candidates | < 20 min | Batched Inngest steps (10/batch), parallel within batch |
-| 500 candidates | < 60 min | Same batching, workflow handles scale |
-| Match list query | < 500ms | Indexed queries, no LLM calls at read time |
+| Scenario          | Target   | Approach                                                |
+| ----------------- | -------- | ------------------------------------------------------- |
+| Single evaluation | < 10s    | Single LLM call per candidate                           |
+| 100 candidates    | < 20 min | Batched Inngest steps (10/batch), parallel within batch |
+| 500 candidates    | < 60 min | Same batching, workflow handles scale                   |
+| Match list query  | < 500ms  | Indexed queries, no LLM calls at read time              |
 
 ---
 
 ## Risks & Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| LLM hallucination in scores | Low match quality | Zod schema validation, score bounds enforced |
-| BYOK key rate limiting | Workflow stalls | Exponential backoff, per-candidate retry, batch pacing |
-| Large candidate pools | Slow workflow | Batched processing, progress tracking |
-| Schema drift (Prisma models) | Runtime errors | No schema changes in this feature — uses existing models |
+| Risk                         | Impact            | Mitigation                                               |
+| ---------------------------- | ----------------- | -------------------------------------------------------- |
+| LLM hallucination in scores  | Low match quality | Zod schema validation, score bounds enforced             |
+| BYOK key rate limiting       | Workflow stalls   | Exponential backoff, per-candidate retry, batch pacing   |
+| Large candidate pools        | Slow workflow     | Batched processing, progress tracking                    |
+| Schema drift (Prisma models) | Runtime errors    | No schema changes in this feature — uses existing models |
 
 ---
 
@@ -265,15 +282,15 @@ Create match listing and detail UI for both user types.
 
 ## Estimated Effort
 
-| Phase | Hours |
-|-------|-------|
-| 1. Agent Core | 6 |
-| 2. Inngest Workflow | 8 |
-| 3. Trigger Integration | 2 |
-| 4. Matches Router | 6 |
-| 5. Frontend | 8 |
-| 6. Security & Hardening | 3 |
-| **Total** | **33** |
+| Phase                   | Hours  |
+| ----------------------- | ------ |
+| 1. Agent Core           | 6      |
+| 2. Inngest Workflow     | 8      |
+| 3. Trigger Integration  | 2      |
+| 4. Matches Router       | 6      |
+| 5. Frontend             | 8      |
+| 6. Security & Hardening | 3      |
+| **Total**               | **33** |
 
 ---
 

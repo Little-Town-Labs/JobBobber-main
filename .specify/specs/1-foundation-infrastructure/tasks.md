@@ -9,13 +9,13 @@
 
 ## Summary
 
-| Metric | Value |
-|--------|-------|
-| Total Tasks | 41 |
-| Phases | 6 |
-| Quality Gates | 5 |
-| Estimated Effort | ~48 hours |
-| Critical Path | T1.1 → T1.3 → T1.4T → T1.4I → T2.1 → T2.2 → T2.3T → T2.3I → T3.1T → T3.1I → T3.2I → T4.1 → T4.2T → T4.2I → T5.1T → T5.1I → T6.1 → T6.2 |
+| Metric           | Value                                                                                                                                  |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Total Tasks      | 41                                                                                                                                     |
+| Phases           | 6                                                                                                                                      |
+| Quality Gates    | 5                                                                                                                                      |
+| Estimated Effort | ~48 hours                                                                                                                              |
+| Critical Path    | T1.1 → T1.3 → T1.4T → T1.4I → T2.1 → T2.2 → T2.3T → T2.3I → T3.1T → T3.1I → T3.2I → T4.1 → T4.2T → T4.2I → T5.1T → T5.1I → T6.1 → T6.2 |
 
 ### Task Legend
 
@@ -39,6 +39,7 @@ dependency chain in this file.
 ---
 
 ### T1.1 — Initialize Next.js 15 project
+
 **Status**: 🟡 Ready
 **Effort**: 1h
 **Depends on**: —
@@ -49,6 +50,7 @@ Create the Next.js 15 App Router project with TypeScript 5 strict mode, configur
 for `noUncheckedIndexedAccess`, set up `pnpm` workspace, configure path aliases.
 
 **Acceptance Criteria**:
+
 - [ ] `pnpm create next-app` executed with `--typescript --app --src-dir`
 - [ ] `tsconfig.json`: `"strict": true, "noUncheckedIndexedAccess": true, "noImplicitAny": true`
 - [ ] `pnpm dev` starts without TypeScript errors
@@ -59,6 +61,7 @@ for `noUncheckedIndexedAccess`, set up `pnpm` workspace, configure path aliases.
 ---
 
 ### T1.2T — Environment validation tests
+
 **Status**: 🔴 Blocked by T1.1
 **Effort**: 0.5h
 **Depends on**: T1.1
@@ -70,6 +73,7 @@ Write tests for `src/lib/env.ts` **before** implementing it. Tests must FAIL bef
 **Test File**: `tests/unit/lib/env.test.ts`
 
 **Test Cases**:
+
 - [ ] Missing required variable (`DATABASE_URL`) throws at module initialization
 - [ ] Valid environment config passes validation without error
 - [ ] `NEXT_PUBLIC_` variables exposed; server-only variables not accessible from client bundle
@@ -80,6 +84,7 @@ Write tests for `src/lib/env.ts` **before** implementing it. Tests must FAIL bef
 ---
 
 ### T1.2I — Implement environment validation (`src/lib/env.ts`)
+
 **Status**: 🔴 Blocked by T1.2T
 **Effort**: 0.5h
 **Depends on**: T1.2T
@@ -93,10 +98,11 @@ pnpm add @t3-oss/env-nextjs zod
 ```
 
 **Acceptance Criteria**:
+
 - [ ] All tests from T1.2T pass
 - [ ] Server-only variables: `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `CLERK_SECRET_KEY`,
-  `CLERK_WEBHOOK_SECRET`, `INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY`, `ENCRYPTION_KEY`,
-  `ENCRYPTION_IV_SALT`, `SENTRY_DSN`
+      `CLERK_WEBHOOK_SECRET`, `INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY`, `ENCRYPTION_KEY`,
+      `ENCRYPTION_IV_SALT`, `SENTRY_DSN`
 - [ ] Client variables: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, all `NEXT_PUBLIC_CLERK_*_URL`
 - [ ] `.env.example` committed documenting every variable with description comment
 - [ ] `pnpm build` fails if any required variable is absent
@@ -104,6 +110,7 @@ pnpm add @t3-oss/env-nextjs zod
 ---
 
 ### T1.3 — Linting, formatting, and pre-commit hooks
+
 **Status**: 🔴 Blocked by T1.1
 **Effort**: 1h
 **Depends on**: T1.1
@@ -120,6 +127,7 @@ npx husky install
 ```
 
 **Acceptance Criteria**:
+
 - [ ] `.eslintrc.json` enables `@typescript-eslint/strict` ruleset
 - [ ] `"no-restricted-syntax"` rule prohibits `as any` (allows `as unknown` for legitimate casts)
 - [ ] `.prettierrc` configured (single quotes, no semicolons, 100 char line width — or team choice)
@@ -131,6 +139,7 @@ npx husky install
 ---
 
 ### T1.4T — Test infrastructure tests (meta)
+
 **Status**: 🔴 Blocked by T1.2I, T1.3
 **Effort**: 0.5h
 **Depends on**: T1.2I, T1.3
@@ -143,9 +152,10 @@ This is the test that verifies the test runner itself works.
 **Test File**: `tests/unit/lib/env.test.ts` (already written in T1.2T — extend it here)
 
 **Additional test**: `tests/unit/sanity.test.ts`
+
 ```typescript
-import { expect, it } from 'vitest'
-it('test infrastructure is working', () => {
+import { expect, it } from "vitest"
+it("test infrastructure is working", () => {
   expect(1 + 1).toBe(2)
 })
 ```
@@ -155,6 +165,7 @@ it('test infrastructure is working', () => {
 ---
 
 ### T1.4I — Configure Vitest + Playwright + coverage gate
+
 **Status**: 🔴 Blocked by T1.4T
 **Effort**: 1h
 **Depends on**: T1.4T
@@ -169,6 +180,7 @@ pnpm add -D @testing-library/react @testing-library/user-event
 ```
 
 **Acceptance Criteria**:
+
 - [ ] `vitest.config.ts` created with:
   - `coverage.provider: "v8"`
   - `coverage.thresholds: { global: { lines: 80, functions: 80, branches: 80 } }`
@@ -181,6 +193,7 @@ pnpm add -D @testing-library/react @testing-library/user-event
 ---
 
 ### T1.5 — GitHub Actions CI pipeline
+
 **Status**: 🔴 Blocked by T1.4I
 **Effort**: 1h
 **Depends on**: T1.4I
@@ -189,6 +202,7 @@ pnpm add -D @testing-library/react @testing-library/user-event
 Write `.github/workflows/ci.yml` with four required jobs.
 
 **Acceptance Criteria**:
+
 - [ ] Job 1 `typecheck`: `pnpm tsc --noEmit` — fails on type error
 - [ ] Job 2 `lint`: `pnpm lint && pnpm format:check` — fails on lint/format error
 - [ ] Job 3 `test`: `pnpm test:coverage` — fails if coverage < 80% or any test fails
@@ -209,6 +223,7 @@ Write `.github/workflows/ci.yml` with four required jobs.
 ---
 
 ### T2.1 — Prisma setup and schema
+
 **Status**: 🔴 Blocked by T1.4I
 **Effort**: 1.5h
 **Depends on**: T1.4I
@@ -223,9 +238,10 @@ npx prisma init --datasource-provider postgresql
 ```
 
 **Acceptance Criteria**:
+
 - [ ] `prisma/schema.prisma` contains complete schema from `data-model.md`
 - [ ] All 9 models present: `JobSeeker`, `SeekerSettings`, `Employer`, `EmployerMember`,
-  `JobPosting`, `JobSettings`, `AgentConversation`, `Match`, `FeedbackInsights`
+      `JobPosting`, `JobSettings`, `AgentConversation`, `Match`, `FeedbackInsights`
 - [ ] All enums present (10 enums)
 - [ ] `pgvector` extension declared: `previewFeatures = ["postgresqlExtensions"]` + `extensions = [pgvector(...)]`
 - [ ] `postinstall` script: `"prisma generate"`
@@ -234,6 +250,7 @@ npx prisma init --datasource-provider postgresql
 ---
 
 ### T2.2 — Apply initial migration
+
 **Status**: 🔴 Blocked by T2.1
 **Effort**: 0.5h
 **Depends on**: T2.1
@@ -246,6 +263,7 @@ DATABASE_URL=$DATABASE_URL_UNPOOLED npx prisma migrate dev --name init
 ```
 
 **Acceptance Criteria**:
+
 - [ ] `prisma/migrations/[timestamp]_init/migration.sql` committed
 - [ ] Migration creates all 9 tables, all 10 enums, all indexes
 - [ ] `CREATE EXTENSION IF NOT EXISTS vector` present in migration SQL
@@ -255,6 +273,7 @@ DATABASE_URL=$DATABASE_URL_UNPOOLED npx prisma migrate dev --name init
 ---
 
 ### T2.3T — Prisma client singleton tests
+
 **Status**: 🔴 Blocked by T2.2
 **Effort**: 0.5h
 **Depends on**: T2.2
@@ -265,18 +284,20 @@ Write integration test for the Prisma client singleton **before** implementing i
 **Test File**: `tests/integration/db.test.ts`
 
 **Test Cases**:
+
 - [ ] Can connect to test database (non-production URL required)
 - [ ] Can create a `JobSeeker` row with minimal required fields
 - [ ] Can read the created row by `id`
 - [ ] Can delete the row; confirm it no longer exists
 - [ ] Test refuses to run if `DATABASE_URL` does not contain `test` or `localhost`
-  (production guard)
+      (production guard)
 
 **Confirm tests FAIL** (Prisma client not yet written) before proceeding to T2.3I.
 
 ---
 
 ### T2.3I — Implement Prisma client singleton (`src/server/db.ts`)
+
 **Status**: 🔴 Blocked by T2.3T
 **Effort**: 0.5h
 **Depends on**: T2.3T
@@ -285,6 +306,7 @@ Write integration test for the Prisma client singleton **before** implementing i
 Implement the global Prisma client singleton with `import "server-only"`.
 
 **Acceptance Criteria**:
+
 - [ ] All tests from T2.3T pass
 - [ ] `import "server-only"` at top of file (prevents client bundle inclusion)
 - [ ] Global singleton pattern: `globalThis.__prisma` prevents multiple instances in hot-reload
@@ -295,6 +317,7 @@ Implement the global Prisma client singleton with `import "server-only"`.
 ---
 
 ### T2.4 — Seed data implementation
+
 **Status**: 🔴 Blocked by T2.3I
 **Effort**: 2h
 **Depends on**: T2.3I
@@ -307,6 +330,7 @@ Implement `prisma/seed.ts` per the seed design in `data-model.md`.
 6 JobSettings, 4 AgentConversations, 3 Matches, 4 FeedbackInsights
 
 **Acceptance Criteria**:
+
 - [ ] `process.env.NODE_ENV !== 'production'` guard at top — throws if run in prod
 - [ ] Uses `upsert` (not `create`) for idempotent re-runs
 - [ ] Clerk placeholder IDs: `user_seed_01..05`, `org_seed_01..03`
@@ -324,6 +348,7 @@ Implement `prisma/seed.ts` per the seed design in `data-model.md`.
 ---
 
 ### T3.1T — tRPC context and middleware tests
+
 **Status**: 🔴 Blocked by T2.3I
 **Effort**: 1h
 **Depends on**: T2.3I
@@ -336,6 +361,7 @@ Write tests for `src/server/api/trpc.ts` — context creation and middleware cha
 **Test File**: `tests/unit/server/api/trpc.test.ts`
 
 **Test Cases**:
+
 - [ ] `createTRPCContext` with unauthenticated request: `userId` is `null`
 - [ ] `createTRPCContext` with authenticated request: `userId` is the Clerk user ID
 - [ ] `protectedProcedure` rejects unauthenticated call with `UNAUTHORIZED`
@@ -350,6 +376,7 @@ Write tests for `src/server/api/trpc.ts` — context creation and middleware cha
 ---
 
 ### T3.1I — Implement tRPC core (`src/server/api/trpc.ts`)
+
 **Status**: 🔴 Blocked by T3.1T
 **Effort**: 1.5h
 **Depends on**: T3.1T
@@ -359,22 +386,24 @@ pnpm add @trpc/server @tanstack/react-query
 ```
 
 **Acceptance Criteria**:
+
 - [ ] All tests from T3.1T pass
 - [ ] `createTRPCContext` calls `auth()` from `@clerk/nextjs/server` and attaches `db`, `inngest`
 - [ ] Five procedure builders exported: `publicProcedure`, `protectedProcedure`,
-  `seekerProcedure`, `employerProcedure`, `adminProcedure`
+      `seekerProcedure`, `employerProcedure`, `adminProcedure`
 - [ ] Each middleware level adds the correct context fields per `contracts/trpc-api.ts`
 - [ ] `protectedProcedure` middleware: throws `UNAUTHORIZED` if `userId` is null
 - [ ] `seekerProcedure` middleware: resolves `JobSeeker` from DB by `clerkUserId`; throws
-  `NOT_FOUND` if absent (seeker hasn't completed onboarding yet)
+      `NOT_FOUND` if absent (seeker hasn't completed onboarding yet)
 - [ ] `employerProcedure` middleware: resolves `Employer` from DB by `clerkOrgId`; throws
-  `FORBIDDEN` if absent
+      `FORBIDDEN` if absent
 - [ ] `adminProcedure` middleware: verifies `orgRole === 'org:admin'`; throws `FORBIDDEN` otherwise
 - [ ] Error formatter strips sensitive fields (no stack trace in production response body)
 
 ---
 
 ### T3.2T — Health router tests
+
 **Status**: 🔴 Blocked by T3.1I
 **Effort**: 0.5h
 **Depends on**: T3.1I
@@ -385,16 +414,18 @@ Write tests for the health router before implementing it.
 **Test File**: `tests/unit/server/api/routers/health.test.ts`
 
 **Test Cases** (aligned with `contracts/trpc-api.ts` HealthPingOutput / HealthDeepCheckOutput):
+
 - [ ] `health.ping` returns `{ status: "ok", timestamp: string }` — unauthenticated call succeeds
 - [ ] `health.deepCheck` returns `{ healthy: true, checks: [...], timestamp: string }`
 - [ ] `health.deepCheck` returns `healthy: false` and `status: "unreachable"` on the `"database"`
-  check when DB connection fails (mock `db.$queryRaw` to throw)
+      check when DB connection fails (mock `db.$queryRaw` to throw)
 
 **Confirm tests FAIL** before T3.2I.
 
 ---
 
 ### T3.2I — Implement all 7 router stubs
+
 **Status**: 🔴 Blocked by T3.2T
 **Effort**: 2.5h
 **Depends on**: T3.2T
@@ -409,29 +440,33 @@ Each procedure must match the contract in `contracts/trpc-api.ts`.
 
 **Health router** (`src/server/api/routers/health.ts`)
 (procedure names from `contracts/trpc-api.ts` — use `ping` and `deepCheck`, NOT `status`):
+
 - [ ] `ping`: returns `{ status: "ok", timestamp: new Date().toISOString() }`
-- [ ] `deepCheck`: queries `db.$queryRaw\`SELECT 1\`` to test DB connectivity; returns
-  `HealthDeepCheckOutput` shape with `healthy`, `checks`, `timestamp`
+- [ ] `deepCheck`: queries `db.$queryRaw\`SELECT 1\``to test DB connectivity; returns`HealthDeepCheckOutput`shape with`healthy`, `checks`, `timestamp`
 
 **All remaining routers** (jobSeekers, employers, jobPostings, matches, settings, insights):
+
 - [ ] Each procedure accepts the correct Zod input schema from `contracts/trpc-api.ts`
 - [ ] Each procedure returns a stub of the correct output type (empty array for lists,
-  `null` for single-item gets that haven't been implemented yet)
+      `null` for single-item gets that haven't been implemented yet)
 - [ ] Every stub has `// TODO: implement in Feature N` comment (N from `contracts/trpc-api.ts`)
 - [ ] `settings.getSeekerSettings` has **no `id` input** — identity from `ctx.seeker.id` only
 - [ ] `insights.getMyInsights` checks `FEEDBACK_INSIGHTS` feature flag; throws `NOT_FOUND`
-  if flag is OFF
+      if flag is OFF
 
 **Root router** (`src/server/api/root.ts`):
+
 - [ ] `appRouter` assembled from all 7 sub-routers
 - [ ] `AppRouter` type exported for use in client
 - [ ] `createCaller` exported for RSC usage
 
 **HTTP handler** (`src/app/api/trpc/[trpc]/route.ts`):
+
 - [ ] `fetchRequestHandler` configured with `appRouter` and `createTRPCContext`
 - [ ] `GET` and `POST` methods exported
 
 **tRPC client** (`src/lib/trpc/client.tsx`, `src/lib/trpc/server.ts`, `src/lib/trpc/query-client.ts`):
+
 - [ ] `createTRPCReact<AppRouter>()` client exported
 - [ ] `createCaller()` for RSC data fetching exported
 - [ ] TanStack Query client configured with `staleTime: 5 * 60 * 1000`
@@ -439,6 +474,7 @@ Each procedure must match the contract in `contracts/trpc-api.ts`.
 ---
 
 ### T3.3 — tRPC E2E smoke test
+
 **Status**: 🔴 Blocked by T3.2I
 **Effort**: 0.5h
 **Depends on**: T3.2I
@@ -449,6 +485,7 @@ Write and run a Playwright test that hits `/api/trpc/health.ping` on the running
 **Test File**: `tests/e2e/health.spec.ts`
 
 **Acceptance Criteria**:
+
 - [ ] `GET /api/trpc/health.ping` returns HTTP 200
 - [ ] Response body matches `{ result: { data: { status: "ok", timestamp: "..." } } }`
 - [ ] Test runs in CI (`pnpm test:e2e`) with server started by `pnpm dev`
@@ -464,6 +501,7 @@ Write and run a Playwright test that hits `/api/trpc/health.ping` on the running
 ---
 
 ### T4.1 — Clerk middleware
+
 **Status**: 🔴 Blocked by T3.2I
 **Effort**: 0.5h
 **Depends on**: T3.2I
@@ -477,8 +515,9 @@ pnpm add @clerk/nextjs
 Write `src/middleware.ts` using `clerkMiddleware()` with public route configuration.
 
 **Acceptance Criteria**:
+
 - [ ] Public routes configured (no auth required):
-  `/`, `/sign-in(.*)`, `/sign-up(.*)`, `/api/trpc(.*)`, `/api/inngest(.*)`, `/api/webhooks/(.*)`
+      `/`, `/sign-in(.*)`, `/sign-up(.*)`, `/api/trpc(.*)`, `/api/inngest(.*)`, `/api/webhooks/(.*)`
 - [ ] All other routes protected (redirect to sign-in if unauthenticated)
 - [ ] Auth pages configured in `src/app/(auth)/sign-in/` and `src/app/(auth)/sign-up/`
 - [ ] Root `layout.tsx` wraps with `<ClerkProvider>`
@@ -487,6 +526,7 @@ Write `src/middleware.ts` using `clerkMiddleware()` with public route configurat
 ---
 
 ### T4.2T — Clerk webhook handler tests
+
 **Status**: 🔴 Blocked by T3.2I
 **Effort**: 0.5h
 **Depends on**: T3.2I
@@ -498,6 +538,7 @@ Write tests for the Clerk webhook handler before implementing it.
 **Test File**: `tests/unit/server/webhooks/clerk.test.ts`
 
 **Test Cases**:
+
 - [ ] Request with invalid `svix` signature → returns HTTP 401
 - [ ] Request with missing `svix` headers → returns HTTP 400
 - [ ] Valid `user.created` event → calls `db.jobSeeker.upsert` with correct `clerkUserId`
@@ -511,6 +552,7 @@ Write tests for the Clerk webhook handler before implementing it.
 ---
 
 ### T4.2I — Implement Clerk webhook handler
+
 **Status**: 🔴 Blocked by T4.2T
 **Effort**: 1h
 **Depends on**: T4.2T
@@ -520,19 +562,21 @@ pnpm add svix
 ```
 
 **Acceptance Criteria**:
+
 - [ ] All tests from T4.2T pass
 - [ ] `import "server-only"` at top of file
 - [ ] `svix` `Webhook` used with `CLERK_WEBHOOK_SECRET` for signature verification
 - [ ] `user.created` handler: `db.jobSeeker.upsert({ where: { clerkUserId }, create: {...} })` stub
-  with `// TODO Feature 3: populate profile fields`
+      with `// TODO Feature 3: populate profile fields`
 - [ ] `organization.created` handler: `db.employer.upsert({ where: { clerkOrgId }, create: {...} })`
-  stub with `// TODO Feature 4: populate org fields`
+      stub with `// TODO Feature 4: populate org fields`
 - [ ] Returns HTTP 401 on invalid signature (no other information leaked)
 - [ ] Returns HTTP 200 on success
 
 ---
 
 ### T4.3 — Inngest client and route handler
+
 **Status**: 🔴 Blocked by T4.2I
 **Effort**: 0.5h
 **Depends on**: T4.2I
@@ -543,14 +587,15 @@ pnpm add inngest
 ```
 
 **Acceptance Criteria**:
+
 - [ ] `src/server/inngest/client.ts`: `new Inngest({ id: "jobbobber", ... })` exported as `inngest`
 - [ ] `src/server/inngest/functions/index.ts`: empty export array `[]` as placeholder
 - [ ] `src/app/api/inngest/route.ts`: `serve({ client: inngest, functions })` with GET + POST handlers
 - [ ] `INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY`, `INNGEST_DEV_SERVER_URL` added to `.env.example`
 - [ ] `inngest` client imported into `createTRPCContext` in `src/server/api/trpc.ts`
-  (enables procedures to fire events)
+      (enables procedures to fire events)
 - [ ] Local dev: `pnpm dev` + `inngest dev` start without port conflicts
-  (`INNGEST_DEV_SERVER_URL=http://localhost:8288`)
+      (`INNGEST_DEV_SERVER_URL=http://localhost:8288`)
 
 ---
 
@@ -561,6 +606,7 @@ pnpm add inngest
 ---
 
 ### T5.1T — Feature flags tests
+
 **Status**: 🔴 Blocked by T4.3
 **Effort**: 0.5h
 **Depends on**: T4.3
@@ -571,6 +617,7 @@ Write tests for `src/lib/flags.ts` before implementing it.
 **Test File**: `tests/unit/lib/flags.test.ts`
 
 **Test Cases**:
+
 - [ ] `SEEKER_PROFILE` flag returns `false` when no override is configured
 - [ ] `EMPLOYER_PROFILE` flag returns `false` when no override is configured
 - [ ] `AI_MATCHING` flag returns `false` when no override is configured
@@ -583,6 +630,7 @@ Write tests for `src/lib/flags.ts` before implementing it.
 ---
 
 ### T5.1I — Implement feature flags (`src/lib/flags.ts`)
+
 **Status**: 🔴 Blocked by T5.1T
 **Effort**: 0.5h
 **Depends on**: T5.1T
@@ -592,17 +640,19 @@ pnpm add @vercel/flags
 ```
 
 **Acceptance Criteria**:
+
 - [ ] All tests from T5.1T pass
 - [ ] Five flags exported matching the contracts in `contracts/trpc-api.ts`:
-  `SEEKER_PROFILE`, `EMPLOYER_PROFILE`, `AI_MATCHING`, `MATCH_DASHBOARD`, `FEEDBACK_INSIGHTS`
+      `SEEKER_PROFILE`, `EMPLOYER_PROFILE`, `AI_MATCHING`, `MATCH_DASHBOARD`, `FEEDBACK_INSIGHTS`
 - [ ] Each flag uses `flag({ key: "...", defaultValue: false })` — all default to `false`
 - [ ] `assertFlagEnabled(flag)` helper exported: throws `TRPCError({ code: "NOT_FOUND" })` if flag
-  is OFF (used in procedure implementations, not as middleware)
+      is OFF (used in procedure implementations, not as middleware)
 - [ ] `VERCEL_FLAGS_SECRET` added to `.env.example`
 
 ---
 
 ### T5.2 — Encryption utility stub (`src/lib/encryption.ts`)
+
 **Status**: 🔴 Blocked by T5.1I
 **Effort**: 1h
 **Depends on**: T5.1I
@@ -615,6 +665,7 @@ but the stub must exist in Feature 1 to complete the server-only module boundary
 **Test File**: `tests/unit/lib/encryption.test.ts` (write tests FIRST)
 
 **Test Cases** (write before implementation):
+
 - [ ] `encrypt(plaintext, userId)` returns a non-empty string different from input
 - [ ] `decrypt(encrypted, userId)` returns the original plaintext
 - [ ] Same plaintext + same userId produces same ciphertext (deterministic IV from userId)
@@ -622,6 +673,7 @@ but the stub must exist in Feature 1 to complete the server-only module boundary
 - [ ] Empty string input throws `Error("Cannot encrypt empty value")`
 
 **Implementation Acceptance Criteria**:
+
 - [ ] `import "server-only"` at top
 - [ ] AES-256-GCM using Node.js built-in `crypto` module (no external dependencies)
 - [ ] IV derived from `HMAC-SHA256(ENCRYPTION_IV_SALT, userId)` — first 12 bytes
@@ -632,6 +684,7 @@ but the stub must exist in Feature 1 to complete the server-only module boundary
 ---
 
 ### T5.3 — Sentry integration
+
 **Status**: 🔴 Blocked by T5.1I
 **Effort**: 0.5h
 **Depends on**: T5.1I
@@ -643,6 +696,7 @@ npx @sentry/wizard@latest -i nextjs
 ```
 
 **Acceptance Criteria**:
+
 - [ ] `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts` created
 - [ ] `next.config.js` wrapped with `withSentryConfig()`
 - [ ] `SENTRY_DSN` in `.env.example`; `SENTRY_AUTH_TOKEN` in `.env.example` (CI-only)
@@ -656,6 +710,7 @@ npx @sentry/wizard@latest -i nextjs
 ---
 
 ### T5.4 — Security review: encryption utility
+
 **Status**: 🔴 Blocked by T5.2
 **Effort**: 0.5h
 **Depends on**: T5.2
@@ -669,10 +724,12 @@ flaw could expose user API keys.
 **Delegate to**: `security-reviewer` agent
 
 **Review Scope**:
+
 - `src/lib/encryption.ts`
 - `tests/unit/lib/encryption.test.ts`
 
 **Acceptance Criteria**:
+
 - [ ] No CRITICAL or HIGH severity findings
 - [ ] IV derivation is unique per user (different userId → different IV confirmed)
 - [ ] No plaintext key material logged or returned in error messages
@@ -691,6 +748,7 @@ flaw could expose user API keys.
 ---
 
 ### T6.1 — Vercel deployment configuration
+
 **Status**: 🔴 Blocked by T5.2, T5.3
 **Effort**: 1h
 **Depends on**: T5.2, T5.3
@@ -699,6 +757,7 @@ flaw could expose user API keys.
 Configure `package.json` build script to run migrations and connect to Vercel project.
 
 **Acceptance Criteria**:
+
 - [ ] `package.json` `build` script: `"prisma generate && prisma migrate deploy && next build"`
 - [ ] `vercel.json` created (if needed for custom routing)
 - [ ] All production env vars set in Vercel dashboard (both preview and production scopes)
@@ -711,6 +770,7 @@ Configure `package.json` build script to run migrations and connect to Vercel pr
 ---
 
 ### T6.2 — README and developer documentation
+
 **Status**: 🔴 Blocked by T6.1
 **Effort**: 1h
 **Depends on**: T6.1
@@ -719,6 +779,7 @@ Configure `package.json` build script to run migrations and connect to Vercel pr
 Write `README.md` covering everything a developer needs to go from clone to running.
 
 **Acceptance Criteria** (aligns with SC-001):
+
 - [ ] Prerequisites section: Node 20+, pnpm, NeonDB account, Clerk account, Inngest account
 - [ ] Setup steps ≤ 5 commands from clone to `pnpm dev` running
 - [ ] All `package.json` scripts documented with one-line descriptions
@@ -727,19 +788,19 @@ Write `README.md` covering everything a developer needs to go from clone to runn
 - [ ] Test commands: `pnpm test`, `pnpm test:coverage`, `pnpm test:e2e`
 - [ ] Link to `.specify/specs/1-foundation-infrastructure/` for architecture context
 - [ ] A developer who has never seen the codebase can have a running local environment
-  within 15 minutes by following the README alone (SC-001)
+      within 15 minutes by following the README alone (SC-001)
 
 ---
 
 ## Quality Gates Summary
 
-| Gate | After Task | Checks |
-|------|-----------|--------|
-| **QG-1: CI Green** | T1.5 | All 4 CI jobs pass on a clean branch |
-| **QG-2: Database Ready** | T2.4 | All 9 tables exist; seed produces correct row counts |
-| **QG-3: API Reachable** | T3.3 | E2E health check returns 200 |
-| **QG-4: Deployment Live** | T6.1 | Production URL serves the app; migrations applied |
-| **QG-5: Security Green** | T5.4 | Encryption utility passes security review; no HIGH/CRITICAL findings |
+| Gate                      | After Task | Checks                                                               |
+| ------------------------- | ---------- | -------------------------------------------------------------------- |
+| **QG-1: CI Green**        | T1.5       | All 4 CI jobs pass on a clean branch                                 |
+| **QG-2: Database Ready**  | T2.4       | All 9 tables exist; seed produces correct row counts                 |
+| **QG-3: API Reachable**   | T3.3       | E2E health check returns 200                                         |
+| **QG-4: Deployment Live** | T6.1       | Production URL serves the app; migrations applied                    |
+| **QG-5: Security Green**  | T5.4       | Encryption utility passes security review; no HIGH/CRITICAL findings |
 
 ---
 
@@ -774,14 +835,14 @@ T1.1 (scaffold)
 
 ## Parallelization Opportunities
 
-| Parallel Group | Tasks | Condition |
-|---------------|-------|-----------|
-| Group A | T1.2T + T1.3 | Both unblock after T1.1 |
-| Group B | T1.5 + T2.1 | Both unblock after T1.4I (CI and schema independent) |
-| Group C | T2.4 + T3.1T | Both unblock after T2.3I (seed and tRPC core independent) |
-| Group D | T4.1 + T4.2T | Both unblock after T3.2I (middleware and webhook independent) |
-| Group E | T4.3 + T4.2I | T4.3 can start as soon as T4.2T is done (parallel with T4.2I) |
-| Group F | T5.2 + T5.3 | Both unblock after T5.1I (encryption and Sentry independent) |
+| Parallel Group | Tasks        | Condition                                                     |
+| -------------- | ------------ | ------------------------------------------------------------- |
+| Group A        | T1.2T + T1.3 | Both unblock after T1.1                                       |
+| Group B        | T1.5 + T2.1  | Both unblock after T1.4I (CI and schema independent)          |
+| Group C        | T2.4 + T3.1T | Both unblock after T2.3I (seed and tRPC core independent)     |
+| Group D        | T4.1 + T4.2T | Both unblock after T3.2I (middleware and webhook independent) |
+| Group E        | T4.3 + T4.2I | T4.3 can start as soon as T4.2T is done (parallel with T4.2I) |
+| Group F        | T5.2 + T5.3  | Both unblock after T5.1I (encryption and Sentry independent)  |
 
 ---
 
@@ -789,14 +850,14 @@ T1.1 (scaffold)
 
 For complex tasks, delegate to specialist agents:
 
-| Task(s) | Agent | Context |
-|---------|-------|---------|
-| T2.3I, T2.4 | `backend-developer` | Prisma 5, NeonDB, seed data |
-| T3.1I, T3.2I | `react-nextjs-expert` | tRPC 11, Next.js 15 App Router, Clerk |
-| T4.2I | `backend-developer` | Svix webhook verification, Prisma upsert |
-| T5.2 | `backend-developer` | Node.js `crypto`, AES-256-GCM |
-| T5.2 (security) | `security-reviewer` | BYOK encryption security review |
-| T6.1 | `react-nextjs-expert` | Vercel deployment, Next.js build config |
+| Task(s)         | Agent                 | Context                                  |
+| --------------- | --------------------- | ---------------------------------------- |
+| T2.3I, T2.4     | `backend-developer`   | Prisma 5, NeonDB, seed data              |
+| T3.1I, T3.2I    | `react-nextjs-expert` | tRPC 11, Next.js 15 App Router, Clerk    |
+| T4.2I           | `backend-developer`   | Svix webhook verification, Prisma upsert |
+| T5.2            | `backend-developer`   | Node.js `crypto`, AES-256-GCM            |
+| T5.2 (security) | `security-reviewer`   | BYOK encryption security review          |
+| T6.1            | `react-nextjs-expert` | Vercel deployment, Next.js build config  |
 
 ---
 

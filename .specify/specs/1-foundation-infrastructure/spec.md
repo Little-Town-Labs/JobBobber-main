@@ -342,12 +342,12 @@ The following are explicitly excluded from this feature and belong to later feat
 
 ## Constitutional Compliance
 
-| Principle | Requirement for this Feature |
-|-----------|------------------------------|
-| I. Type Safety | TypeScript strict mode, zero `any`, Zod for all external inputs — enforced in CI |
-| II. TDD | Testing framework (Vitest) configured with 80% gate; LLM mock utilities created |
-| III. BYOK | No AI calls in this feature; BYOK schema fields scaffolded in SeekerSettings |
-| IV. Minimal Abstractions | No heavy framework magic; thin, explicit setup |
-| V. Security & Privacy | Private settings tables separated from public tables from day one |
-| VI. Feature Flags | Flag SDK integrated; all future features default to OFF |
-| VII. Agent Autonomy | Inngest configured for async workflows (used by agent features later) |
+| Principle                | Requirement for this Feature                                                     |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| I. Type Safety           | TypeScript strict mode, zero `any`, Zod for all external inputs — enforced in CI |
+| II. TDD                  | Testing framework (Vitest) configured with 80% gate; LLM mock utilities created  |
+| III. BYOK                | No AI calls in this feature; BYOK schema fields scaffolded in SeekerSettings     |
+| IV. Minimal Abstractions | No heavy framework magic; thin, explicit setup                                   |
+| V. Security & Privacy    | Private settings tables separated from public tables from day one                |
+| VI. Feature Flags        | Flag SDK integrated; all future features default to OFF                          |
+| VII. Agent Autonomy      | Inngest configured for async workflows (used by agent features later)            |

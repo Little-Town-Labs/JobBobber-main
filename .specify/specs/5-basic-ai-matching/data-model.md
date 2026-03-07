@@ -11,23 +11,24 @@ The Prisma schema already contains the entities needed for basic matching. No ne
 
 ### Match (existing in schema.prisma)
 
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| id | String (CUID) | PK | Unique identifier |
-| conversationId | String | FK, Unique | Link to AgentConversation |
-| jobPostingId | String | FK | Link to JobPosting |
-| seekerId | String | FK | Link to JobSeeker |
-| employerId | String | FK | Link to Employer |
-| confidenceScore | MatchConfidence | Enum | STRONG / GOOD / POTENTIAL |
-| matchSummary | String | Not Null | AI-generated match explanation |
-| seekerStatus | MatchPartyStatus | Default: PENDING | Seeker's accept/decline |
-| employerStatus | MatchPartyStatus | Default: PENDING | Employer's accept/decline |
-| seekerContactInfo | Json? | Nullable | Revealed after mutual accept |
-| seekerAvailability | Json? | Nullable | Revealed after mutual accept |
-| createdAt | DateTime | Auto | Record creation |
-| updatedAt | DateTime | Auto | Last update |
+| Field              | Type             | Constraints      | Description                    |
+| ------------------ | ---------------- | ---------------- | ------------------------------ |
+| id                 | String (CUID)    | PK               | Unique identifier              |
+| conversationId     | String           | FK, Unique       | Link to AgentConversation      |
+| jobPostingId       | String           | FK               | Link to JobPosting             |
+| seekerId           | String           | FK               | Link to JobSeeker              |
+| employerId         | String           | FK               | Link to Employer               |
+| confidenceScore    | MatchConfidence  | Enum             | STRONG / GOOD / POTENTIAL      |
+| matchSummary       | String           | Not Null         | AI-generated match explanation |
+| seekerStatus       | MatchPartyStatus | Default: PENDING | Seeker's accept/decline        |
+| employerStatus     | MatchPartyStatus | Default: PENDING | Employer's accept/decline      |
+| seekerContactInfo  | Json?            | Nullable         | Revealed after mutual accept   |
+| seekerAvailability | Json?            | Nullable         | Revealed after mutual accept   |
+| createdAt          | DateTime         | Auto             | Record creation                |
+| updatedAt          | DateTime         | Auto             | Last update                    |
 
 **Enums:**
+
 - `MatchConfidence`: STRONG, GOOD, POTENTIAL
 - `MatchPartyStatus`: PENDING, ACCEPTED, DECLINED, EXPIRED
 
@@ -35,19 +36,20 @@ The Prisma schema already contains the entities needed for basic matching. No ne
 
 Used in MVP as a minimal wrapper around the evaluation — no multi-turn conversation yet.
 
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| id | String (CUID) | PK | Unique identifier |
-| jobPostingId | String | FK | Link to JobPosting |
-| seekerId | String | FK | Link to JobSeeker |
-| status | ConversationStatus | Default: IN_PROGRESS | Lifecycle state |
-| messages | Json[] | Default: [] | In MVP: single evaluation message |
-| startedAt | DateTime | Auto | When evaluation began |
-| completedAt | DateTime? | Nullable | When evaluation finished |
-| outcome | String? | Nullable | Result summary |
-| inngestRunId | String? | Nullable | Link to Inngest workflow run |
+| Field        | Type               | Constraints          | Description                       |
+| ------------ | ------------------ | -------------------- | --------------------------------- |
+| id           | String (CUID)      | PK                   | Unique identifier                 |
+| jobPostingId | String             | FK                   | Link to JobPosting                |
+| seekerId     | String             | FK                   | Link to JobSeeker                 |
+| status       | ConversationStatus | Default: IN_PROGRESS | Lifecycle state                   |
+| messages     | Json[]             | Default: []          | In MVP: single evaluation message |
+| startedAt    | DateTime           | Auto                 | When evaluation began             |
+| completedAt  | DateTime?          | Nullable             | When evaluation finished          |
+| outcome      | String?            | Nullable             | Result summary                    |
+| inngestRunId | String?            | Nullable             | Link to Inngest workflow run      |
 
 **Enums:**
+
 - `ConversationStatus`: IN_PROGRESS, COMPLETED_MATCH, COMPLETED_NO_MATCH, TERMINATED
 
 ### Key Relationships
@@ -131,10 +133,10 @@ The following indexes already exist in the Prisma schema and support matching qu
 
 ## Query Patterns
 
-| Operation | Access Pattern | Index Used |
-|-----------|---------------|-----------|
-| Find eligible candidates | `jobSeeker.findMany({ where: { isActive: true } })` | isActive |
-| Find matches for employer | `match.findMany({ where: { employerId, jobPostingId } })` | [jobPostingId, employerId] |
-| Find matches for seeker | `match.findMany({ where: { seekerId } })` | seekerId |
-| Check duplicate match | `agentConversation.findFirst({ where: { seekerId, jobPostingId } })` | [seekerId, jobPostingId] |
-| Get employer BYOK key | `employer.findUnique({ where: { id } })` | PK |
+| Operation                 | Access Pattern                                                       | Index Used                 |
+| ------------------------- | -------------------------------------------------------------------- | -------------------------- |
+| Find eligible candidates  | `jobSeeker.findMany({ where: { isActive: true } })`                  | isActive                   |
+| Find matches for employer | `match.findMany({ where: { employerId, jobPostingId } })`            | [jobPostingId, employerId] |
+| Find matches for seeker   | `match.findMany({ where: { seekerId } })`                            | seekerId                   |
+| Check duplicate match     | `agentConversation.findFirst({ where: { seekerId, jobPostingId } })` | [seekerId, jobPostingId]   |
+| Get employer BYOK key     | `employer.findUnique({ where: { id } })`                             | PK                         |

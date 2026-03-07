@@ -15,6 +15,7 @@ This roadmap outlines all features planned for [Project Name] across multiple ph
 All features in this roadmap MUST comply with the [Project Constitution](../memory/constitution.md).
 
 **Key Principles:**
+
 - **Start Simple**: Focus on core value proposition first
 - **Iterate Fast**: Add complexity based on learnings
 - **Scale Smart**: Optimize for scale when needed
@@ -25,16 +26,19 @@ All features in this roadmap MUST comply with the [Project Constitution](../memo
 ## Phase Breakdown
 
 ### Phase 1: MVP
+
 **Goal**: [MVP goal statement]
 **Timeline**: [X months]
 **Success Metrics**: [Define success]
 
 ### Phase 2: Beta
+
 **Goal**: [Beta goal statement]
 **Timeline**: [X months]
 **Success Metrics**: [Define success]
 
 ### Phase 3: Full Launch
+
 **Goal**: [Launch goal statement]
 **Timeline**: [X months]
 **Success Metrics**: [Define success]
@@ -58,4 +62,5 @@ All features in this roadmap MUST comply with the [Project Constitution](../memo
 ## Version History
 
 ### v1.0 - [Date]
+
 - Initial roadmap created from PRD

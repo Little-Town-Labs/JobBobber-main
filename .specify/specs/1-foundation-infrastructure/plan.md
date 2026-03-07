@@ -17,6 +17,7 @@ database tables migrated and seeded, and every subsequent feature gated behind f
 default to OFF.
 
 **Deliverables**:
+
 - Bootstrapped Next.js 15 project with strict TypeScript 5
 - Complete Prisma schema for all 9 MVP entities, migrated and seeded
 - tRPC 11 router stubs for all 7 sub-routers (no business logic — just scaffold)
@@ -157,21 +158,21 @@ jobbobber/
 All technology decisions are locked by the project constitution. Full rationale in
 `research.md`. Summary:
 
-| Layer | Technology | Version | Key Reason |
-|-------|-----------|---------|-----------|
-| Framework | Next.js | 15 (App Router) | Server Components, streaming, Vercel-native |
-| Language | TypeScript | 5 (strict) | Type Safety First (Principle I) |
-| API | tRPC | 11 | End-to-end type safety, no codegen, Zod dual-use |
-| ORM | Prisma | 5 | Schema-first, migration tracking, typed client |
-| Database | NeonDB (PostgreSQL 16 + pgvector) | — | Serverless, pgvector avoids separate vector DB |
-| Auth | Clerk | — | Organizations = multi-tenant employers; `auth()` gives userId+orgId |
-| Async | Inngest | 3 | Resumable step functions; critical for multi-hour agent conversations |
-| AI SDK | Vercel AI SDK | 3 | Provider-agnostic, Zod-validated streaming |
-| Feature Flags | Vercel Flags SDK | — | Edge evaluation, no external service at launch |
-| Unit Tests | Vitest | — | Native ESM, Vite-compatible, Jest-compatible API |
-| E2E Tests | Playwright | — | Multi-browser, auto-waits, Clerk testing utilities |
-| Hosting | Vercel | — | Next.js-native, preview URLs per PR |
-| Error Monitoring | Sentry | — | Source maps, alert on new error types |
+| Layer            | Technology                        | Version         | Key Reason                                                            |
+| ---------------- | --------------------------------- | --------------- | --------------------------------------------------------------------- |
+| Framework        | Next.js                           | 15 (App Router) | Server Components, streaming, Vercel-native                           |
+| Language         | TypeScript                        | 5 (strict)      | Type Safety First (Principle I)                                       |
+| API              | tRPC                              | 11              | End-to-end type safety, no codegen, Zod dual-use                      |
+| ORM              | Prisma                            | 5               | Schema-first, migration tracking, typed client                        |
+| Database         | NeonDB (PostgreSQL 16 + pgvector) | —               | Serverless, pgvector avoids separate vector DB                        |
+| Auth             | Clerk                             | —               | Organizations = multi-tenant employers; `auth()` gives userId+orgId   |
+| Async            | Inngest                           | 3               | Resumable step functions; critical for multi-hour agent conversations |
+| AI SDK           | Vercel AI SDK                     | 3               | Provider-agnostic, Zod-validated streaming                            |
+| Feature Flags    | Vercel Flags SDK                  | —               | Edge evaluation, no external service at launch                        |
+| Unit Tests       | Vitest                            | —               | Native ESM, Vite-compatible, Jest-compatible API                      |
+| E2E Tests        | Playwright                        | —               | Multi-browser, auto-waits, Clerk testing utilities                    |
+| Hosting          | Vercel                            | —               | Next.js-native, preview URLs per PR                                   |
+| Error Monitoring | Sentry                            | —               | Source maps, alert on new error types                                 |
 
 ---
 
@@ -193,17 +194,17 @@ Full schema in `data-model.md`. The schema implements three privacy guarantees b
 
 ### Entity Summary
 
-| Entity | Table | Key Constraint | Privacy |
-|--------|-------|----------------|---------|
-| JobSeeker | `job_seekers` | `clerkUserId @unique` | Public |
-| SeekerSettings | `seeker_settings` | `seekerId @unique` (1:1 FK) | PRIVATE — never in public API |
-| Employer | `employers` | `clerkOrgId @unique` | Public |
-| EmployerMember | `employer_members` | `(employerId, clerkUserId) @unique` | Semi-public |
-| JobPosting | `job_postings` | `employerId` FK, status index | Public |
-| JobSettings | `job_settings` | `jobPostingId @unique` (1:1 FK) | PRIVATE — never in public API |
-| AgentConversation | `agent_conversations` | `(seekerId, jobPostingId)` index | Restricted |
-| Match | `matches` | `conversationId @unique` | Restricted |
-| FeedbackInsights | `feedback_insights` | `(userId, userType) @unique` | Aggregate only |
+| Entity            | Table                 | Key Constraint                      | Privacy                       |
+| ----------------- | --------------------- | ----------------------------------- | ----------------------------- |
+| JobSeeker         | `job_seekers`         | `clerkUserId @unique`               | Public                        |
+| SeekerSettings    | `seeker_settings`     | `seekerId @unique` (1:1 FK)         | PRIVATE — never in public API |
+| Employer          | `employers`           | `clerkOrgId @unique`                | Public                        |
+| EmployerMember    | `employer_members`    | `(employerId, clerkUserId) @unique` | Semi-public                   |
+| JobPosting        | `job_postings`        | `employerId` FK, status index       | Public                        |
+| JobSettings       | `job_settings`        | `jobPostingId @unique` (1:1 FK)     | PRIVATE — never in public API |
+| AgentConversation | `agent_conversations` | `(seekerId, jobPostingId)` index    | Restricted                    |
+| Match             | `matches`             | `conversationId @unique`            | Restricted                    |
+| FeedbackInsights  | `feedback_insights`   | `(userId, userType) @unique`        | Aggregate only                |
 
 ---
 
@@ -215,15 +216,15 @@ added in Features 2–18.
 
 ### Router Inventory
 
-| Router | Procedures | Procedure Level | Notes |
-|--------|-----------|-----------------|-------|
-| `health` | `ping`, `status` | `publicProcedure` | Infrastructure health only |
-| `jobSeekers` | `getProfile`, `getMyProfile`, `upsertMyProfile`, `deleteMyProfile` | Mixed | Public read, authenticated write |
-| `employers` | `getProfile`, `getMyOrg`, `upsertMyOrg`, `listMembers`, `removeMember` | Mixed | `adminProcedure` for member mutation |
-| `jobPostings` | `list`, `getById`, `create`, `update`, `updateStatus`, `delete` | Mixed | Status transitions fire Inngest events |
-| `matches` | `listForSeeker`, `listForEmployer`, `getById`, `respondToMatch` | Mixed | Contact info withheld until mutual acceptance |
-| `settings` | `getSeekerSettings`, `upsertSeekerSettings`, `getJobSettings`, `upsertJobSettings` | `seekerProcedure`/`employerProcedure` | No `id` input — ownership from `ctx` only |
-| `insights` | `getMyInsights` | Mixed | Behind `FEEDBACK_INSIGHTS` feature flag |
+| Router        | Procedures                                                                         | Procedure Level                       | Notes                                         |
+| ------------- | ---------------------------------------------------------------------------------- | ------------------------------------- | --------------------------------------------- |
+| `health`      | `ping`, `status`                                                                   | `publicProcedure`                     | Infrastructure health only                    |
+| `jobSeekers`  | `getProfile`, `getMyProfile`, `upsertMyProfile`, `deleteMyProfile`                 | Mixed                                 | Public read, authenticated write              |
+| `employers`   | `getProfile`, `getMyOrg`, `upsertMyOrg`, `listMembers`, `removeMember`             | Mixed                                 | `adminProcedure` for member mutation          |
+| `jobPostings` | `list`, `getById`, `create`, `update`, `updateStatus`, `delete`                    | Mixed                                 | Status transitions fire Inngest events        |
+| `matches`     | `listForSeeker`, `listForEmployer`, `getById`, `respondToMatch`                    | Mixed                                 | Contact info withheld until mutual acceptance |
+| `settings`    | `getSeekerSettings`, `upsertSeekerSettings`, `getJobSettings`, `upsertJobSettings` | `seekerProcedure`/`employerProcedure` | No `id` input — ownership from `ctx` only     |
+| `insights`    | `getMyInsights`                                                                    | Mixed                                 | Behind `FEEDBACK_INSIGHTS` feature flag       |
 
 ### Context Hierarchy
 
@@ -279,6 +280,7 @@ stable sort with `(createdAt DESC, id DESC)` tie-breaking.
 **Goal**: A compilable, deployable Next.js 15 project with zero business logic but a green build.
 
 **Step 1 — Initialize project**
+
 ```bash
 pnpm create next-app@latest jobbobber \
   --typescript --eslint --app --src-dir \
@@ -288,17 +290,20 @@ pnpm add -D @types/node typescript@5
 ```
 
 **Step 2 — Environment validation**
+
 - Install `@t3-oss/env-nextjs` and `zod`
 - Write `src/lib/env.ts` — declare all required env vars with Zod schemas
 - Build fails immediately if any required variable is absent
 - Commit `.env.example` documenting all variables
 
 **Step 3 — Linting and formatting**
+
 - Configure ESLint with `@typescript-eslint/strict` rules
 - Install and configure Prettier
 - Install Husky + lint-staged; pre-commit hook runs `prettier --check` + `eslint`
 
 **Step 4 — Test infrastructure**
+
 - Install Vitest + `@vitest/coverage-v8`
 - Write `vitest.config.ts` with `coverage.thresholds: { global: { lines: 80 } }`
 - Install Playwright + `@playwright/test`
@@ -306,6 +311,7 @@ pnpm add -D @types/node typescript@5
 - Write first passing test: `tests/unit/lib/env.test.ts` (validates env schema)
 
 **Step 5 — CI pipeline**
+
 - Write `.github/workflows/ci.yml` with jobs: `typecheck` → `lint` → `test` → `build`
 - Coverage gate: `vitest run --coverage` — pipeline fails if below 80%
 - Branch protection: all 4 jobs required before merge
@@ -317,15 +323,18 @@ pnpm add -D @types/node typescript@5
 **Goal**: Complete Prisma schema, migrations applied, seed working.
 
 **Step 6 — Prisma setup**
+
 ```bash
 pnpm add prisma @prisma/client
 npx prisma init --datasource-provider postgresql
 ```
+
 - Copy complete schema from `data-model.md` into `prisma/schema.prisma`
 - Add `prisma generate` to `postinstall` script
 - Configure `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` in `.env.example`
 
 **Step 7 — pgvector extension**
+
 - Add `previewFeatures = ["postgresqlExtensions"]` to generator block
 - Add `extensions = [pgvector(map: "vector", schema: "public")]` to datasource
 - Create and apply initial migration:
@@ -334,11 +343,13 @@ npx prisma init --datasource-provider postgresql
   ```
 
 **Step 8 — Prisma client singleton**
+
 - Write `src/server/db.ts` with import `"server-only"` and global PrismaClient pattern
   (prevents multiple client instances in Next.js hot-reload dev)
 - Add integration test `tests/integration/db.test.ts` that creates and deletes a test record
 
 **Step 9 — Seed data**
+
 - Write `prisma/seed.ts` per the seed design in `data-model.md`:
   5 seekers, 5 seeker settings, 3 employers, 6 members, 6 postings,
   6 job settings, 4 conversations, 3 matches, 4 feedback records
@@ -353,16 +364,19 @@ npx prisma init --datasource-provider postgresql
 **Goal**: Complete tRPC scaffold — all 7 routers with stub procedures, context hierarchy, middleware.
 
 **Step 10 — tRPC core**
+
 ```bash
 pnpm add @trpc/server @trpc/client @trpc/react-query @trpc/next
 pnpm add @tanstack/react-query
 ```
+
 - Write `src/server/api/trpc.ts`:
   - `createTRPCContext()` — calls `auth()` from `@clerk/nextjs/server`, attaches `db` and `inngest`
   - `publicProcedure`, `protectedProcedure`, `seekerProcedure`, `employerProcedure`, `adminProcedure`
   - Each middleware level writes the narrowed context type (see contracts/trpc-api.ts)
 
 **Step 11 — Router stubs**
+
 - Write all 7 router files in `src/server/api/routers/`
 - Every procedure:
   - Accepts the correct Zod input schema (from `contracts/trpc-api.ts`)
@@ -371,12 +385,14 @@ pnpm add @tanstack/react-query
 - Write `src/server/api/root.ts` assembling all routers into `appRouter`
 
 **Step 12 — HTTP handler and client**
+
 - Write `src/app/api/trpc/[trpc]/route.ts` using `fetchRequestHandler`
 - Write `src/lib/trpc/client.tsx` — `createTRPCReact<AppRouter>()`
 - Write `src/lib/trpc/server.ts` — `createCaller()` for RSC usage
 - Write `src/lib/trpc/query-client.ts` — TanStack Query config
 
 **Step 13 — tRPC tests**
+
 - Unit test `tests/unit/server/api/trpc.test.ts`: context creation, middleware rejection
 - Unit test `tests/unit/server/api/routers/health.test.ts`: `ping` returns pong
 
@@ -387,18 +403,22 @@ pnpm add @tanstack/react-query
 **Goal**: Auth middleware installed, Clerk webhook handler scaffolded, Inngest registered.
 
 **Step 14 — Clerk middleware**
+
 ```bash
 pnpm add @clerk/nextjs
 ```
+
 - Write `src/middleware.ts` with `clerkMiddleware()`:
   - Public routes: `/`, `/sign-in(.*)`, `/sign-up(.*)`, `/api/trpc(.*)` (tRPC handles own auth),
     `/api/inngest(.*)`, `/api/webhooks/(.*)`
   - All other routes: protected
 
 **Step 15 — Clerk webhook handler**
+
 ```bash
 pnpm add svix
 ```
+
 - Write `src/app/api/webhooks/clerk/route.ts`:
   - Verifies signature with `svix` using `CLERK_WEBHOOK_SECRET`
   - Handles `user.created` → creates `JobSeeker` record (stub: `// TODO Feature 3`)
@@ -407,9 +427,11 @@ pnpm add svix
 - Write unit test for signature verification logic
 
 **Step 16 — Inngest**
+
 ```bash
 pnpm add inngest
 ```
+
 - Write `src/server/inngest/client.ts` — `new Inngest({ id: "jobbobber" })`
 - Write `src/app/api/inngest/route.ts` — `serve({ client, functions: [] })` placeholder
 - Export client from `src/server/inngest/client.ts` for future feature use
@@ -421,24 +443,28 @@ pnpm add inngest
 **Goal**: Vercel Flags SDK initialized with all flags OFF; Sentry connected.
 
 **Step 17 — Feature flags**
+
 ```bash
 pnpm add @vercel/flags
 ```
+
 - Write `src/lib/flags.ts` defining all feature flags from `contracts/trpc-api.ts`:
   ```typescript
-  export const SEEKER_PROFILE   = flag({ key: "SEEKER_PROFILE",   defaultValue: false })
-  export const EMPLOYER_PROFILE = flag({ key: "EMPLOYER_PROFILE",  defaultValue: false })
-  export const AI_MATCHING      = flag({ key: "AI_MATCHING",       defaultValue: false })
-  export const MATCH_DASHBOARD  = flag({ key: "MATCH_DASHBOARD",   defaultValue: false })
-  export const FEEDBACK_INSIGHTS= flag({ key: "FEEDBACK_INSIGHTS", defaultValue: false })
+  export const SEEKER_PROFILE = flag({ key: "SEEKER_PROFILE", defaultValue: false })
+  export const EMPLOYER_PROFILE = flag({ key: "EMPLOYER_PROFILE", defaultValue: false })
+  export const AI_MATCHING = flag({ key: "AI_MATCHING", defaultValue: false })
+  export const MATCH_DASHBOARD = flag({ key: "MATCH_DASHBOARD", defaultValue: false })
+  export const FEEDBACK_INSIGHTS = flag({ key: "FEEDBACK_INSIGHTS", defaultValue: false })
   ```
 - Write unit test: all flags return `false` when no override is set
 
 **Step 18 — Sentry**
+
 ```bash
 pnpm add @sentry/nextjs
 npx @sentry/wizard@latest -i nextjs
 ```
+
 - Configure `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
 - Set `SENTRY_DSN` in `.env.example`
 - Wrap custom error pages if needed
@@ -450,6 +476,7 @@ npx @sentry/wizard@latest -i nextjs
 **Goal**: Production deployment live; README complete.
 
 **Step 19 — Vercel deployment**
+
 - Connect repository to Vercel project
 - Set all production environment variables in Vercel dashboard
 - Configure `DATABASE_URL_UNPOOLED` for build-time `prisma migrate deploy`
@@ -460,6 +487,7 @@ npx @sentry/wizard@latest -i nextjs
 - Push to main → verify production deployment succeeds
 
 **Step 20 — README**
+
 - Document: prerequisites, clone, setup command, all npm scripts, env vars,
   database setup, seed command, test commands, deployment process
 - Include link to `project-config.json` for agent context
@@ -470,28 +498,28 @@ npx @sentry/wizard@latest -i nextjs
 
 ### Unit Tests (Vitest)
 
-| Test File | Coverage Target | Key Assertions |
-|-----------|----------------|----------------|
-| `lib/env.test.ts` | `src/lib/env.ts` | Missing vars throw; valid config passes |
-| `lib/encryption.test.ts` | `src/lib/encryption.ts` | Encrypt → decrypt round-trip; different IVs per call |
-| `lib/flags.test.ts` | `src/lib/flags.ts` | All flags default to `false` |
-| `server/api/trpc.test.ts` | `src/server/api/trpc.ts` | Unauthenticated call to protectedProcedure throws UNAUTHORIZED |
-| `server/api/routers/health.test.ts` | `health.ts` | `ping` returns `{ pong: true }` |
-| `webhooks/clerk.test.ts` | Clerk webhook handler | Invalid signature → 401; valid `user.created` → upsert called |
+| Test File                           | Coverage Target          | Key Assertions                                                 |
+| ----------------------------------- | ------------------------ | -------------------------------------------------------------- |
+| `lib/env.test.ts`                   | `src/lib/env.ts`         | Missing vars throw; valid config passes                        |
+| `lib/encryption.test.ts`            | `src/lib/encryption.ts`  | Encrypt → decrypt round-trip; different IVs per call           |
+| `lib/flags.test.ts`                 | `src/lib/flags.ts`       | All flags default to `false`                                   |
+| `server/api/trpc.test.ts`           | `src/server/api/trpc.ts` | Unauthenticated call to protectedProcedure throws UNAUTHORIZED |
+| `server/api/routers/health.test.ts` | `health.ts`              | `ping` returns `{ pong: true }`                                |
+| `webhooks/clerk.test.ts`            | Clerk webhook handler    | Invalid signature → 401; valid `user.created` → upsert called  |
 
 ### Integration Tests (Vitest + real test DB)
 
-| Test File | Coverage Target | Key Assertions |
-|-----------|----------------|----------------|
-| `integration/db.test.ts` | Prisma client | Can create, read, delete `JobSeeker` row in test DB |
+| Test File                | Coverage Target | Key Assertions                                      |
+| ------------------------ | --------------- | --------------------------------------------------- |
+| `integration/db.test.ts` | Prisma client   | Can create, read, delete `JobSeeker` row in test DB |
 
 **Integration test guard**: tests refuse to run unless `DATABASE_URL` contains `test` or
 `localhost` — prevents accidental production DB writes.
 
 ### E2E Tests (Playwright)
 
-| Test File | User Flow | Key Assertions |
-|-----------|-----------|----------------|
+| Test File            | User Flow                   | Key Assertions                                          |
+| -------------------- | --------------------------- | ------------------------------------------------------- |
 | `e2e/health.spec.ts` | `GET /api/trpc/health.ping` | Returns 200 with `{ result: { data: { pong: true } } }` |
 
 ### Coverage Gate
@@ -526,12 +554,12 @@ business data.
 
 ### Environment Variable Management
 
-| Environment | Source | Notes |
-|------------|--------|-------|
-| Local dev | `.env.local` (gitignored) | Copied from `.env.example` |
-| Preview | Vercel Environment Variables (preview scope) | Set once per project |
-| Production | Vercel Environment Variables (production scope) | Set once per project |
-| CI | GitHub Actions secrets | Passed as env vars to test runner |
+| Environment | Source                                          | Notes                             |
+| ----------- | ----------------------------------------------- | --------------------------------- |
+| Local dev   | `.env.local` (gitignored)                       | Copied from `.env.example`        |
+| Preview     | Vercel Environment Variables (preview scope)    | Set once per project              |
+| Production  | Vercel Environment Variables (production scope) | Set once per project              |
+| CI          | GitHub Actions secrets                          | Passed as env vars to test runner |
 
 ---
 
@@ -540,6 +568,7 @@ business data.
 ### BYOK Architecture (Principle III)
 
 No platform LLM API keys exist in any environment. `src/lib/encryption.ts` implements:
+
 - AES-256-GCM with a 32-byte `ENCRYPTION_KEY` (server secret)
 - Per-user IV derived from `HMAC-SHA256(ENCRYPTION_IV_SALT, clerkUserId)` (deterministic
   but secret; IV is stored alongside ciphertext for correctness)
@@ -568,27 +597,27 @@ a `NODE_ENV !== 'production'` guard around test utilities.
 
 ## Risks and Mitigation
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|-----------|
-| NeonDB cold start adds latency to first query | Medium | Low | Use pooled URL; acceptable for dev setup |
-| Prisma Unsupported pgvector type causes friction in queries | Low | Medium | All vector queries go through `$queryRaw` wrappers; documented in data-model.md |
-| Clerk webhook delivery delays create eventual-consistency window | Low | Low | Seeker/Employer records created lazily; tRPC procedures handle missing records gracefully |
-| Coverage gate fails on initial CI run | Low | Low | Write tests for all Feature 1 code before merging; exclusion list in vitest.config.ts |
-| Inngest dev server conflicts with Next.js dev server ports | Low | Low | `inngest dev` runs on port 8288 by default; `INNGEST_DEV_SERVER_URL` set in `.env.local` |
+| Risk                                                             | Likelihood | Impact | Mitigation                                                                                |
+| ---------------------------------------------------------------- | ---------- | ------ | ----------------------------------------------------------------------------------------- |
+| NeonDB cold start adds latency to first query                    | Medium     | Low    | Use pooled URL; acceptable for dev setup                                                  |
+| Prisma Unsupported pgvector type causes friction in queries      | Low        | Medium | All vector queries go through `$queryRaw` wrappers; documented in data-model.md           |
+| Clerk webhook delivery delays create eventual-consistency window | Low        | Low    | Seeker/Employer records created lazily; tRPC procedures handle missing records gracefully |
+| Coverage gate fails on initial CI run                            | Low        | Low    | Write tests for all Feature 1 code before merging; exclusion list in vitest.config.ts     |
+| Inngest dev server conflicts with Next.js dev server ports       | Low        | Low    | `inngest dev` runs on port 8288 by default; `INNGEST_DEV_SERVER_URL` set in `.env.local`  |
 
 ---
 
 ## Constitutional Compliance
 
-| Principle | How This Plan Enforces It |
-|-----------|--------------------------|
-| I. Type Safety | TypeScript strict mode from step 1; tRPC + Zod ensure no unvalidated data crosses API boundaries; `env.ts` fails build on missing vars |
-| II. TDD | Every Phase 1–5 step specifies its test file(s) first; Vitest 80% gate in CI; tests written before business logic (stubs only in this feature) |
-| III. BYOK | `encryption.ts` stub created (server-only); no platform LLM keys in any env var list; `byokApiKeyEncrypted` field in schema |
-| IV. Minimal Abstractions | No LangChain, no GraphQL gateway, no ORM-over-ORM; Vercel Flags SDK is the minimal flag primitive; Inngest replaces complex queue infrastructure |
-| V. Security & Privacy | `SeekerSettings` / `JobSettings` are separate models with structural isolation; Clerk webhook verified; `settings.*` procedures derive identity from session not user input |
-| VI. Feature Flags | All 5 feature flags defined in `flags.ts`; all default `false`; evaluated at Edge per request; flags documented in `contracts/trpc-api.ts` |
-| VII. Agent Autonomy | Inngest client registered; `/api/inngest` route handler ready to accept function registrations from Feature 9+ |
+| Principle                | How This Plan Enforces It                                                                                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| I. Type Safety           | TypeScript strict mode from step 1; tRPC + Zod ensure no unvalidated data crosses API boundaries; `env.ts` fails build on missing vars                                      |
+| II. TDD                  | Every Phase 1–5 step specifies its test file(s) first; Vitest 80% gate in CI; tests written before business logic (stubs only in this feature)                              |
+| III. BYOK                | `encryption.ts` stub created (server-only); no platform LLM keys in any env var list; `byokApiKeyEncrypted` field in schema                                                 |
+| IV. Minimal Abstractions | No LangChain, no GraphQL gateway, no ORM-over-ORM; Vercel Flags SDK is the minimal flag primitive; Inngest replaces complex queue infrastructure                            |
+| V. Security & Privacy    | `SeekerSettings` / `JobSettings` are separate models with structural isolation; Clerk webhook verified; `settings.*` procedures derive identity from session not user input |
+| VI. Feature Flags        | All 5 feature flags defined in `flags.ts`; all default `false`; evaluated at Edge per request; flags documented in `contracts/trpc-api.ts`                                  |
+| VII. Agent Autonomy      | Inngest client registered; `/api/inngest` route handler ready to accept function registrations from Feature 9+                                                              |
 
 ---
 
@@ -596,11 +625,11 @@ a `NODE_ENV !== 'production'` guard around test utilities.
 
 1. **Preview DB isolation**: Should each Vercel preview deployment get its own NeonDB branch,
    or share a shared dev branch? NeonDB branching is available but requires additional setup.
-   *Recommended default*: shared dev branch for Feature 1 previews; revisit for Feature 9+.
+   _Recommended default_: shared dev branch for Feature 1 previews; revisit for Feature 9+.
 
 2. **Test DB setup in CI**: CI needs a real PostgreSQL instance for integration tests.
-   *Recommended*: GitHub Actions `services: postgres` block with a test database URL,
+   _Recommended_: GitHub Actions `services: postgres` block with a test database URL,
    or NeonDB dev branch URL stored as a CI secret.
 
 3. **Sentry environment**: Sentry DSN can be shared across preview and production, or separate.
-   *Recommended*: separate DSNs to keep production error noise clean.
+   _Recommended_: separate DSNs to keep production error noise clean.

@@ -398,15 +398,15 @@ AgentConversation (1) ─ (1) Match
 
 ## `onDelete` Strategy Reference
 
-| Relation | Strategy | Reason |
-|---|---|---|
-| SeekerSettings → JobSeeker | `Cascade` | Private settings are meaningless without the profile |
-| JobSettings → JobPosting | `Cascade` | Same reasoning |
-| EmployerMember → Employer | `Cascade` | Member records are worthless without the employer |
-| JobPosting → Employer | `Cascade` | Orphaned postings are unusable |
-| AgentConversation → JobSeeker/JobPosting | `Restrict` | Conversations are audit records |
-| Match → all parents | `Restrict` | Match is a business/legal artifact; require explicit deletion |
-| FeedbackInsights → JobSeeker/Employer | `Cascade` | Insights are derived data |
+| Relation                                 | Strategy   | Reason                                                        |
+| ---------------------------------------- | ---------- | ------------------------------------------------------------- |
+| SeekerSettings → JobSeeker               | `Cascade`  | Private settings are meaningless without the profile          |
+| JobSettings → JobPosting                 | `Cascade`  | Same reasoning                                                |
+| EmployerMember → Employer                | `Cascade`  | Member records are worthless without the employer             |
+| JobPosting → Employer                    | `Cascade`  | Orphaned postings are unusable                                |
+| AgentConversation → JobSeeker/JobPosting | `Restrict` | Conversations are audit records                               |
+| Match → all parents                      | `Restrict` | Match is a business/legal artifact; require explicit deletion |
+| FeedbackInsights → JobSeeker/Employer    | `Cascade`  | Insights are derived data                                     |
 
 ---
 
@@ -439,17 +439,17 @@ and `(employerId, employerStatus)` on `matches`.
 
 `prisma/seed.ts` creates the following records for local and preview environments:
 
-| Entity | Count | Notes |
-|--------|-------|-------|
-| JobSeeker | 5 | Varied experience levels, skills, locations |
-| SeekerSettings | 5 | One per seeker; salary and deal-breaker variety |
-| Employer | 3 | Small startup, mid-size tech co, enterprise |
-| EmployerMember | 6 | 2 per employer: 1 ADMIN + 1 JOB_POSTER |
-| JobPosting | 6 | 2 per employer (1 DRAFT, 1 ACTIVE); varied skills |
-| JobSettings | 6 | One per posting; urgency and salary variety |
-| AgentConversation | 4 | 3 COMPLETED_MATCH, 1 IN_PROGRESS |
-| Match | 3 | 1 MUTUALLY_ACCEPTED, 1 PENDING, 1 EMPLOYER_ACCEPTED |
-| FeedbackInsights | 4 | 3 seeker + 1 employer; varied trend directions |
+| Entity            | Count | Notes                                               |
+| ----------------- | ----- | --------------------------------------------------- |
+| JobSeeker         | 5     | Varied experience levels, skills, locations         |
+| SeekerSettings    | 5     | One per seeker; salary and deal-breaker variety     |
+| Employer          | 3     | Small startup, mid-size tech co, enterprise         |
+| EmployerMember    | 6     | 2 per employer: 1 ADMIN + 1 JOB_POSTER              |
+| JobPosting        | 6     | 2 per employer (1 DRAFT, 1 ACTIVE); varied skills   |
+| JobSettings       | 6     | One per posting; urgency and salary variety         |
+| AgentConversation | 4     | 3 COMPLETED_MATCH, 1 IN_PROGRESS                    |
+| Match             | 3     | 1 MUTUALLY_ACCEPTED, 1 PENDING, 1 EMPLOYER_ACCEPTED |
+| FeedbackInsights  | 4     | 3 seeker + 1 employer; varied trend directions      |
 
 **Clerk IDs in seed**: seed uses placeholder Clerk IDs (`user_seed_01`, `org_seed_01`, etc.)
 that correspond to hardcoded test accounts created in the Clerk development instance.
@@ -461,36 +461,36 @@ Production seed is never run (guarded by `process.env.NODE_ENV !== 'production'`
 
 ### Server-only (private — never `NEXT_PUBLIC_` prefix)
 
-| Variable | Purpose | Required |
-|----------|---------|----------|
-| `DATABASE_URL` | NeonDB pooled connection (Prisma app queries) | Always |
-| `DATABASE_URL_UNPOOLED` | NeonDB direct connection (Prisma migrations only) | CI/deploy |
-| `CLERK_SECRET_KEY` | Clerk server SDK | Always |
-| `CLERK_WEBHOOK_SECRET` | Validates Clerk webhook events | Auth webhooks |
-| `INNGEST_SIGNING_KEY` | Inngest webhook signature verification | Always |
-| `INNGEST_EVENT_KEY` | Inngest SDK event sending | Always |
-| `ENCRYPTION_KEY` | AES-256-GCM key for BYOK key storage (64 hex chars = 32 bytes) | BYOK |
-| `ENCRYPTION_IV_SALT` | Per-user IV generation salt | BYOK |
-| `VERCEL_AI_GATEWAY_URL` | Vercel AI Gateway base URL | AI features |
-| `SENTRY_DSN` | Sentry error capture | Observability |
-| `SENTRY_AUTH_TOKEN` | Sentry source map upload (CI only) | CI/build |
+| Variable                | Purpose                                                        | Required      |
+| ----------------------- | -------------------------------------------------------------- | ------------- |
+| `DATABASE_URL`          | NeonDB pooled connection (Prisma app queries)                  | Always        |
+| `DATABASE_URL_UNPOOLED` | NeonDB direct connection (Prisma migrations only)              | CI/deploy     |
+| `CLERK_SECRET_KEY`      | Clerk server SDK                                               | Always        |
+| `CLERK_WEBHOOK_SECRET`  | Validates Clerk webhook events                                 | Auth webhooks |
+| `INNGEST_SIGNING_KEY`   | Inngest webhook signature verification                         | Always        |
+| `INNGEST_EVENT_KEY`     | Inngest SDK event sending                                      | Always        |
+| `ENCRYPTION_KEY`        | AES-256-GCM key for BYOK key storage (64 hex chars = 32 bytes) | BYOK          |
+| `ENCRYPTION_IV_SALT`    | Per-user IV generation salt                                    | BYOK          |
+| `VERCEL_AI_GATEWAY_URL` | Vercel AI Gateway base URL                                     | AI features   |
+| `SENTRY_DSN`            | Sentry error capture                                           | Observability |
+| `SENTRY_AUTH_TOKEN`     | Sentry source map upload (CI only)                             | CI/build      |
 
 ### Client-accessible (`NEXT_PUBLIC_` prefix required)
 
-| Variable | Purpose |
-|----------|---------|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk frontend SDK |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` |
-| `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` | Post-login redirect |
+| Variable                              | Purpose                          |
+| ------------------------------------- | -------------------------------- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`   | Clerk frontend SDK               |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL`       | `/sign-in`                       |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL`       | `/sign-up`                       |
+| `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` | Post-login redirect              |
 | `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` | Post-signup → `/onboarding/role` |
-| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog analytics (optional MVP) |
-| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog endpoint |
+| `NEXT_PUBLIC_POSTHOG_KEY`             | PostHog analytics (optional MVP) |
+| `NEXT_PUBLIC_POSTHOG_HOST`            | PostHog endpoint                 |
 
 ### Development-only
 
-| Variable | Purpose |
-|----------|---------|
+| Variable                 | Purpose                                          |
+| ------------------------ | ------------------------------------------------ |
 | `INNGEST_DEV_SERVER_URL` | Points Inngest SDK at local `inngest dev` server |
 
 **BYOK security note**: No `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` appears in the server

@@ -88,27 +88,24 @@ JobBobber uses a **three-layer agent system** that avoids heavy frameworks (Lang
 ```typescript
 // src/app/api/chat/seeker/route.ts
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages } = await req.json()
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4-turbo',
+    model: "gpt-4-turbo",
     stream: true,
-    messages: [
-      { role: 'system', content: 'You are a job search agent...' },
-      ...messages,
-    ],
-  });
+    messages: [{ role: "system", content: "You are a job search agent..." }, ...messages],
+  })
 
-  const stream = OpenAIStream(response);
-  return new StreamingTextResponse(stream);
+  const stream = OpenAIStream(response)
+  return new StreamingTextResponse(stream)
 }
 ```
 
 ```typescript
 // src/app/dashboard/seeker/chat/page.tsx
 const { messages, input, handleSubmit } = useChat({
-  api: '/api/chat/seeker',
-});
+  api: "/api/chat/seeker",
+})
 ```
 
 **Why:** Fast, real-time streaming, great UX
@@ -288,9 +285,9 @@ const result = schema.parse(JSON.parse(response.choices[0].message.content));
 
 ```typescript
 // Each step is resumable - if function times out, resumes from last completed step
-const result = await step.run('step-name', async () => {
-  return expensiveOperation();
-});
+const result = await step.run("step-name", async () => {
+  return expensiveOperation()
+})
 ```
 
 ### Pattern 3: Private Information Handling
@@ -302,7 +299,7 @@ Private Parameters (use strategically, DO NOT reveal):
 - Max Salary: $${privateParams.maxSalary}
 
 Public Message: Respond to the candidate without revealing exact budget.
-`;
+`
 ```
 
 ## Testing Strategy
@@ -310,38 +307,38 @@ Public Message: Respond to the candidate without revealing exact budget.
 ### 1. Mock OpenAI Calls
 
 ```typescript
-vi.mock('~/lib/openai', () => ({
+vi.mock("~/lib/openai", () => ({
   openai: {
     chat: {
       completions: {
         create: vi.fn().mockResolvedValue({
-          choices: [{ message: { content: JSON.stringify(mockResponse) } }]
-        })
-      }
-    }
-  }
-}));
+          choices: [{ message: { content: JSON.stringify(mockResponse) } }],
+        }),
+      },
+    },
+  },
+}))
 ```
 
 ### 2. Test Agent Logic Separately
 
 ```typescript
 // Don't test OpenAI API - test YOUR logic
-it('should reject if confidence < threshold', () => {
-  const evaluation = { confidence: 0.3, isMatch: true };
-  const result = applyConfidenceThreshold(evaluation, 0.5);
-  expect(result.isMatch).toBe(false);
-});
+it("should reject if confidence < threshold", () => {
+  const evaluation = { confidence: 0.3, isMatch: true }
+  const result = applyConfidenceThreshold(evaluation, 0.5)
+  expect(result.isMatch).toBe(false)
+})
 ```
 
 ### 3. Integration Tests with Inngest
 
 ```typescript
 // Inngest provides testing utilities
-import { InngestTestEngine } from 'inngest';
+import { InngestTestEngine } from "inngest"
 
-const t = new InngestTestEngine({ functions: [agentNegotiation] });
-await t.execute('match/negotiate', { data: mockEvent });
+const t = new InngestTestEngine({ functions: [agentNegotiation] })
+await t.execute("match/negotiate", { data: mockEvent })
 ```
 
 ## Migration Path from LangChain
@@ -371,9 +368,9 @@ JobBobber uses Vercel Flags SDK for progressive feature rollout:
 ```typescript
 // src/lib/flags.ts
 export const agentToAgentEnabled = flag({
-  key: 'agent-to-agent',
+  key: "agent-to-agent",
   decide: () => false, // Start with MVP features only
-});
+})
 ```
 
 **MVP → Beta → Full rollout:**
@@ -391,7 +388,7 @@ See `.claude/rules.md` for complete flag patterns.
 ```typescript
 // Agent automatically calls searchJobs tool
 User: "Find me React jobs"
-Agent: [searchJobsTool({ skills: ['React'] })]
+Agent: [searchJobsTool({ skills: ["React"] })]
 Agent: "Found 10 matches! Here are the top 3..."
 ```
 

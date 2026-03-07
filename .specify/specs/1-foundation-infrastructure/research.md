@@ -21,6 +21,7 @@ documents the few remaining open decisions that exist within the locked stack.
 **Decision**: Use Next.js 15 with the App Router.
 
 **Rationale**:
+
 - Server Components reduce client JS bundle size and enable data fetching at the component
   level without client-side waterfalls.
 - App Router's streaming and Suspense integration pairs well with AI features (streaming
@@ -29,6 +30,7 @@ documents the few remaining open decisions that exist within the locked stack.
   with preview URLs per PR (FR-014, FR-015).
 
 **Tradeoffs accepted**:
+
 - App Router mental model is more complex than Pages Router.
 - Some ecosystem libraries haven't fully adopted App Router patterns yet.
 
@@ -39,6 +41,7 @@ documents the few remaining open decisions that exist within the locked stack.
 **Decision**: tRPC 11 over REST or GraphQL.
 
 **Rationale**:
+
 - End-to-end type safety from server procedure input/output to React component props
   satisfies the constitutional Principle I (Type Safety First) without any code generation
   step.
@@ -48,11 +51,11 @@ documents the few remaining open decisions that exist within the locked stack.
 
 **Alternatives considered**:
 
-| Option | Verdict |
-|--------|---------|
-| REST + OpenAPI + codegen | Rejected: adds code generation step; types lag behind implementation |
-| GraphQL (Apollo/Pothos) | Rejected: higher complexity; overfetch/underfetch less relevant for our shape |
-| Server Actions only | Rejected: no type-safe client-side data fetching pattern; poor for complex queries |
+| Option                   | Verdict                                                                            |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| REST + OpenAPI + codegen | Rejected: adds code generation step; types lag behind implementation               |
+| GraphQL (Apollo/Pothos)  | Rejected: higher complexity; overfetch/underfetch less relevant for our shape      |
+| Server Actions only      | Rejected: no type-safe client-side data fetching pattern; poor for complex queries |
 
 ---
 
@@ -61,6 +64,7 @@ documents the few remaining open decisions that exist within the locked stack.
 **Decision**: Prisma 5 over Drizzle ORM.
 
 **Rationale**:
+
 - Prisma's schema-first approach makes the data model the single source of truth.
 - Migration system tracks applied migrations with a `_prisma_migrations` table; prevents
   schema drift (FR-022, FR-025).
@@ -69,11 +73,11 @@ documents the few remaining open decisions that exist within the locked stack.
 
 **Alternatives considered**:
 
-| Option | Verdict |
-|--------|---------|
+| Option      | Verdict                                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- |
 | Drizzle ORM | Not chosen: sql-first style preferred by some, but Prisma's schema.prisma format is more readable for onboarding |
-| Kysely | Not chosen: manual migration management; no schema file |
-| Raw SQL | Not chosen: no type safety, rejected by constitution |
+| Kysely      | Not chosen: manual migration management; no schema file                                                          |
+| Raw SQL     | Not chosen: no type safety, rejected by constitution                                                             |
 
 **Note on pgvector**: Prisma 5 does not natively model pgvector columns. Declared as
 `Unsupported("vector(1536)")` and queried via `db.$queryRaw`. Vector indexes (HNSW or
@@ -86,6 +90,7 @@ IVFFlat) created as raw SQL migrations after data seeding.
 **Decision**: NeonDB as the PostgreSQL host, with pgvector extension.
 
 **Rationale**:
+
 - Serverless Postgres: scales to zero between usage, cost-efficient at early stage.
 - pgvector extension avoids a separate vector database (Pinecone/Weaviate) until scale
   warrants it; fewer external dependencies (Principle IV: Minimal Abstractions).
@@ -104,6 +109,7 @@ Dimension must be decided before production embeddings are generated (Feature 11
 **Decision**: Clerk over NextAuth, Auth0, or custom JWT.
 
 **Rationale**:
+
 - Organizations feature maps directly to the Employer multi-tenancy model: each employer
   is a Clerk Organization; employee roles (ADMIN, JOB_POSTER, VIEWER) map to Clerk org roles.
 - `auth()` from `@clerk/nextjs/server` provides `userId`, `orgId`, and `orgRole` in one
@@ -122,6 +128,7 @@ created lazily on first profile interaction after the Clerk webhook fires.
 **Decision**: Inngest 3 for background and long-running work.
 
 **Rationale**:
+
 - Resumable functions: an agent-to-agent conversation that runs for 30 minutes across
   multiple LLM API calls is not viable as a single serverless function invocation.
   Inngest's step functions resume after each step, with no timeout limit.
@@ -134,12 +141,12 @@ created lazily on first profile interaction after the Clerk webhook fires.
 
 **Alternatives considered**:
 
-| Option | Verdict |
-|--------|---------|
-| BullMQ | Rejected: stateless; job restarts from scratch on failure |
-| Vercel Cron + Queue | Rejected: no step-level durability or resume |
-| AWS Step Functions | Rejected: too heavy; vendor lock-in; unnecessary complexity |
-| Trigger.dev | Viable alternative, but Inngest already in project-config.json |
+| Option              | Verdict                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| BullMQ              | Rejected: stateless; job restarts from scratch on failure      |
+| Vercel Cron + Queue | Rejected: no step-level durability or resume                   |
+| AWS Step Functions  | Rejected: too heavy; vendor lock-in; unnecessary complexity    |
+| Trigger.dev         | Viable alternative, but Inngest already in project-config.json |
 
 ---
 
@@ -148,6 +155,7 @@ created lazily on first profile interaction after the Clerk webhook fires.
 **Decision**: Vercel AI SDK 3 for all LLM interactions.
 
 **Rationale**:
+
 - `streamText` / `streamObject` provide streaming responses and structured output with
   Zod schema validation in one call — satisfying Principle I (Type Safety).
 - `generateObject` returns Zod-validated objects synchronously for agent evaluation tasks.
@@ -165,6 +173,7 @@ provides the minimal abstraction needed.
 **Decision**: Vercel Flags SDK over LaunchDarkly, Flagsmith, or custom feature flags.
 
 **Rationale**:
+
 - Edge evaluation: flags evaluated at request time with zero added latency (flags are
   evaluated in Edge Middleware, not via external API calls).
 - No external service dependency for MVP: the SDK defaults to local evaluation.
@@ -179,6 +188,7 @@ provides the minimal abstraction needed.
 **Decision**: Vitest over Jest.
 
 **Rationale**:
+
 - Native ESM support: Next.js 15 + TypeScript 5 uses ES modules; Jest requires
   additional transpilation configuration.
 - Vite-compatible: same config as the build toolchain.
@@ -192,6 +202,7 @@ provides the minimal abstraction needed.
 **Decision**: Playwright is the E2E framework.
 
 **Rationale**:
+
 - Browser automation that covers Chromium, Firefox, and WebKit from one test run.
 - Auto-waits: no `sleep()` calls or flaky timing issues in the test suite.
 - `@clerk/testing` provides utilities for Clerk-authenticated Playwright sessions.

@@ -13,6 +13,7 @@ This roadmap outlines all features planned for JobBobber across three phases: MV
 **Constitutional Alignment:**
 
 All features in this roadmap MUST comply with the [Project Constitution](../.specify/memory/constitution.md):
+
 - ✅ Type Safety First (tRPC + Prisma + Zod validation)
 - ✅ Test-Driven Development (80%+ coverage from day 1)
 - ✅ BYOK Architecture (all AI features use user API keys)
@@ -22,6 +23,7 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 - ✅ Agent Autonomy (no human intervention)
 
 **Key Principles:**
+
 - **Start Simple**: MVP focuses on core matching loop only
 - **Iterate Fast**: Beta adds agent intelligence based on MVP learnings
 - **Scale Smart**: Full launch adds enterprise features and optimization
@@ -484,28 +486,36 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 When deciding what to build next, use this framework:
 
 ### P0 (Must Have)
+
 Features required for the product to function:
+
 - Authentication
 - Profile creation
 - Basic matching
 - Match viewing
 
 ### P1 (Should Have)
+
 Features that significantly improve user experience:
+
 - Private parameters
 - Agent chat
 - Two-way matching
 - Tool calling
 
 ### P2 (Nice to Have)
+
 Features that add value but aren't critical:
+
 - Custom prompts
 - Analytics
 - Mobile apps
 - API
 
 ### P3 (Future)
+
 Features for later phases:
+
 - Video analysis
 - Global expansion
 - White-labeling
@@ -515,6 +525,7 @@ Features for later phases:
 ## Changelog
 
 ### Version 1.1 (2026-02-14)
+
 - **BREAKING**: Moved Testing & Quality from Phase 2 to Phase 1 (MVP)
   - Rationale: Constitution requires TDD from day 1 (Principle II)
 - Added Type Safety Enforcement to MVP (Constitutional Requirement - Principle I)
@@ -524,6 +535,7 @@ Features for later phases:
 - Clarified that all features must align with constitution
 
 ### Version 1.0 (2026-02-14)
+
 - Initial roadmap created
 - Defined MVP, Beta, and Full Launch phases
 - Outlined 100+ features across all phases

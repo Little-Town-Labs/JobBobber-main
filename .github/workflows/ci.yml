@@ -91,15 +91,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [typecheck, lint, test]
     env:
-      # Minimal env for build — real secrets injected in deployment pipelines
-      DATABASE_URL: "postgresql://user:pass@localhost/db"
-      DATABASE_URL_UNPOOLED: "postgresql://user:pass@localhost/db"
-      CLERK_SECRET_KEY: "sk_test_placeholder"
-      CLERK_WEBHOOK_SECRET: "whsec_placeholder"
-      INNGEST_SIGNING_KEY: "signkey-placeholder"
-      INNGEST_EVENT_KEY: "eventkey-placeholder"
-      ENCRYPTION_KEY: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      ENCRYPTION_IV_SALT: "placeholder-salt"
+      SKIP_ENV_VALIDATION: "true"
+      # Minimal env for build — NEXT_PUBLIC_ vars must exist at build time
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_placeholder"
       NEXT_PUBLIC_CLERK_SIGN_IN_URL: "/sign-in"
       NEXT_PUBLIC_CLERK_SIGN_UP_URL: "/sign-up"
@@ -119,6 +112,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm prisma generate
 
       - name: Build
         run: pnpm build

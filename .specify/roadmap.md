@@ -16,6 +16,7 @@ implementation phases. Each feature is processed independently through the full
 specify → clarify → plan → tasks → analyze → implement → review pipeline.
 
 **Constitutional Alignment:**
+
 - Type Safety First (I) — tRPC + Prisma + Zod throughout
 - Test-Driven Development (II) — 80%+ coverage, TDD mandatory
 - BYOK Architecture (III) — user-provided API keys, AES-256 encrypted
@@ -82,6 +83,7 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 ### Phase 1 Features
 
 #### 1-foundation-infrastructure
+
 **PRD Section:** §10 Technology Stack, §11 Phase 1 MVP
 **Priority:** P0
 **Complexity:** Medium
@@ -92,6 +94,7 @@ Prisma database schema for all core entities (JobSeeker, Employer, JobPosting, A
 Match, FeedbackInsights). Deploy to Vercel with preview-per-PR.
 
 **Acceptance Criteria:**
+
 - `pnpm dev` runs without errors
 - `pnpm build` succeeds (zero TypeScript errors)
 - Database schema migrated and seeded
@@ -99,6 +102,7 @@ Match, FeedbackInsights). Deploy to Vercel with preview-per-PR.
 - All MVP feature flags initialized to OFF
 
 #### 2-authentication-byok
+
 **PRD Section:** §6.1 Authentication & User Management, §Constitution III (BYOK)
 **Priority:** P0
 **Complexity:** Medium
@@ -108,6 +112,7 @@ it against the provider, encrypts it with AES-256 using a user-scoped key, and s
 Display estimated cost range. No platform fallback keys allowed.
 
 **Acceptance Criteria:**
+
 - Job seekers and employers can register and sign in via Clerk
 - Role persisted and enforced in tRPC protected procedures
 - API key validated before saving (live API call)
@@ -116,6 +121,7 @@ Display estimated cost range. No platform fallback keys allowed.
 - Key can be rotated or deleted by the user
 
 #### 3-job-seeker-profile
+
 **PRD Section:** §6.2 Job Seeker Profile, §8.1 Job Seeker Flow
 **Priority:** P0
 **Complexity:** Medium
@@ -125,6 +131,7 @@ skills (autocomplete), portfolio URLs, location and relocation preferences. Resu
 Profile completeness score displayed to the user.
 
 **Acceptance Criteria:**
+
 - Job seeker can create and update a complete profile
 - Resume uploads to Vercel Blob, parsing extracts structured fields
 - Profile completeness score calculated and displayed
@@ -133,6 +140,7 @@ Profile completeness score displayed to the user.
   but is hidden behind Beta feature flag
 
 #### 4-employer-profile-job-posting
+
 **PRD Section:** §6.3 Employer Profile, §8.2 Employer Flow
 **Priority:** P0
 **Complexity:** Medium
@@ -142,6 +150,7 @@ experience level, employment type, location, public salary range, "why apply"). 
 status management (draft → active → paused → closed → filled).
 
 **Acceptance Criteria:**
+
 - Employer can create and update company profile
 - Employer can create, edit, and manage a job posting
 - Job posting status transitions enforced
@@ -150,6 +159,7 @@ status management (draft → active → paused → closed → filled).
 - All data type-safe end-to-end
 
 #### 5-basic-ai-matching
+
 **PRD Section:** §7.1 Agent Types (Employer Agent), §11 Phase 1 MVP
 **Priority:** P0
 **Complexity:** Large
@@ -160,6 +170,7 @@ triggered via Inngest workflow. No agent-to-agent conversation in MVP — employ
 evaluates static profiles only.
 
 **Acceptance Criteria:**
+
 - Inngest workflow fires when employer activates a job posting
 - Employer agent evaluates all candidate profiles for the posting
 - Match score and reasoning generated and stored
@@ -169,6 +180,7 @@ evaluates static profiles only.
 - Agent respects ethical guardrails (no discrimination on protected characteristics)
 
 #### 6-match-dashboard
+
 **PRD Section:** §6.5 Dashboard & Notifications, §6.6 Match Delivery
 **Priority:** P1
 **Complexity:** Medium
@@ -179,6 +191,7 @@ more info. Match notification system (email via Inngest). When both parties acce
 employer receives job seeker contact info and availability.
 
 **Acceptance Criteria:**
+
 - Job seeker can view, sort, and filter their matches
 - Employer can view, sort, and filter matched candidates
 - Accept/decline actions update match status atomically
@@ -187,6 +200,7 @@ employer receives job seeker contact info and availability.
 - Confidence score (Strong/Good/Potential) displayed on each match card
 
 #### 7-testing-infrastructure
+
 **PRD Section:** §Constitution II (TDD), Roadmap Testing & Quality
 **Priority:** P0 (Constitutional Requirement)
 **Complexity:** Small
@@ -197,6 +211,7 @@ pre-commit hooks, and CI/CD test gates. Playwright E2E setup with critical flow 
 non-negotiable gate.
 
 **Acceptance Criteria:**
+
 - `pnpm test` runs all unit + integration tests
 - `pnpm test:e2e` runs Playwright tests against local dev server
 - Coverage report generated; CI fails if below 80%
@@ -209,6 +224,7 @@ non-negotiable gate.
 ### Phase 2 Features
 
 #### 8-private-negotiation-parameters
+
 **PRD Section:** §6.2 (Private Settings), §6.3 (Private Job Settings)
 **Priority:** P1
 **Complexity:** Medium
@@ -219,6 +235,7 @@ priority attributes. Data stored in separate private tables, never exposed via p
 accessed only by the user's own agent.
 
 **Acceptance Criteria:**
+
 - Private settings saved separately from public profile (separate DB tables)
 - Private settings never appear in any tRPC response accessible to other users
 - Agent reads private settings only via server-side agent context
@@ -226,6 +243,7 @@ accessed only by the user's own agent.
 - Full test coverage of privacy boundary enforcement
 
 #### 9-agent-to-agent-conversations
+
 **PRD Section:** §7.2 Agent-to-Agent Interaction Model
 **Priority:** P0
 **Complexity:** Large
@@ -236,6 +254,7 @@ strategically without disclosing exact values. All conversations logged to Agent
 table. No human intervention until match is surfaced.
 
 **Acceptance Criteria:**
+
 - Inngest workflow handles full conversation lifecycle (resumable, no timeout)
 - Employer Agent initiates; Job Seeker Agent responds
 - Multi-turn evaluation (minimum 3 turns before match decision)
@@ -246,6 +265,7 @@ table. No human intervention until match is surfaced.
 - All agent calls mocked in tests
 
 #### 10-two-way-matching
+
 **PRD Section:** §7.2 (Match Decision), §Constitution VII (Agent Autonomy)
 **Priority:** P0
 **Complexity:** Medium
@@ -255,6 +275,7 @@ agent-to-agent conversations. Adds Job Seeker Agent's active evaluation of oppor
 against private preferences. Match only generated when both agents agree.
 
 **Acceptance Criteria:**
+
 - Job Seeker Agent evaluates job opportunities against private preferences
 - Match generated only when both agents signal consensus
 - Confidence score (Strong/Good/Potential) calculated from alignment depth
@@ -263,6 +284,7 @@ against private preferences. Match only generated when both agents agree.
 - Agent autonomy fully respected (no human approval mid-negotiation)
 
 #### 11-vector-search
+
 **PRD Section:** §10 Technology Stack (pgvector), §7.4 Profile Validation
 **Priority:** P1
 **Complexity:** Medium
@@ -272,6 +294,7 @@ Employer Agent uses vector similarity search to build initial candidate shortlis
 initiating conversations. Semantic search replaces naive keyword filtering.
 
 **Acceptance Criteria:**
+
 - pgvector extension enabled on NeonDB
 - Profile and job posting embeddings generated and stored on create/update
 - Employer Agent uses cosine similarity search for initial candidate discovery
@@ -280,6 +303,7 @@ initiating conversations. Semantic search replaces naive keyword filtering.
 - BYOK key used for embedding generation (OpenAI or Anthropic embeddings)
 
 #### 12-agent-conversation-logs
+
 **PRD Section:** §6.5 Dashboard (conversation logs), §14 Agent Conversation Data
 **Priority:** P1
 **Complexity:** Small
@@ -289,6 +313,7 @@ never shown in logs (redacted at storage time). Users can opt out of their conve
 being used for model improvement.
 
 **Acceptance Criteria:**
+
 - Conversation messages stored in AgentConversation.messages[] field
 - Job seeker can view conversations their agent participated in
 - Employer can view conversations per candidate per job posting
@@ -297,6 +322,7 @@ being used for model improvement.
 - Behind `CONVERSATION_LOGS` feature flag
 
 #### 13-multi-member-employer-accounts
+
 **PRD Section:** §6.3 (EmployerMember), §6.1 (Role Management)
 **Priority:** P1
 **Complexity:** Medium
@@ -306,6 +332,7 @@ postings), Viewer (read-only). Admin can invite team members by email. Role enfo
 level via tRPC protected procedures.
 
 **Acceptance Criteria:**
+
 - Clerk Organizations used for employer multi-tenancy
 - Admin can invite, remove, and assign roles to team members
 - tRPC procedures enforce role-based access for all employer operations
@@ -318,6 +345,7 @@ level via tRPC protected procedures.
 ### Phase 3 Features
 
 #### 14-aggregate-feedback-insights
+
 **PRD Section:** §7.2.1 Aggregate Feedback Insights, §6.5 Dashboard
 **Priority:** P1
 **Complexity:** Large
@@ -328,6 +356,7 @@ Derived from aggregated conversation outcomes — never exposes individual conve
 or the identity of the other party. FeedbackInsights entity regenerated periodically by Inngest.
 
 **Acceptance Criteria:**
+
 - FeedbackInsights generated from aggregated conversation outcomes (not individual disclosures)
 - Insights visible only to the profile owner (private API endpoint)
 - No individual rejection details or opposing party identity revealed
@@ -337,6 +366,7 @@ or the identity of the other party. FeedbackInsights entity regenerated periodic
 - Behind `FEEDBACK_INSIGHTS` feature flag
 
 #### 15-custom-agent-prompting
+
 **PRD Section:** §6.4 Custom Agent Prompting
 **Priority:** P2
 **Complexity:** Medium
@@ -347,6 +377,7 @@ example prompts and guidance. Prompt quality is itself a soft signal of user cap
 Prompt injection detection required.
 
 **Acceptance Criteria:**
+
 - Custom prompt input available in profile settings (both user types)
 - Prompt injected into agent context within a sandboxed section
 - Core guardrails cannot be overridden by custom prompt
@@ -356,6 +387,7 @@ Prompt injection detection required.
 - Behind `CUSTOM_PROMPTS` feature flag
 
 #### 16-subscription-billing
+
 **PRD Section:** §12 Revenue Model
 **Priority:** P0
 **Complexity:** Large
@@ -366,6 +398,7 @@ tier limits. Billing dashboard shows current plan, usage, and payment history. S
 handled via Inngest.
 
 **Acceptance Criteria:**
+
 - Stripe Checkout and Customer Portal integrated
 - Subscription tiers enforce feature flag access
 - Inngest handles Stripe webhook events (payment, cancellation, upgrade, downgrade)
@@ -376,6 +409,7 @@ handled via Inngest.
 - Introductory beta pricing supported via Stripe coupons
 
 #### 17-advanced-employer-dashboard
+
 **PRD Section:** §6.5 Employer Dashboard, §11 Phase 3
 **Priority:** P2
 **Complexity:** Medium
@@ -385,6 +419,7 @@ candidate comparison tool for side-by-side evaluation of matched candidates, bul
 (conversations, in-progress, match rate). Team activity view for admins.
 
 **Acceptance Criteria:**
+
 - Pipeline view shows all active job postings with match counts and status
 - Candidate comparison: side-by-side view of 2–4 candidates with match details
 - Bulk actions: batch status updates, CSV export of matched candidates
@@ -393,6 +428,7 @@ candidate comparison tool for side-by-side evaluation of matched candidates, bul
 - Admin sees team activity log
 
 #### 18-compliance-security
+
 **PRD Section:** §14 Security, Privacy & Compliance
 **Priority:** P1
 **Complexity:** Large
@@ -403,6 +439,7 @@ and abuse detection, DDoS protection, penetration testing prep. Bias audit frame
 agent matching (EEOC compliance). SOC 2 preparation documentation.
 
 **Acceptance Criteria:**
+
 - Users can export all their data (GDPR Article 20) via self-service
 - Users can delete all their data (GDPR Article 17 / CCPA); cascading deletion confirmed
 - Audit log captures all sensitive operations (profile access, key rotation, match decisions)
@@ -451,15 +488,15 @@ Phase 2 complete → Phase 3:
 
 ## Risk Register
 
-| Feature | Risk | Mitigation |
-|---------|------|-----------|
-| 5-basic-ai-matching | LLM cost at scale | BYOK; optimize prompt length; cache repeated evaluations |
-| 9-agent-to-agent-conversations | Private data leakage via agents | Strict sandboxing; red-team testing; agent output filtering |
-| 9-agent-to-agent-conversations | Conversation depth limits | Inngest resumable workflows; configurable max turns |
-| 10-two-way-matching | Poor match quality | Human feedback loops on outcomes; A/B test agent strategies |
-| 14-aggregate-feedback-insights | Inadvertent disclosure | Aggregate only; minimum N conversations before insights shown |
-| 15-custom-agent-prompting | Adversarial prompt injection | Sandbox execution; content filtering; injection detection |
-| 18-compliance-security | EEOC bias in matching | Regular bias audits; diverse test cases; third-party assessment |
+| Feature                        | Risk                            | Mitigation                                                      |
+| ------------------------------ | ------------------------------- | --------------------------------------------------------------- |
+| 5-basic-ai-matching            | LLM cost at scale               | BYOK; optimize prompt length; cache repeated evaluations        |
+| 9-agent-to-agent-conversations | Private data leakage via agents | Strict sandboxing; red-team testing; agent output filtering     |
+| 9-agent-to-agent-conversations | Conversation depth limits       | Inngest resumable workflows; configurable max turns             |
+| 10-two-way-matching            | Poor match quality              | Human feedback loops on outcomes; A/B test agent strategies     |
+| 14-aggregate-feedback-insights | Inadvertent disclosure          | Aggregate only; minimum N conversations before insights shown   |
+| 15-custom-agent-prompting      | Adversarial prompt injection    | Sandbox execution; content filtering; injection detection       |
+| 18-compliance-security         | EEOC bias in matching           | Regular bias audits; diverse test cases; third-party assessment |
 
 ---
 
@@ -492,6 +529,7 @@ Phase 2 complete → Phase 3:
 ## Execution Checklist
 
 ### Pre-Implementation Gates
+
 - [x] PRD reviewed and approved (v1.1)
 - [x] Constitution ratified (v1.0.0)
 - [x] Tech stack locked (see constitution §Technical Constraints)
@@ -500,6 +538,7 @@ Phase 2 complete → Phase 3:
 - [ ] First feature spec started (`/speckit-specify 1-foundation-infrastructure`)
 
 ### Phase 1 Gate (before Phase 2 begins)
+
 - [ ] All 7 MVP features complete and deployed to production
 - [ ] 80%+ test coverage achieved across all MVP code
 - [ ] Zero TypeScript errors in CI
@@ -507,12 +546,14 @@ Phase 2 complete → Phase 3:
 - [ ] Core matching loop demonstrated end-to-end
 
 ### Phase 2 Gate (before Phase 3 begins)
+
 - [ ] All 6 Beta features complete
 - [ ] Agent-to-agent conversations stable in production
 - [ ] Two-way matching producing quality results
 - [ ] Beta user feedback incorporated
 
 ### Phase 3 Gate (launch readiness)
+
 - [ ] All 5 Full Launch features complete
 - [ ] GDPR/CCPA compliance verified by legal review
 - [ ] Penetration test complete, critical findings resolved
@@ -521,5 +562,5 @@ Phase 2 complete → Phase 3:
 
 ---
 
-*This roadmap is the authoritative source for speckit-ralph feature processing.
-Human-readable product roadmap: `docs/ROADMAP.md`*
+_This roadmap is the authoritative source for speckit-ralph feature processing.
+Human-readable product roadmap: `docs/ROADMAP.md`_

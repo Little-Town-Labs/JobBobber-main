@@ -14,6 +14,7 @@
 **Business Model:** Subscription platform ($0-$99/month) where users bring their own LLM API keys (OpenAI/Anthropic). JobBobber has **zero AI infrastructure costs** while users pay only for what they use (~$10-50/month to their LLM provider).
 
 **Market Opportunity:**
+
 - Large and growing market for AI-powered recruiting solutions
 - We're building the first truly AI-native talent platform
 
@@ -29,6 +30,7 @@ JobBobber is a next-generation talent matching platform that leverages AI agents
 LinkedIn has evolved from a professional networking tool into a general-purpose social media platform. The signal-to-noise ratio has deteriorated — personal opinion posts, political commentary, and engagement-bait content now dominate feeds. Evaluating genuine professional talent from a profile alone is nearly impossible.
 
 **The Manual Grind:**
+
 - **Job Seekers:** Spend weeks/months submitting hundreds of applications with ~2% response rate
 - **Employers:** Invest thousands of hours screening applicants where 90%+ are unqualified or misaligned
 - **Both:** Frustrated by inefficiency, wasted time, and poor matches
@@ -37,6 +39,7 @@ LinkedIn has evolved from a professional networking tool into a general-purpose 
 AI agents can handle the screening and negotiation process better than humans — they're objective, tireless, available 24/7, and can evaluate thousands of matches simultaneously while respecting private preferences (salary flexibility, deal-breakers, training willingness) that neither party wants to reveal upfront.
 
 **Key Differentiators:**
+
 - **AI-First Matching**: Agent-to-agent conversations autonomously evaluate fit and negotiate terms
 - **Zero Noise**: No social feed, no opinion posts — purely focused on talent-to-opportunity matching
 - **Private Negotiation**: Both parties set confidential parameters that their AI agents use strategically
@@ -47,18 +50,21 @@ AI agents can handle the screening and negotiation process better than humans �
 ## Features
 
 ### For Job Seekers
+
 - **AI Agent Representation**: Your agent searches, screens, and negotiates on your behalf 24/7
 - **Private Preferences**: Set confidential parameters (min salary, deal-breakers) that your agent uses strategically
 - **Profile Enhancement**: AI helps build comprehensive, accurate profiles from resumes and conversations
 - **Interview-Ready Matches**: Only see opportunities where mutual fit has been verified by AI agents
 
 ### For Employers
+
 - **Automated Screening**: AI agent evaluates all applicants against job requirements and private criteria
 - **Cost Reduction**: Eliminate thousands of hours spent on manual applicant review
 - **Quality Matches**: AI probes beyond surface-level profiles to validate true qualifications
 - **Multi-User Support**: Team-based access with roles (admin, job poster, hiring manager)
 
 ### Core Capabilities
+
 - **Agent-to-Agent Conversations**: Multi-turn negotiations between job seeker and employer agents
 - **Semantic Search**: Vector-based matching for profile-to-job similarity
 - **Custom Agent Prompting**: Organizations can customize their AI agent's evaluation criteria
@@ -70,6 +76,7 @@ AI agents can handle the screening and negotiation process better than humans �
 **Architecture**: Hybrid T3 Stack with separate agent processing service
 
 ### Frontend
+
 - **Framework**: Next.js 15 (React 19)
 - **API Layer**: tRPC (end-to-end type safety)
 - **Styling**: Tailwind CSS
@@ -77,24 +84,28 @@ AI agents can handle the screening and negotiation process better than humans �
 - **UI Components**: shadcn/ui + Radix UI
 
 ### Backend - Main API
+
 - **Runtime**: Node.js 20+
 - **Framework**: Next.js API Routes (tRPC)
 - **Language**: TypeScript
 - **Type Safety**: Full-stack with tRPC + Prisma
 
 ### Backend - Agent Service (Separate)
+
 - **Runtime**: Node.js 20+
 - **Framework**: Express or Fastify
 - **Purpose**: Long-running AI agent conversations
 - **Orchestration**: Inngest workflows
 
 ### Database & Storage
+
 - **Primary Database**: PostgreSQL (NeonDB serverless)
 - **ORM**: Prisma (type-safe queries + migrations)
 - **Vector Database**: pgvector (NeonDB extension)
 - **File Storage**: Vercel Blob Storage (resumes, documents)
 
 ### AI & Agent Infrastructure
+
 - **Development AI**: Anthropic Claude (Claude Sonnet 4.5)
 - **Runtime AI**: **User-provided API keys** (BYOK model - OpenAI, Anthropic, or Cohere)
 - **AI Gateway**: Vercel AI Gateway (user's budgets, monitoring, load-balancing)
@@ -107,6 +118,7 @@ AI agents can handle the screening and negotiation process better than humans �
 - **Vector Similarity**: pgvector cosine similarity
 
 **Bring Your Own Key (BYOK) Model:**
+
 - Users provide their own OpenAI/Anthropic/Cohere API keys
 - JobBobber doesn't pay for AI usage (**zero AI infrastructure costs!**)
 - Users control their AI spending through their own provider accounts
@@ -118,29 +130,33 @@ AI agents can handle the screening and negotiation process better than humans �
 ### Revenue: Subscription-Only
 
 **Free Tier** — $0/month
+
 - 10 AI matches per month
 - Basic chat with your agent
 - Manual job applications
-- *User pays ~$0.50/month to their LLM provider*
+- _User pays ~$0.50/month to their LLM provider_
 
 **Pro Tier** — $29/month
+
 - Unlimited AI matches
 - Advanced agent features
 - Auto-apply to jobs
 - Private negotiation parameters
-- *User pays ~$10-50/month to their LLM provider*
+- _User pays ~$10-50/month to their LLM provider_
 
 **Team Tier** — $99/month (For Employers)
+
 - Everything in Pro
 - 5 team members
 - Custom agent prompts
 - Analytics dashboard
 - Dedicated support
-- *User pays ~$50-200/month to their LLM provider*
+- _User pays ~$50-200/month to their LLM provider_
 
 ### Why BYOK Makes Sense
 
 **Traditional SaaS AI Cost Problem:**
+
 ```
 10,000 users × 100 agent calls/month × $0.05/call
 = $50,000/month in AI costs 😱
@@ -148,6 +164,7 @@ AI agents can handle the screening and negotiation process better than humans �
 ```
 
 **JobBobber with BYOK:**
+
 ```
 JobBobber AI costs: $0/month ✅
 Revenue: Subscription-based (pricing TBD)
@@ -156,12 +173,14 @@ Users: Pay their own LLM provider directly (transparent, controllable)
 ```
 
 **Benefits:**
+
 - **Infinite scaling** without AI cost concerns
 - **Simple pricing** that never changes based on usage
 - **User transparency** (they see exact AI costs in OpenAI dashboard)
 - **Better margins** than any AI-included pricing model
 
 **Agent Architecture Philosophy:**
+
 - Vercel AI SDK for user-facing chat (streaming, `useChat` hooks, function calling)
 - AI SDK tools enable agents to search jobs, retrieve profiles during conversations
 - Inngest workflows for agent-to-agent negotiations (no timeout limits)
@@ -170,6 +189,7 @@ Users: Pay their own LLM provider directly (transparent, controllable)
 - Feature flags control rollout phases (MVP → Beta → Full)
 
 ### Infrastructure
+
 - **Authentication**: Clerk (organizations, teams, RBAC)
 - **Workflow Engine**: Inngest (long-running agent workflows)
 - **Feature Flags**: Vercel Flags SDK (phased rollout, A/B testing)
@@ -179,6 +199,7 @@ Users: Pay their own LLM provider directly (transparent, controllable)
 - **Real-time**: Server-Sent Events (SSE) via tRPC subscriptions
 
 ### Testing
+
 - **Unit Testing**: Vitest
 - **E2E Testing**: Playwright
 - **API Testing**: tRPC testing utilities
@@ -186,6 +207,7 @@ Users: Pay their own LLM provider directly (transparent, controllable)
 - **Test Database**: NeonDB preview branches
 
 ### Development Tools
+
 - **Package Manager**: pnpm
 - **Linting**: ESLint + TypeScript strict mode
 - **Formatting**: Prettier
@@ -515,12 +537,14 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 ## Roadmap & Phased Rollout
 
 ### Phase 1: MVP (Months 1–3)
+
 **Goal:** Prove the core matching loop works.
 
 **Timeline:** 3 months from project start
 **Success Metrics:** TBD (will be defined based on market research)
 
 **Features:**
+
 - ✅ User authentication (Clerk with orgs)
 - ✅ Job seeker profile creation (structured fields + resume upload)
 - ✅ Employer profile and job posting creation
@@ -530,12 +554,14 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 - ✅ BYOK onboarding (users add their API keys)
 
 **Tech Stack:**
+
 - Next.js + tRPC + Prisma (T3 Stack)
 - Vercel AI SDK (user chat)
 - Inngest (basic workflows)
 - Feature flags: All advanced features OFF
 
 **Launch Strategy:**
+
 - Internal team testing (2 weeks)
 - Friends & family (2 weeks)
 - Small beta cohort (50-100 users)
@@ -543,12 +569,14 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 ---
 
 ### Phase 2: Beta (Months 4–6)
+
 **Goal:** Add agent intelligence and two-way matching.
 
 **Timeline:** 3 months after MVP launch
 **Success Metrics:** TBD (will be defined after MVP learnings)
 
 **Features:**
+
 - ✅ Agent-to-agent conversations (multi-turn via Inngest)
 - ✅ Job Seeker Agent evaluates job postings (two-way matching)
 - ✅ Private negotiation parameters (salary, flexibility, deal-breakers)
@@ -557,12 +585,14 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 - ✅ Agent chat with tool calling (job search during conversation)
 
 **Tech Stack:**
+
 - All MVP tech +
 - AI SDK tool calling
 - Inngest multi-turn workflows
 - Feature flags: Agent features enabled for beta users
 
 **Launch Strategy:**
+
 - Gradual rollout: 10% → 25% → 50% → 100%
 - A/B test GPT-4 vs Claude performance
 - Collect user feedback continuously
@@ -570,12 +600,14 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 ---
 
 ### Phase 3: Full Launch (Months 7–12)
+
 **Goal:** Scale and optimize for growth.
 
 **Timeline:** 6 months after beta
 **Success Metrics:** TBD (will be defined based on beta performance)
 
 **Features:**
+
 - ✅ Custom agent prompt templates (employers customize evaluation criteria)
 - ✅ Advanced analytics and reporting
 - ✅ Team features for employers (5+ members, role-based access)
@@ -585,12 +617,14 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 - ✅ API for integrations
 
 **Tech Stack:**
+
 - All Beta tech +
 - Vercel AI Gateway (caching, load-balancing)
 - Advanced feature flags
 - Multi-provider support (OpenAI + Anthropic + Cohere)
 
 **Launch Strategy:**
+
 - Public launch with marketing campaign
 - Content marketing (blog, case studies)
 - Partnership with recruiting agencies
@@ -601,6 +635,7 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 ### Long-Term Vision (Year 2+)
 
 **Features:**
+
 - Industry-specific agent templates (tech, healthcare, finance)
 - AI-powered resume generation
 - Salary negotiation automation
@@ -610,6 +645,7 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 - Global expansion (EU, APAC markets)
 
 **Business Goals:**
+
 - Scale to significant user base
 - Achieve profitability
 - Consider fundraising options (if desired)
@@ -619,6 +655,7 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 > API documentation will be available once endpoints are implemented.
 
 **Planned Key Endpoints:**
+
 - `POST /api/v1/auth/register` - User registration
 - `POST /api/v1/profiles/job-seeker` - Create job seeker profile
 - `POST /api/v1/profiles/employer` - Create employer profile
@@ -633,6 +670,7 @@ pnpm check-all                  # Runs: lint, type-check, test, build
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
 - Code of conduct
 - Development workflow
 - Coding standards
@@ -652,11 +690,13 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 ## Security & Privacy
 
 JobBobber handles sensitive user data including:
+
 - Personal information (names, contact details)
 - Professional history (resumes, work experience)
 - Private negotiation parameters (salary expectations, deal-breakers)
 
 **Security Measures:**
+
 - All data encrypted at rest and in transit
 - Role-based access control (RBAC)
 - Regular security audits
@@ -679,6 +719,147 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 - Built with Claude (Anthropic) for development
 - Powered by AI agents for runtime matching
 - Inspired by the need for a better professional networking experience
+
+---
+
+## Developer Quickstart
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm 10+
+- A [NeonDB](https://neon.tech) project (free tier works)
+- A [Clerk](https://clerk.com) application (free tier works)
+- An [Inngest](https://inngest.com) account (free tier works)
+
+### 1. Clone and install
+
+```bash
+git clone <repo-url> jobbobber
+cd jobbobber
+pnpm install
+```
+
+### 2. Set up environment variables
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in the required values in `.env.local`:
+
+| Variable                            | Where to find it                    |
+| ----------------------------------- | ----------------------------------- |
+| `DATABASE_URL`                      | NeonDB → Connection string (pooled) |
+| `DATABASE_URL_UNPOOLED`             | NeonDB → Connection string (direct) |
+| `CLERK_SECRET_KEY`                  | Clerk → API Keys                    |
+| `CLERK_WEBHOOK_SECRET`              | Clerk → Webhooks → Signing secret   |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk → API Keys                    |
+| `INNGEST_SIGNING_KEY`               | Inngest → App → Keys                |
+| `INNGEST_EVENT_KEY`                 | Inngest → App → Keys                |
+| `ENCRYPTION_KEY`                    | Generate: `openssl rand -hex 32`    |
+| `ENCRYPTION_IV_SALT`                | Any random string                   |
+
+### 3. Set up the database
+
+```bash
+# Apply migrations and generate Prisma client
+pnpm db:migrate
+
+# Seed with development fixture data
+pnpm db:seed
+```
+
+### 4. Start the dev server
+
+```bash
+# Terminal 1: Next.js dev server
+pnpm dev
+
+# Terminal 2: Inngest dev server (for local workflow testing)
+npx inngest-cli@latest dev
+```
+
+App is now running at http://localhost:3000.
+
+### 5. Verify the setup
+
+```bash
+# Run unit tests
+pnpm test
+
+# Run unit tests with coverage (must be ≥80%)
+pnpm test:coverage
+
+# Type check
+pnpm tsc --noEmit
+
+# Lint
+pnpm lint
+```
+
+Hit the health endpoint to confirm the full stack is up:
+
+```bash
+curl http://localhost:3000/api/trpc/health.ping
+# Expected: {"result":{"data":{"status":"ok","timestamp":"..."}}}
+
+curl http://localhost:3000/api/trpc/health.deepCheck
+# Expected: {"result":{"data":{"healthy":true,"checks":[{"name":"database","status":"ok",...}],...}}}
+```
+
+### Project structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/             # Sign-in / sign-up pages
+│   ├── api/
+│   │   ├── trpc/[trpc]/    # tRPC HTTP handler
+│   │   ├── inngest/        # Inngest serve handler
+│   │   └── webhooks/clerk/ # Clerk webhook handler
+│   ├── layout.tsx          # Root layout (ClerkProvider)
+│   └── page.tsx            # Placeholder home
+├── lib/
+│   ├── db.ts               # Prisma singleton
+│   ├── env.ts              # Type-safe environment variables
+│   ├── encryption.ts       # AES-256-GCM for BYOK key storage
+│   ├── flags.ts            # Vercel feature flags
+│   ├── inngest.ts          # Inngest client
+│   └── trpc/               # tRPC client (React + RSC)
+├── server/
+│   ├── api/
+│   │   ├── trpc.ts         # Context + middleware chain
+│   │   ├── root.ts         # Root router
+│   │   └── routers/        # 7 feature routers
+│   └── inngest/functions/  # Inngest function registry
+├── middleware.ts            # Clerk auth middleware
+└── types/                  # Shared TypeScript types
+
+prisma/
+├── schema.prisma           # Database schema (9 models, 10 enums)
+└── seed.ts                 # Development fixture data
+
+tests/
+├── unit/                   # Vitest unit tests (coverage ≥80%)
+├── integration/            # Database integration tests
+└── e2e/                    # Playwright E2E tests
+```
+
+### Available npm scripts
+
+| Script               | Description                              |
+| -------------------- | ---------------------------------------- |
+| `pnpm dev`           | Start Next.js dev server                 |
+| `pnpm build`         | Production build (runs migrations first) |
+| `pnpm test`          | Run unit tests                           |
+| `pnpm test:coverage` | Run tests with coverage report           |
+| `pnpm test:e2e`      | Run Playwright E2E tests                 |
+| `pnpm lint`          | ESLint + TypeScript type check           |
+| `pnpm format`        | Format all files with Prettier           |
+| `pnpm db:migrate`    | Apply pending migrations                 |
+| `pnpm db:seed`       | Seed development data                    |
+| `pnpm db:studio`     | Open Prisma Studio                       |
 
 ---
 

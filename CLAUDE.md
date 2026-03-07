@@ -54,37 +54,44 @@ This file contains cross-project preferences for working with Claude Code. These
 The following skills are globally available and will auto-activate based on task context:
 
 **Frontend & Design (3):**
+
 - `frontend-design` - Distinctive, beautiful frontend designs with thoughtful typography and themes
 - `algorithmic-art` - Generative art using p5.js with seeded randomness and particle systems
 - `canvas-design` - Professional visual art in PNG/PDF formats
 
 **Web Development (3):**
+
 - `web-artifacts-builder` - React apps with Tailwind & shadcn/ui bundled as single HTML files
 - `webapp-testing` - Playwright-based automated testing for local web applications
 - `slack-gif-creator` - Animated GIFs optimized for Slack (1MB limit)
 
 **Document Skills (4):**
+
 - `docx` - Word document creation, editing, and analysis with tracked changes
 - `pdf` - PDF extraction, creation, merging, splitting, and form handling
 - `pptx` - PowerPoint presentations with layouts and professional formatting
 - `xlsx` - Excel spreadsheets with formulas, formatting, and data analysis
 
 **Code Quality (2):**
+
 - `code-review` - Comprehensive code reviews for best practices, security, and performance
 - `commit-message-helper` - Generate conventional commit messages from git diffs
 
 **Enterprise & Communication (3):**
+
 - `brand-guidelines` - Apply Anthropic's official brand colors and typography
 - `internal-comms` - Write internal communications, reports, and announcements
 - `theme-factory` - Apply professional themes to artifacts (10 presets available)
 
 **Development Tools (4):**
+
 - `mcp-builder` - Guide for creating Model Context Protocol (MCP) servers
 - `skill-creator` - Guide for developing new Agent Skills
 - `pod-manager` - Manage Podman/Docker containers and pods
 - `perplexity-research` - Research integration capabilities
 
 **Meta (1):**
+
 - `template-skill` - Starting template for creating new skills
 
 ### Specialized Agents (Task Tool)
@@ -92,17 +99,20 @@ The following skills are globally available and will auto-activate based on task
 The following agents are available via the Task tool for complex, multi-step work:
 
 **Orchestrators (3) - Start Here:**
+
 - `tech-lead-orchestrator` - Analyzes complex projects and coordinates multi-step tasks
 - `project-analyst` - Detects technology stack for intelligent agent routing
 - `team-configurator` - Sets up optimal agent mappings for projects
 
 **Core Team (4) - Cross-cutting Concerns:**
+
 - `code-archaeologist` - Explores and documents unfamiliar/legacy codebases
 - `code-reviewer` - Rigorous security-aware reviews with severity-tagged reports
 - `performance-optimizer` - Identifies bottlenecks and optimizes for scale
 - `documentation-specialist` - Creates comprehensive technical documentation
 
 **Universal Experts (5) - Framework-Agnostic:**
+
 - `api-architect` - RESTful design, GraphQL schemas, and API contracts
 - `backend-developer` - Polyglot backend development across languages
 - `frontend-developer` - Modern web technologies and responsive design
@@ -110,9 +120,11 @@ The following agents are available via the Task tool for complex, multi-step wor
 - `serverless-edge-expert` - Serverless and edge computing patterns
 
 **Specialized - Database (1):**
+
 - `drizzle-orm-expert` - Drizzle ORM for type-safe database access in TypeScript
 
 **Specialized - Python (9):**
+
 - `python-expert` - Modern Python 3.12+ development
 - `django-expert` - Complete Django 5.0+ web development
 - `fastapi-expert` - FastAPI 0.115+ high-performance APIs
@@ -124,24 +136,29 @@ The following agents are available via the Task tool for complex, multi-step wor
 - `web-scraping-expert` - Web scraping, data extraction, and automation
 
 **Specialized - Django (3):**
+
 - `django-backend-expert` - Models, views, services, Django conventions
 - `django-api-developer` - Django REST Framework and GraphQL
 - `django-orm-expert` - Query optimization and database performance
 
 **Specialized - Laravel (2):**
+
 - `laravel-backend-expert` - Laravel MVC, services, and Eloquent patterns
 - `laravel-eloquent-expert` - Advanced ORM optimization and queries
 
 **Specialized - Rails (3):**
+
 - `rails-backend-expert` - Full-stack Rails development
 - `rails-api-developer` - RESTful APIs and GraphQL with Rails
 - `rails-activerecord-expert` - Complex queries and database optimization
 
 **Specialized - React (2):**
+
 - `react-component-architect` - Modern React patterns, hooks, and component design
 - `react-nextjs-expert` - Next.js SSR, SSG, ISR, and full-stack applications
 
 **Specialized - Vue (3):**
+
 - `vue-component-architect` - Vue 3 Composition API and component patterns
 - `vue-nuxt-expert` - Nuxt SSR, SSG, and full-stack applications
 - `vue-state-manager` - Pinia and Vuex state architecture
@@ -153,6 +170,7 @@ The following agents are available via the Task tool for complex, multi-step wor
 When using the Task tool to invoke subagents, choose the appropriate model based on task complexity:
 
 **Opus (claude-opus-4-5) - Complex Problem Solving:**
+
 - Deep architectural decisions requiring extensive reasoning
 - Complex refactoring across multiple files
 - Debugging intricate, multi-layered issues
@@ -161,6 +179,7 @@ When using the Task tool to invoke subagents, choose the appropriate model based
 - Performance optimization with multiple trade-offs
 
 **Sonnet (claude-sonnet-4-5) - General Orchestration (Preferred):**
+
 - Standard feature implementation
 - Code reviews and analysis
 - API design and implementation
@@ -170,6 +189,7 @@ When using the Task tool to invoke subagents, choose the appropriate model based
 - **This is the preferred model for most orchestration and development work**
 
 **Haiku (claude-haiku-4) - Straightforward Tasks:**
+
 - Simple CRUD operations
 - Straightforward bug fixes
 - Code formatting and linting
@@ -179,6 +199,7 @@ When using the Task tool to invoke subagents, choose the appropriate model based
 - Quick analysis of small code sections
 
 **Model Selection Examples:**
+
 - Complex optimization → `model: "opus"` with `performance-optimizer`
 - Standard feature → `model: "sonnet"` with `vue-component-architect` (default, preferred)
 - Simple fix → `model: "haiku"` with `code-reviewer`
@@ -190,12 +211,14 @@ When using the Task tool to invoke subagents, choose the appropriate model based
 Ralph is a globally installed system that enables continuous autonomous development cycles with Claude Code. It's available as a set of CLI commands from any directory.
 
 **Core Commands:**
+
 - `ralph` - Main autonomous development loop with intelligent exit detection
 - `ralph-setup <project>` - Initialize new Ralph projects with templates
 - `ralph-import <file> [project]` - Convert PRD/specs to Ralph format
 - `ralph-monitor` - Live monitoring dashboard for tracking progress
 
 **Key Features:**
+
 - **Autonomous loops** - Continuously executes Claude Code until project completion
 - **Intelligent exit detection** - Automatically stops when objectives are complete
 - **Rate limiting** - Built-in API call management (100 calls/hour, configurable)
@@ -205,6 +228,7 @@ Ralph is a globally installed system that enables continuous autonomous developm
 - **5-hour API limit handling** - Detects Claude's usage limit and prompts for action
 
 **Common Usage:**
+
 ```bash
 # Create new Ralph project
 ralph-setup my-project
@@ -224,6 +248,7 @@ ralph --reset-session  # Reset session state manually
 ```
 
 **Project Structure:**
+
 - `PROMPT.md` - Main development instructions for Ralph
 - `@fix_plan.md` - Prioritized task list
 - `specs/` - Project specifications
@@ -269,15 +294,16 @@ When starting work in a new project, **always consult these files first** to und
 
 **File Purpose Summary:**
 
-| File                      | Purpose                              | Format     | Audience        |
-|---------------------------|--------------------------------------|------------|-----------------|
-| `CLAUDE.md`               | Cross-project preferences & routing  | Markdown   | Claude (global) |
-| `README.md`               | Project overview & architecture      | Markdown   | Humans & Claude |
-| `project-config.json`     | Structured project metadata          | JSON       | Claude (routing)|
-| `.claude/rules.md`        | Project-specific instructions        | Markdown   | Claude (local)  |
-| `.claude/settings.json`   | Technical configuration              | JSON       | Claude Code     |
+| File                    | Purpose                             | Format   | Audience         |
+| ----------------------- | ----------------------------------- | -------- | ---------------- |
+| `CLAUDE.md`             | Cross-project preferences & routing | Markdown | Claude (global)  |
+| `README.md`             | Project overview & architecture     | Markdown | Humans & Claude  |
+| `project-config.json`   | Structured project metadata         | JSON     | Claude (routing) |
+| `.claude/rules.md`      | Project-specific instructions       | Markdown | Claude (local)   |
+| `.claude/settings.json` | Technical configuration             | JSON     | Claude Code      |
 
 **Workflow:**
+
 1. Read README.md to understand what the project is
 2. Check project-config.json to know which agents to use
 3. Review .claude/rules.md for project-specific patterns (if it exists)

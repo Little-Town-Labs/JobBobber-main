@@ -23,11 +23,7 @@
       "inngest@3 (workflow orchestration)",
       "zod (validation)"
     ],
-    "database": [
-      "postgresql (neondb serverless)",
-      "prisma@5 (ORM)",
-      "pgvector (vector extension)"
-    ],
+    "database": ["postgresql (neondb serverless)", "prisma@5 (ORM)", "pgvector (vector extension)"],
     "infrastructure": [
       "clerk (auth + organizations)",
       "inngest (serverless workflows)",
@@ -50,11 +46,7 @@
       "inngest@3 (agent workflow orchestration)",
       "zod (structured output validation)"
     ],
-    "testing": [
-      "vitest (unit + integration)",
-      "playwright (e2e)",
-      "testing-library-react"
-    ],
+    "testing": ["vitest (unit + integration)", "playwright (e2e)", "testing-library-react"],
     "monitoring": [
       "sentry (error tracking)",
       "vercel-analytics (performance)",
@@ -74,15 +66,8 @@
       "tech-lead-orchestrator (for complex multi-step tasks)",
       "project-analyst (for tech stack detection)"
     ],
-    "frontend": [
-      "react-component-architect",
-      "react-nextjs-expert",
-      "tailwind-css-expert"
-    ],
-    "backend_api": [
-      "backend-developer",
-      "api-architect"
-    ],
+    "frontend": ["react-component-architect", "react-nextjs-expert", "tailwind-css-expert"],
+    "backend_api": ["backend-developer", "api-architect"],
     "database": [
       "NOTE: Prisma doesn't have dedicated agent",
       "backend-developer (for Prisma queries)",
@@ -92,15 +77,8 @@
       "backend-developer (for Inngest workflows)",
       "NOTE: Custom agent patterns for LLM integration"
     ],
-    "review": [
-      "code-reviewer",
-      "security-reviewer",
-      "performance-optimizer"
-    ],
-    "orchestration": [
-      "tech-lead-orchestrator",
-      "project-analyst"
-    ]
+    "review": ["code-reviewer", "security-reviewer", "performance-optimizer"],
+    "orchestration": ["tech-lead-orchestrator", "project-analyst"]
   },
   "spec_kit": {
     "workflow": [

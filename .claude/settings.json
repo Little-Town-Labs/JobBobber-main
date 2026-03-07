@@ -32,12 +32,7 @@
       "Bash(wget *)",
       "WebFetch"
     ],
-    "ask": [
-      "Bash(git push *)",
-      "Bash(pnpm publish)",
-      "Bash(vercel *)",
-      "Bash(gh *)"
-    ]
+    "ask": ["Bash(git push *)", "Bash(pnpm publish)", "Bash(vercel *)", "Bash(gh *)"]
   },
   "env": {
     "NODE_ENV": "development",
@@ -59,9 +54,6 @@
   "sandbox": {
     "enabled": false,
     "autoAllowBashIfSandboxed": true,
-    "excludedCommands": [
-      "docker",
-      "docker-compose"
-    ]
+    "excludedCommands": ["docker", "docker-compose"]
   }
 }

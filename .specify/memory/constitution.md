@@ -33,6 +33,7 @@ Dependencies:
 Full-stack type safety from database to UI with zero tolerance for type bypasses.
 
 **Rules:**
+
 - ALL data flows MUST be type-safe: Database (Prisma) → API (tRPC) → UI (TypeScript)
 - Zod schemas REQUIRED for all external inputs (user input, LLM responses, API calls)
 - NO `any` types except in verified third-party integration boundaries
@@ -45,6 +46,7 @@ Full-stack type safety from database to UI with zero tolerance for type bypasses
 TDD workflow is mandatory for all feature development.
 
 **Rules:**
+
 - Tests written FIRST, then implementation
 - Red-Green-Refactor cycle strictly enforced
 - Minimum 80% code coverage (unit + integration)
@@ -58,6 +60,7 @@ TDD workflow is mandatory for all feature development.
 Users provide their own LLM API keys. JobBobber NEVER pays for AI usage.
 
 **Rules:**
+
 - ALL user-facing AI features MUST use user-provided API keys
 - API keys MUST be encrypted at rest (AES-256)
 - User-scoped encryption (separate keys per user)
@@ -72,6 +75,7 @@ Users provide their own LLM API keys. JobBobber NEVER pays for AI usage.
 Prefer explicit, debuggable code over heavy frameworks and abstractions.
 
 **Rules:**
+
 - NO LangChain, LangGraph, or similar heavy AI frameworks
 - Use Vercel AI SDK + direct OpenAI SDK calls
 - Custom agent logic over framework magic
@@ -85,6 +89,7 @@ Prefer explicit, debuggable code over heavy frameworks and abstractions.
 Protect user data and private negotiation parameters.
 
 **Rules:**
+
 - Private negotiation parameters (salary, deal-breakers) MUST NEVER be exposed in public APIs
 - Separate data models for public vs private fields
 - All API endpoints MUST validate authorization (tRPC protected procedures)
@@ -99,6 +104,7 @@ Protect user data and private negotiation parameters.
 All new features deployed progressively using Vercel Flags SDK.
 
 **Rules:**
+
 - ALL beta/experimental features behind feature flags
 - MVP → Beta → Full launch progression strictly followed
 - No "big bang" releases
@@ -113,6 +119,7 @@ All new features deployed progressively using Vercel Flags SDK.
 AI agents operate autonomously without human intervention until interview stage.
 
 **Rules:**
+
 - Agent-to-agent conversations MUST NOT require human approval mid-negotiation
 - Private parameters used strategically by agents
 - Multi-turn negotiations handled by Inngest (resumable, no timeout limits)
@@ -128,24 +135,28 @@ AI agents operate autonomously without human intervention until interview stage.
 The following stack decisions are locked for consistency:
 
 **Frontend:**
+
 - Next.js 15 + React 19 (App Router)
 - tRPC 11 (type-safe API)
 - Tailwind CSS 3 + shadcn/ui
 - TypeScript 5 (strict mode)
 
 **Backend:**
+
 - Next.js API Routes (tRPC server)
 - Prisma 5 (ORM)
 - NeonDB (PostgreSQL + pgvector)
 - Inngest 3 (workflow orchestration)
 
 **AI Infrastructure:**
+
 - Vercel AI SDK 3 (user chat + tools)
 - Vercel AI Gateway (unified API)
 - BYOK model (user-provided keys)
 - Zod (structured output validation)
 
 **Infrastructure:**
+
 - Clerk (auth + organizations)
 - Vercel (hosting + deployment)
 - Vercel Flags SDK (feature rollout)
@@ -156,6 +167,7 @@ The following stack decisions are locked for consistency:
 ### Code Organization
 
 **Rules:**
+
 - Feature-based organization (colocate related files)
 - One tRPC router per domain entity
 - One Inngest function per workflow
@@ -167,6 +179,7 @@ The following stack decisions are locked for consistency:
 ### AI Agent Code
 
 **Rules:**
+
 - Agent prompts stored as typed functions (not strings)
 - All agent outputs validated with Zod schemas
 - LLM API calls mocked in tests (NO real API calls in test suite)
@@ -179,6 +192,7 @@ The following stack decisions are locked for consistency:
 ### Code Review Requirements
 
 **Before ANY pull request can merge:**
+
 - [ ] All tests passing (80%+ coverage)
 - [ ] TypeScript compilation successful (zero errors)
 - [ ] ESLint passing (zero errors)
@@ -190,6 +204,7 @@ The following stack decisions are locked for consistency:
 ### Agent Code Review
 
 **Additional requirements for AI agent code:**
+
 - [ ] Zod schemas defined for all agent outputs
 - [ ] LLM calls properly mocked in tests
 - [ ] Private parameters never exposed in logs or responses
@@ -199,6 +214,7 @@ The following stack decisions are locked for consistency:
 ### Feature Release Process
 
 **Progressive rollout checklist:**
+
 1. Feature developed behind feature flag (OFF by default)
 2. Tests passing with 80%+ coverage
 3. Code review approved
@@ -218,6 +234,7 @@ This constitution supersedes all other development practices and guidelines. Whe
 ### Amendment Process
 
 **To amend this constitution:**
+
 1. Propose amendment with clear rationale
 2. Update constitution file with version bump
 3. Document impact on dependent templates
@@ -226,6 +243,7 @@ This constitution supersedes all other development practices and guidelines. Whe
 6. Commit with message: `docs: amend constitution to vX.Y.Z (summary)`
 
 **Version Bump Rules:**
+
 - MAJOR (X.0.0): Removed or redefined core principles, breaking governance changes
 - MINOR (X.Y.0): New principles added, material expansions to guidance
 - PATCH (X.Y.Z): Clarifications, wording improvements, typo fixes
@@ -233,6 +251,7 @@ This constitution supersedes all other development practices and guidelines. Whe
 ### Compliance Verification
 
 **Every pull request MUST verify:**
+
 - [ ] Follows type safety principle (no any types, Zod validation)
 - [ ] Includes tests (80%+ coverage)
 - [ ] Uses BYOK model (no platform API keys)
@@ -241,6 +260,7 @@ This constitution supersedes all other development practices and guidelines. Whe
 - [ ] Follows minimal abstraction principle (no heavy frameworks)
 
 **Architecture review REQUIRED for:**
+
 - Changes to core tech stack (database, framework, AI provider)
 - New external dependencies
 - New third-party API integrations
@@ -249,6 +269,7 @@ This constitution supersedes all other development practices and guidelines. Whe
 ### Runtime Development Guidance
 
 For day-to-day development patterns and examples, reference:
+
 - **Primary**: `.claude/rules.md` (T3 + AI agent patterns)
 - **Secondary**: `docs/AGENT_ARCHITECTURE.md` (agent system design)
 - **Configuration**: `project-config.json` (tech stack and commands)

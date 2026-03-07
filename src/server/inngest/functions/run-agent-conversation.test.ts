@@ -252,3 +252,229 @@ describe("buildConversationWorkflow", () => {
     expect(mockDb.agentConversation.update).toHaveBeenCalled()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Task 3.1 — Match Creation with Evaluations
+// ---------------------------------------------------------------------------
+
+describe("match creation with evaluations (Task 3.1)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // Helper: build a valid agent evaluation
+  function makeEvaluation(
+    role: "employer_agent" | "seeker_agent",
+    recommendation: "MATCH" | "NO_MATCH",
+    overallScore = 80,
+  ) {
+    return {
+      agentRole: role,
+      overallScore,
+      recommendation,
+      reasoning: `This is a ${recommendation === "MATCH" ? "good" : "poor"} fit based on thorough evaluation of all factors`,
+      dimensions: [
+        {
+          name: "skills_alignment" as const,
+          score: overallScore,
+          reasoning: "Skills are well aligned with requirements",
+        },
+        {
+          name: "experience_fit" as const,
+          score: overallScore - 5,
+          reasoning: "Experience level matches expectations",
+        },
+        {
+          name: "compensation_alignment" as const,
+          score: overallScore + 5,
+          reasoning: "Compensation range is acceptable",
+        },
+        {
+          name: "culture_fit" as const,
+          score: overallScore - 10,
+          reasoning: "Culture alignment looks positive",
+        },
+      ],
+    }
+  }
+
+  // Helper: mock generateObject to return specific agent outputs per turn
+  async function mockAgentResponses(responses: Array<{ decision: string; evaluation?: unknown }>) {
+    const { generateObject } = vi.mocked(await import("ai"))
+    let callIndex = 0
+    generateObject.mockImplementation(async () => {
+      const resp = responses[callIndex] ?? responses[responses.length - 1]
+      callIndex++
+      return {
+        object: {
+          content: `Agent response for turn ${callIndex}. This is a detailed analysis of the candidate.`,
+          phase: "decision",
+          decision: resp.decision,
+          evaluation: resp.evaluation,
+        },
+      } as never
+    })
+  }
+
+  function setupFullMocks() {
+    mockDb.agentConversation.findFirst.mockResolvedValue(null)
+    mockDb.jobPosting.findUnique.mockResolvedValue(mockPosting as never)
+    mockDb.jobSeeker.findUnique.mockResolvedValue(mockSeeker as never)
+    mockDb.employer.findUnique.mockResolvedValue(mockEmployer as never)
+    mockDb.seekerSettings.findUnique.mockResolvedValue(mockSeekerSettings as never)
+    mockDb.jobSettings.findUnique.mockResolvedValue(mockJobSettings as never)
+    mockDb.agentConversation.create.mockResolvedValue({ id: "conv_1" } as never)
+    mockDb.agentConversation.update.mockResolvedValue({ id: "conv_1" } as never)
+    mockDb.match.create.mockResolvedValue({ id: "match_1" } as never)
+    vi.mocked(decrypt).mockResolvedValue("sk-decrypted-key")
+  }
+
+  it(
+    "creates Match with evaluationData when both agents signal MATCH",
+    { timeout: 30_000 },
+    async () => {
+      setupFullMocks()
+      const empEval = makeEvaluation("employer_agent", "MATCH", 85)
+      const seekEval = makeEvaluation("seeker_agent", "MATCH", 78)
+
+      await mockAgentResponses([
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "MATCH", evaluation: empEval },
+        { decision: "MATCH", evaluation: seekEval },
+      ])
+
+      const step = createMockStep()
+      const handler = buildConversationWorkflow()
+      await handler({
+        event: { data: { jobPostingId: "jp_1", seekerId: "seeker_1", employerId: "emp_1" } },
+        step,
+      } as never)
+
+      expect(mockDb.match.create).toHaveBeenCalledTimes(1)
+      const matchData = mockDb.match.create.mock.calls[0][0].data
+      expect(matchData.evaluationData).not.toBeNull()
+      expect(matchData.evaluationData).toHaveProperty("employerEvaluation")
+      expect(matchData.evaluationData).toHaveProperty("seekerEvaluation")
+      expect(matchData.evaluationData).toHaveProperty("confidenceInputs")
+    },
+  )
+
+  it(
+    "derives confidenceScore from dimension averages, not message count",
+    { timeout: 30_000 },
+    async () => {
+      setupFullMocks()
+      // High scores → STRONG confidence
+      const empEval = makeEvaluation("employer_agent", "MATCH", 90)
+      const seekEval = makeEvaluation("seeker_agent", "MATCH", 85)
+
+      await mockAgentResponses([
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "MATCH", evaluation: empEval },
+        { decision: "MATCH", evaluation: seekEval },
+      ])
+
+      const step = createMockStep()
+      const handler = buildConversationWorkflow()
+      await handler({
+        event: { data: { jobPostingId: "jp_1", seekerId: "seeker_1", employerId: "emp_1" } },
+        step,
+      } as never)
+
+      const matchData = mockDb.match.create.mock.calls[0][0].data
+      // Average of scores ~87.5 → STRONG (≥75)
+      expect(matchData.confidenceScore).toBe("STRONG")
+    },
+  )
+
+  it(
+    "extracts employerSummary and seekerSummary from evaluation reasoning",
+    { timeout: 30_000 },
+    async () => {
+      setupFullMocks()
+      const empEval = makeEvaluation("employer_agent", "MATCH", 80)
+      const seekEval = makeEvaluation("seeker_agent", "MATCH", 75)
+
+      await mockAgentResponses([
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "CONTINUE" },
+        { decision: "MATCH", evaluation: empEval },
+        { decision: "MATCH", evaluation: seekEval },
+      ])
+
+      const step = createMockStep()
+      const handler = buildConversationWorkflow()
+      await handler({
+        event: { data: { jobPostingId: "jp_1", seekerId: "seeker_1", employerId: "emp_1" } },
+        step,
+      } as never)
+
+      const matchData = mockDb.match.create.mock.calls[0][0].data
+      expect(matchData.employerSummary).toContain("good fit")
+      expect(matchData.seekerSummary).toContain("good fit")
+    },
+  )
+
+  it("does NOT create Match when either agent signals NO_MATCH", { timeout: 30_000 }, async () => {
+    setupFullMocks()
+    const empEval = makeEvaluation("employer_agent", "NO_MATCH", 30)
+
+    await mockAgentResponses([
+      { decision: "CONTINUE" },
+      { decision: "CONTINUE" },
+      { decision: "NO_MATCH", evaluation: empEval },
+    ])
+
+    const step = createMockStep()
+    const handler = buildConversationWorkflow()
+    const result = await handler({
+      event: { data: { jobPostingId: "jp_1", seekerId: "seeker_1", employerId: "emp_1" } },
+      step,
+    } as never)
+
+    expect(mockDb.match.create).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ status: "COMPLETED_NO_MATCH" })
+  })
+
+  it("populates GOOD confidence for moderate dimension scores", { timeout: 30_000 }, async () => {
+    setupFullMocks()
+    // Moderate scores → GOOD confidence (≥55 but <75)
+    const empEval = makeEvaluation("employer_agent", "MATCH", 60)
+    const seekEval = makeEvaluation("seeker_agent", "MATCH", 58)
+
+    await mockAgentResponses([
+      { decision: "CONTINUE" },
+      { decision: "CONTINUE" },
+      { decision: "CONTINUE" },
+      { decision: "CONTINUE" },
+      { decision: "CONTINUE" },
+      { decision: "CONTINUE" },
+      { decision: "MATCH", evaluation: empEval },
+      { decision: "MATCH", evaluation: seekEval },
+    ])
+
+    const step = createMockStep()
+    const handler = buildConversationWorkflow()
+    await handler({
+      event: { data: { jobPostingId: "jp_1", seekerId: "seeker_1", employerId: "emp_1" } },
+      step,
+    } as never)
+
+    const matchData = mockDb.match.create.mock.calls[0][0].data
+    expect(matchData.confidenceScore).toBe("GOOD")
+  })
+})

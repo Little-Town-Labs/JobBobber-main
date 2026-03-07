@@ -330,6 +330,9 @@ model Match {
   employerStatus     MatchPartyStatus @default(PENDING)
   seekerContactInfo  Json?
   seekerAvailability Json?
+  employerSummary    String?
+  seekerSummary      String?
+  evaluationData     Json?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 

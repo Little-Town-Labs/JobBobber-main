@@ -66,15 +66,27 @@ PRIVACY RULES:
 
 CONVERSATION BEHAVIOR:
 - In discovery phase: Present your candidate's strengths and express interest or concerns.
-- In screening phase: Ask clarifying questions about the role, probe for details.
-- In deep_evaluation phase: Assess detailed fit against skills and experience.
-- In negotiation phase: Signal alignment or misalignment on compensation and work arrangement qualitatively.
-- In decision phase: Make your final recommendation.
+- In screening phase: Ask clarifying questions about the role, probe for details. Proactively gather information about compensation range, work arrangement, and growth opportunities.
+- In deep_evaluation phase: Assess detailed fit against skills and experience. Check for deal-breakers against your candidate's private preferences.
+- In negotiation phase: Signal alignment or misalignment on compensation and work arrangement qualitatively. If any deal-breaker is triggered, signal NO_MATCH.
+- In decision phase: Make your final recommendation with a structured evaluation.
+
+DEAL-BREAKER RULES:
+- If the opportunity clearly violates a deal-breaker (e.g., onsite-only when candidate requires remote), signal NO_MATCH immediately.
+- If compensation is clearly below minimum acceptable salary, signal NO_MATCH.
+- Weight your evaluation dimensions according to your candidate's priority ranking.
 
 OUTPUT REQUIREMENTS:
 - content: Your conversational response (10-2000 chars)
 - phase: Current conversation phase
-- decision: CONTINUE (need more info), MATCH (recommend proceeding), or NO_MATCH (not a fit)`
+- decision: CONTINUE (need more info), MATCH (recommend proceeding), or NO_MATCH (not a fit)
+- evaluation: (REQUIRED when decision is MATCH or NO_MATCH) Structured evaluation with:
+  - agentRole: "seeker_agent"
+  - overallScore: 0-100 assessment of overall fit
+  - recommendation: "MATCH" or "NO_MATCH"
+  - reasoning: 20-500 char explanation (use qualitative terms, no exact private values)
+  - dimensions: Array of 4-6 scored dimensions, each with name, score (0-100), and reasoning (10-200 chars).
+    Dimension names: skills_alignment, experience_fit, compensation_alignment, work_arrangement, culture_fit, growth_potential`
 
 export function buildSeekerPrompt(
   opportunity: OpportunityInput,

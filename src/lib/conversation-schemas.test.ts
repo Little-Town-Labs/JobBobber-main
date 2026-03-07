@@ -84,9 +84,33 @@ describe("agentTurnOutputSchema", () => {
   })
 
   it("accepts all decision types", () => {
-    for (const decision of ["MATCH", "NO_MATCH", "CONTINUE"] as const) {
-      expect(() => agentTurnOutputSchema.parse({ ...validOutput, decision })).not.toThrow()
+    const evaluation = {
+      agentRole: "employer_agent" as const,
+      overallScore: 80,
+      recommendation: "MATCH" as const,
+      reasoning: "Strong candidate with relevant experience and skills",
+      dimensions: [
+        { name: "skills_alignment" as const, score: 85, reasoning: "Good match on core skills" },
+        { name: "experience_fit" as const, score: 75, reasoning: "Sufficient experience level" },
+        { name: "culture_fit" as const, score: 80, reasoning: "Good cultural alignment" },
+        { name: "growth_potential" as const, score: 70, reasoning: "Room for development" },
+      ],
     }
+    // CONTINUE doesn't need evaluation
+    expect(() =>
+      agentTurnOutputSchema.parse({ ...validOutput, decision: "CONTINUE" }),
+    ).not.toThrow()
+    // MATCH and NO_MATCH require evaluation
+    expect(() =>
+      agentTurnOutputSchema.parse({ ...validOutput, decision: "MATCH", evaluation }),
+    ).not.toThrow()
+    expect(() =>
+      agentTurnOutputSchema.parse({
+        ...validOutput,
+        decision: "NO_MATCH",
+        evaluation: { ...evaluation, recommendation: "NO_MATCH" },
+      }),
+    ).not.toThrow()
   })
 
   it("rejects content shorter than 10 chars", () => {

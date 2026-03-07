@@ -17,8 +17,12 @@ import {
 } from "@/server/agents/conversation-orchestrator"
 import { type PostingInput, type CandidateInput } from "@/server/agents/employer-agent"
 import { type OpportunityInput, type SeekerPrivateSettings } from "@/server/agents/seeker-agent"
+import { z } from "zod"
 import type { ConversationMessage, ConversationPhase } from "@/lib/conversation-schemas"
+import { agentEvaluationSchema } from "@/lib/conversation-schemas"
+import { computeConfidence } from "@/lib/matching-schemas"
 import type { PrivateValues } from "@/server/agents/privacy-filter"
+import { filterPrivateValues } from "@/server/agents/privacy-filter"
 
 const MAX_TURNS = 10
 const MIN_TURNS_BEFORE_DECISION = 3
@@ -59,7 +63,14 @@ PRIVACY RULES:
 OUTPUT REQUIREMENTS:
 - content: Your conversational response (10-2000 chars)
 - phase: Current conversation phase (${phase})
-- decision: CONTINUE (need more info), MATCH (recommend proceeding), or NO_MATCH (not a fit)`
+- decision: CONTINUE (need more info), MATCH (recommend proceeding), or NO_MATCH (not a fit)
+- evaluation: (REQUIRED when decision is MATCH or NO_MATCH) Structured evaluation with:
+  - agentRole: "employer_agent"
+  - overallScore: 0-100 assessment of overall fit
+  - recommendation: "MATCH" or "NO_MATCH"
+  - reasoning: 20-500 char explanation (qualitative terms, no exact figures)
+  - dimensions: Array of 4-6 scored dimensions, each with name, score (0-100), and reasoning (10-200 chars).
+    Dimension names: skills_alignment, experience_fit, compensation_alignment, work_arrangement, culture_fit, growth_potential`
 
     const prompt = `## Job Posting
 ${JSON.stringify(posting, null, 2)}
@@ -117,6 +128,23 @@ function makeSeekerAgentFn(profile: CandidateInput, privateSettings: SeekerPriva
 }
 
 // ---------------------------------------------------------------------------
+// Status derivation helper
+// ---------------------------------------------------------------------------
+
+function deriveFinalStatus(
+  messages: ConversationMessage[],
+  lastTerminated: boolean,
+): "COMPLETED_MATCH" | "COMPLETED_NO_MATCH" | "TERMINATED" {
+  if (lastTerminated) return "TERMINATED"
+  const lastEmployerMsg = [...messages].reverse().find((m) => m.role === "employer_agent")
+  const lastSeekerMsg = [...messages].reverse().find((m) => m.role === "seeker_agent")
+  const empDec = lastEmployerMsg?.decision ?? "CONTINUE"
+  const seekDec = lastSeekerMsg?.decision ?? "CONTINUE"
+  if (empDec === "MATCH" && seekDec === "MATCH") return "COMPLETED_MATCH"
+  return "COMPLETED_NO_MATCH"
+}
+
+// ---------------------------------------------------------------------------
 // Workflow handler (exported for testing)
 // ---------------------------------------------------------------------------
 
@@ -131,11 +159,12 @@ export function buildConversationWorkflow() {
       sendEvent: (event: unknown) => Promise<void>
     }
   }) => {
-    const { jobPostingId, seekerId, employerId } = event.data as {
-      jobPostingId: string
-      seekerId: string
-      employerId: string
-    }
+    const eventSchema = z.object({
+      jobPostingId: z.string().min(1),
+      seekerId: z.string().min(1),
+      employerId: z.string().min(1),
+    })
+    const { jobPostingId, seekerId, employerId } = eventSchema.parse(event.data)
 
     // Step 1: Check for duplicates and load context
     const context = await step.run("load-context", async () => {
@@ -263,7 +292,8 @@ export function buildConversationWorkflow() {
     })) as { id: string }
 
     // Step 3-N: Execute turns
-    // State is derived from step results (replay-safe — no mutable vars across steps)
+    // turnResults accumulates across steps; on Inngest replay, prior step.run calls
+    // return memoized results so this array is rebuilt identically.
     const turnResults: { message: ConversationMessage; terminated: boolean }[] = []
 
     for (let turn = 0; turn < MAX_TURNS; turn++) {
@@ -342,24 +372,7 @@ export function buildConversationWorkflow() {
       const allMessages = turnResults.map((r) => r.message)
       const lastTurn = turnResults[turnResults.length - 1]
 
-      // Determine final status from messages
-      let finalStatus: "COMPLETED_MATCH" | "COMPLETED_NO_MATCH" | "TERMINATED" =
-        "COMPLETED_NO_MATCH"
-
-      if (lastTurn?.terminated) {
-        finalStatus = "TERMINATED"
-      } else {
-        const lastEmployerMsg = [...allMessages].reverse().find((m) => m.role === "employer_agent")
-        const lastSeekerMsg = [...allMessages].reverse().find((m) => m.role === "seeker_agent")
-        const empDec = lastEmployerMsg?.decision ?? "CONTINUE"
-        const seekDec = lastSeekerMsg?.decision ?? "CONTINUE"
-
-        if (empDec === "MATCH" && seekDec === "MATCH") {
-          finalStatus = "COMPLETED_MATCH"
-        } else if (empDec === "NO_MATCH" || seekDec === "NO_MATCH") {
-          finalStatus = "COMPLETED_NO_MATCH"
-        }
-      }
+      const finalStatus = deriveFinalStatus(allMessages, !!lastTurn?.terminated)
 
       const outcome =
         finalStatus === "COMPLETED_MATCH"
@@ -379,12 +392,65 @@ export function buildConversationWorkflow() {
       })
 
       if (finalStatus === "COMPLETED_MATCH") {
-        const confidence =
-          allMessages.length <= 4
-            ? ("STRONG" as const)
-            : allMessages.length <= 7
-              ? ("GOOD" as const)
-              : ("POTENTIAL" as const)
+        // Extract evaluations from final decision messages
+        const lastEmployerDecisionMsg = [...allMessages]
+          .reverse()
+          .find((m) => m.role === "employer_agent" && m.decision && m.decision !== "CONTINUE")
+        const lastSeekerDecisionMsg = [...allMessages]
+          .reverse()
+          .find((m) => m.role === "seeker_agent" && m.decision && m.decision !== "CONTINUE")
+
+        // Parse evaluations from messages (evaluation field carried through from agent output)
+        const employerEval = lastEmployerDecisionMsg?.evaluation
+          ? agentEvaluationSchema.safeParse(lastEmployerDecisionMsg.evaluation)
+          : null
+        const seekerEval = lastSeekerDecisionMsg?.evaluation
+          ? agentEvaluationSchema.safeParse(lastSeekerDecisionMsg.evaluation)
+          : null
+
+        let confidenceScore: "STRONG" | "GOOD" | "POTENTIAL"
+        let evaluationData: unknown = null
+        let employerSummary: string | null = null
+        let seekerSummary: string | null = null
+
+        if (employerEval?.success && seekerEval?.success) {
+          // Apply privacy filter to evaluation reasoning
+          const filteredEmployerEval = {
+            ...employerEval.data,
+            reasoning: filterPrivateValues(employerEval.data.reasoning, ctx.privateVals),
+            dimensions: employerEval.data.dimensions.map((d) => ({
+              ...d,
+              reasoning: filterPrivateValues(d.reasoning, ctx.privateVals),
+            })),
+          }
+          const filteredSeekerEval = {
+            ...seekerEval.data,
+            reasoning: filterPrivateValues(seekerEval.data.reasoning, ctx.privateVals),
+            dimensions: seekerEval.data.dimensions.map((d) => ({
+              ...d,
+              reasoning: filterPrivateValues(d.reasoning, ctx.privateVals),
+            })),
+          }
+
+          const { confidence, confidenceInputs } = computeConfidence(
+            filteredEmployerEval,
+            filteredSeekerEval,
+          )
+          confidenceScore = confidence
+
+          employerSummary = filteredEmployerEval.reasoning.slice(0, 500)
+          seekerSummary = filteredSeekerEval.reasoning.slice(0, 500)
+
+          evaluationData = {
+            employerEvaluation: filteredEmployerEval,
+            seekerEvaluation: filteredSeekerEval,
+            confidenceInputs,
+          }
+        } else {
+          // Fallback: no structured evaluation available (backwards compat)
+          confidenceScore =
+            allMessages.length <= 4 ? "STRONG" : allMessages.length <= 7 ? "GOOD" : "POTENTIAL"
+        }
 
         const lastMessages = allMessages.slice(-4)
         const summary = lastMessages.map((m) => m.content).join(" ")
@@ -396,8 +462,11 @@ export function buildConversationWorkflow() {
             jobPostingId,
             seekerId,
             employerId,
-            confidenceScore: confidence,
+            confidenceScore,
             matchSummary,
+            employerSummary,
+            seekerSummary,
+            evaluationData: evaluationData as Prisma.InputJsonValue,
           },
         })
       }
@@ -405,15 +474,7 @@ export function buildConversationWorkflow() {
 
     const allMessages = turnResults.map((r) => r.message)
     const lastTurn = turnResults[turnResults.length - 1]
-    const finalStatus = lastTurn?.terminated
-      ? "TERMINATED"
-      : (() => {
-          const empMsg = [...allMessages].reverse().find((m) => m.role === "employer_agent")
-          const seekMsg = [...allMessages].reverse().find((m) => m.role === "seeker_agent")
-          return empMsg?.decision === "MATCH" && seekMsg?.decision === "MATCH"
-            ? "COMPLETED_MATCH"
-            : "COMPLETED_NO_MATCH"
-        })()
+    const finalStatus = deriveFinalStatus(allMessages, !!lastTurn?.terminated)
 
     return {
       status: finalStatus,

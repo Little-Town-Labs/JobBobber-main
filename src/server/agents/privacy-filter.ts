@@ -19,13 +19,25 @@ export interface PrivateValues {
  * Formats a number into variants that might appear in agent output.
  * e.g., 85000 → ["85000", "85,000", "$85,000", "$85000"]
  */
+/**
+ * Deterministic comma formatter — does not depend on ICU/locale config.
+ */
+function formatWithCommas(value: number): string {
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+}
+
 function salaryVariants(value: number): string[] {
   const plain = String(value)
-  const formatted = value.toLocaleString("en-US")
+  const formatted = formatWithCommas(value)
   const variants = [plain]
   if (formatted !== plain) variants.push(formatted)
   variants.push(`$${plain}`)
   if (formatted !== plain) variants.push(`$${formatted}`)
+  // Shorthand variants (e.g., 85000 → "85k", "$85K")
+  if (value >= 1000 && value % 1000 === 0) {
+    const k = String(value / 1000)
+    variants.push(`${k}k`, `${k}K`, `$${k}k`, `$${k}K`)
+  }
   return variants
 }
 

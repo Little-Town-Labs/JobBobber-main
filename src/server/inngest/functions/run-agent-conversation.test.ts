@@ -207,6 +207,25 @@ describe("buildConversationWorkflow", () => {
     )
   })
 
+  it("does not store decrypted API keys in step results", async () => {
+    setupMocks()
+
+    const step = createMockStep()
+    const handler = buildConversationWorkflow()
+
+    await handler({
+      event: { data: { jobPostingId: "jp_1", seekerId: "seeker_1", employerId: "emp_1" } },
+      step,
+    } as never)
+
+    // The load-context step should return key refs, not decrypted keys
+    const contextResult = step.results.get("load-context") as Record<string, unknown>
+    expect(contextResult).not.toHaveProperty("employerApiKey")
+    expect(contextResult).not.toHaveProperty("seekerApiKey")
+    expect(contextResult).toHaveProperty("employerKeyRef")
+    expect(contextResult).toHaveProperty("seekerKeyRef")
+  })
+
   it("updates conversation status on completion", async () => {
     setupMocks()
 

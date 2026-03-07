@@ -110,48 +110,49 @@ export const evaluateCandidates = inngest.createFunction(
     // When AGENT_CONVERSATIONS flag is ON, dispatch conversation events
     // instead of doing direct single-shot evaluation
     if (useConversations) {
-      await step.run("dispatch-conversations", async () => {
-        // Evaluate candidates with a quick initial score first
-        const conversationsDispatched: string[] = []
+      // Evaluate candidates in batches, then dispatch conversations for qualifying ones
+      const qualifiedIds: string[] = []
 
-        for (const seekerId of candidateIds) {
-          const seeker = await db.jobSeeker.findUnique({ where: { id: seekerId } })
-          if (!seeker) continue
+      for (let i = 0; i < candidateIds.length; i += BATCH_SIZE) {
+        const batchIds = candidateIds.slice(i, i + BATCH_SIZE)
+        const batchNum = Math.floor(i / BATCH_SIZE)
 
-          const candidate: CandidateInput = {
-            name: seeker.name,
-            headline: seeker.headline,
-            skills: seeker.skills,
-            experience: seeker.experience as unknown[],
-            education: seeker.education as unknown[],
-            location: seeker.location,
-            profileCompleteness: seeker.profileCompleteness,
+        const batchQualified = await step.run(`screen-batch-${batchNum}`, async () => {
+          const seekers = await db.jobSeeker.findMany({
+            where: { id: { in: batchIds } },
+          })
+
+          const qualified: string[] = []
+          for (const seeker of seekers) {
+            const candidate: CandidateInput = {
+              name: seeker.name,
+              headline: seeker.headline,
+              skills: seeker.skills,
+              experience: seeker.experience as unknown[],
+              education: seeker.education as unknown[],
+              location: seeker.location,
+              profileCompleteness: seeker.profileCompleteness,
+            }
+
+            const evaluation = await evaluateCandidate(
+              context.posting!,
+              candidate,
+              context.apiKey!,
+              context.provider!,
+            )
+
+            if (evaluation && evaluation.score >= MATCH_SCORE_THRESHOLD) {
+              qualified.push(seeker.id)
+            }
           }
+          return qualified
+        })
 
-          const evaluation = await evaluateCandidate(
-            context.posting!,
-            candidate,
-            context.apiKey!,
-            context.provider!,
-          )
+        qualifiedIds.push(...(batchQualified as string[]))
+      }
 
-          // Only dispatch conversations for candidates above the conversation threshold
-          if (evaluation && evaluation.score >= MATCH_SCORE_THRESHOLD) {
-            conversationsDispatched.push(seekerId)
-          }
-        }
-
-        return conversationsDispatched
-      })
-
-      // Send conversation start events for qualifying candidates
-      const dispatched = await step.run("send-conversation-events", async () => {
-        // Re-fetch since step.run results aren't shared
-        return candidateIds
-      })
-
-      // Use step.sendEvent for each candidate
-      for (const seekerId of dispatched as string[]) {
+      // Dispatch conversation events only for qualified candidates
+      for (const seekerId of qualifiedIds) {
         await step.sendEvent({
           name: "conversations/start",
           data: { jobPostingId, seekerId, employerId },
@@ -162,7 +163,7 @@ export const evaluateCandidates = inngest.createFunction(
         status: "COMPLETED" as const,
         totalCandidates: candidateIds.length,
         mode: "conversations" as const,
-        conversationsDispatched: (dispatched as string[]).length,
+        conversationsDispatched: qualifiedIds.length,
       }
     }
 

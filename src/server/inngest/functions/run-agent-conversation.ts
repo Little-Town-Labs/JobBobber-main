@@ -165,13 +165,6 @@ export function buildConversationWorkflow() {
         return { skip: true, reason: "Seeker has no BYOK key" }
       }
 
-      // Decrypt keys
-      const employerApiKey = await decrypt(employer.byokApiKeyEncrypted, employer.id)
-      const seekerApiKey = await decrypt(
-        seekerSettings.byokApiKeyEncrypted,
-        seekerSettings.seekerId,
-      )
-
       const postingInput: PostingInput = {
         title: posting.title,
         description: posting.description,
@@ -229,10 +222,14 @@ export function buildConversationWorkflow() {
         opportunityInput,
         seekerPrivate,
         privateVals,
-        employerApiKey,
         employerProvider: employer.byokProvider,
-        seekerApiKey,
         seekerProvider: seekerSettings.byokProvider,
+        // Key refs for decryption inside turn steps (not serialized)
+        employerKeyRef: { encrypted: employer.byokApiKeyEncrypted, salt: employer.id },
+        seekerKeyRef: {
+          encrypted: seekerSettings.byokApiKeyEncrypted,
+          salt: seekerSettings.seekerId,
+        },
       }
     })
 
@@ -246,10 +243,10 @@ export function buildConversationWorkflow() {
       opportunityInput: OpportunityInput
       seekerPrivate: SeekerPrivateSettings
       privateVals: PrivateValues
-      employerApiKey: string
       employerProvider: string
-      seekerApiKey: string
       seekerProvider: string
+      employerKeyRef: { encrypted: string; salt: string }
+      seekerKeyRef: { encrypted: string; salt: string }
     }
 
     // Step 2: Create conversation record
@@ -265,31 +262,37 @@ export function buildConversationWorkflow() {
     })) as { id: string }
 
     // Step 3-N: Execute turns
-    const messages: ConversationMessage[] = []
-    let lastEmployerDecision: "MATCH" | "NO_MATCH" | "CONTINUE" = "CONTINUE"
-    let lastSeekerDecision: "MATCH" | "NO_MATCH" | "CONTINUE" = "CONTINUE"
-    let finalStatus: "COMPLETED_MATCH" | "COMPLETED_NO_MATCH" | "TERMINATED" = "COMPLETED_NO_MATCH"
-    let totalLlmCalls = 0
-
-    const orchestratorInput: OrchestratorInput = {
-      posting: ctx.postingInput,
-      candidate: ctx.candidateInput,
-      opportunity: ctx.opportunityInput,
-      seekerPrivateSettings: ctx.seekerPrivate,
-      privateValues: ctx.privateVals,
-      employerApiKey: ctx.employerApiKey,
-      employerProvider: ctx.employerProvider,
-      seekerApiKey: ctx.seekerApiKey,
-      seekerProvider: ctx.seekerProvider,
-      maxTurns: MAX_TURNS,
-      minTurnsBeforeDecision: MIN_TURNS_BEFORE_DECISION,
-    }
-
-    const employerAgentFn = makeEmployerAgentFn(ctx.postingInput, ctx.candidateInput)
-    const seekerAgentFn = makeSeekerAgentFn(ctx.candidateInput, ctx.seekerPrivate)
+    // State is derived from step results (replay-safe — no mutable vars across steps)
+    const turnResults: { message: ConversationMessage; terminated: boolean }[] = []
 
     for (let turn = 0; turn < MAX_TURNS; turn++) {
       const turnResult = (await step.run(`turn-${turn}`, async () => {
+        // Decrypt keys fresh each turn — never serialized by Inngest
+        const [employerApiKey, seekerApiKey] = await Promise.all([
+          decrypt(ctx.employerKeyRef.encrypted, ctx.employerKeyRef.salt),
+          decrypt(ctx.seekerKeyRef.encrypted, ctx.seekerKeyRef.salt),
+        ])
+
+        const orchestratorInput: OrchestratorInput = {
+          posting: ctx.postingInput,
+          candidate: ctx.candidateInput,
+          opportunity: ctx.opportunityInput,
+          seekerPrivateSettings: ctx.seekerPrivate,
+          privateValues: ctx.privateVals,
+          employerApiKey,
+          employerProvider: ctx.employerProvider,
+          seekerApiKey,
+          seekerProvider: ctx.seekerProvider,
+          maxTurns: MAX_TURNS,
+          minTurnsBeforeDecision: MIN_TURNS_BEFORE_DECISION,
+        }
+
+        const employerAgentFn = makeEmployerAgentFn(ctx.postingInput, ctx.candidateInput)
+        const seekerAgentFn = makeSeekerAgentFn(ctx.candidateInput, ctx.seekerPrivate)
+
+        // Build messages from prior turn results (replay-safe)
+        const messages = turnResults.map((r) => r.message)
+
         return runConversationTurn({
           input: orchestratorInput,
           turnNumber: turn,
@@ -299,74 +302,90 @@ export function buildConversationWorkflow() {
         })
       })) as { message: ConversationMessage; terminated: boolean; terminationReason?: string }
 
-      totalLlmCalls++
-      messages.push(turnResult.message)
+      turnResults.push(turnResult)
 
       // Persist messages after each turn
+      const allMessages = turnResults.map((r) => r.message)
       await step.run(`persist-turn-${turn}`, async () => {
         await db.agentConversation.update({
           where: { id: conversation.id },
-          data: { messages: messages as unknown[] },
+          data: { messages: allMessages as unknown[] },
         })
       })
 
       if (turnResult.terminated) {
-        finalStatus = "TERMINATED"
         break
       }
 
-      // Track decisions
-      if (turnResult.message.role === "employer_agent" && turnResult.message.decision) {
-        lastEmployerDecision = turnResult.message.decision
-      }
-      if (turnResult.message.role === "seeker_agent" && turnResult.message.decision) {
-        lastSeekerDecision = turnResult.message.decision
-      }
+      // Derive decisions from accumulated messages (replay-safe)
+      const lastEmployerMsg = [...allMessages].reverse().find((m) => m.role === "employer_agent")
+      const lastSeekerMsg = [...allMessages].reverse().find((m) => m.role === "seeker_agent")
+      const employerDecision = lastEmployerMsg?.decision ?? "CONTINUE"
+      const seekerDecision = lastSeekerMsg?.decision ?? "CONTINUE"
 
-      // Check termination
       const terminationResult = shouldTerminate(
-        lastEmployerDecision,
-        lastSeekerDecision,
+        employerDecision,
+        seekerDecision,
         turn + 1,
         MIN_TURNS_BEFORE_DECISION,
         MAX_TURNS,
       )
 
       if (terminationResult) {
-        finalStatus = terminationResult
         break
       }
     }
 
-    // Final step: Update conversation and optionally create match
+    // Final step: derive status from accumulated results and finalize
     await step.run("finalize", async () => {
+      const allMessages = turnResults.map((r) => r.message)
+      const lastTurn = turnResults[turnResults.length - 1]
+
+      // Determine final status from messages
+      let finalStatus: "COMPLETED_MATCH" | "COMPLETED_NO_MATCH" | "TERMINATED" =
+        "COMPLETED_NO_MATCH"
+
+      if (lastTurn?.terminated) {
+        finalStatus = "TERMINATED"
+      } else {
+        const lastEmployerMsg = [...allMessages].reverse().find((m) => m.role === "employer_agent")
+        const lastSeekerMsg = [...allMessages].reverse().find((m) => m.role === "seeker_agent")
+        const empDec = lastEmployerMsg?.decision ?? "CONTINUE"
+        const seekDec = lastSeekerMsg?.decision ?? "CONTINUE"
+
+        if (empDec === "MATCH" && seekDec === "MATCH") {
+          finalStatus = "COMPLETED_MATCH"
+        } else if (empDec === "NO_MATCH" || seekDec === "NO_MATCH") {
+          finalStatus = "COMPLETED_NO_MATCH"
+        }
+      }
+
       const outcome =
         finalStatus === "COMPLETED_MATCH"
-          ? `Mutual match at turn ${messages.length}`
+          ? `Mutual match at turn ${allMessages.length}`
           : finalStatus === "TERMINATED"
-            ? `Terminated at turn ${messages.length}`
-            : `No match after ${messages.length} turns`
+            ? `Terminated at turn ${allMessages.length}`
+            : `No match after ${allMessages.length} turns`
 
       await db.agentConversation.update({
         where: { id: conversation.id },
         data: {
           status: finalStatus,
           completedAt: new Date(),
-          outcome: `${outcome}. LLM calls: ${totalLlmCalls}`,
-          messages: messages as unknown[],
+          outcome: `${outcome}. LLM calls: ${allMessages.length}`,
+          messages: allMessages as unknown[],
         },
       })
 
       if (finalStatus === "COMPLETED_MATCH") {
-        // Derive confidence from conversation length
         const confidence =
-          messages.length <= 4
+          allMessages.length <= 4
             ? ("STRONG" as const)
-            : messages.length <= 7
+            : allMessages.length <= 7
               ? ("GOOD" as const)
               : ("POTENTIAL" as const)
 
-        const lastMessages = messages.slice(-4)
+        const lastMessages = allMessages.slice(-4)
         const summary = lastMessages.map((m) => m.content).join(" ")
         const matchSummary = summary.length > 500 ? summary.slice(0, 497) + "..." : summary
 
@@ -383,11 +402,23 @@ export function buildConversationWorkflow() {
       }
     })
 
+    const allMessages = turnResults.map((r) => r.message)
+    const lastTurn = turnResults[turnResults.length - 1]
+    const finalStatus = lastTurn?.terminated
+      ? "TERMINATED"
+      : (() => {
+          const empMsg = [...allMessages].reverse().find((m) => m.role === "employer_agent")
+          const seekMsg = [...allMessages].reverse().find((m) => m.role === "seeker_agent")
+          return empMsg?.decision === "MATCH" && seekMsg?.decision === "MATCH"
+            ? "COMPLETED_MATCH"
+            : "COMPLETED_NO_MATCH"
+        })()
+
     return {
       status: finalStatus,
       conversationId: conversation.id,
-      totalTurns: messages.length,
-      totalLlmCalls,
+      totalTurns: allMessages.length,
+      totalLlmCalls: allMessages.length,
     }
   }
 }
@@ -400,7 +431,7 @@ export const runAgentConversation = inngest.createFunction(
   {
     id: "run-agent-conversation",
     retries: 3,
-    concurrency: [{ limit: CONCURRENCY_LIMIT, key: "event.data.jobPostingId" }],
+    concurrency: [{ limit: CONCURRENCY_LIMIT, key: "event.data.jobPostingId" }, { limit: 200 }],
   },
   { event: "conversations/start" },
   buildConversationWorkflow(),

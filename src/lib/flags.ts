@@ -43,6 +43,12 @@ export const FEEDBACK_INSIGHTS = flag<boolean>({
   description: "Enable AI-generated feedback insights panel (Feature 9)",
 })
 
+export const AGENT_CONVERSATIONS = flag<boolean>({
+  key: "agent-conversations",
+  defaultValue: false,
+  description: "Enable multi-turn agent-to-agent conversations for matching (Feature 9)",
+})
+
 export const PRIVATE_PARAMS = flag<boolean>({
   key: "private-params",
   defaultValue: false,

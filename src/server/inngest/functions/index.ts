@@ -9,9 +9,11 @@ import {
   sendMatchCreatedNotification,
   sendMutualAcceptNotification,
 } from "./send-match-notification"
+import { runAgentConversation } from "./run-agent-conversation"
 
 export const functions = [
   evaluateCandidates,
   sendMatchCreatedNotification,
   sendMutualAcceptNotification,
+  runAgentConversation,
 ]

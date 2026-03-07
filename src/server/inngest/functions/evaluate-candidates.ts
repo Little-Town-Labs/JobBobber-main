@@ -16,6 +16,7 @@ import {
   type CandidateInput,
 } from "@/server/agents/employer-agent"
 import { scoreToConfidence, MATCH_SCORE_THRESHOLD } from "@/lib/matching-schemas"
+import { AGENT_CONVERSATIONS } from "@/lib/flags"
 
 const BATCH_SIZE = 10
 
@@ -97,7 +98,75 @@ export const evaluateCandidates = inngest.createFunction(
       }
     }
 
-    // Step 3: Evaluate in batches
+    // Step 2b: Check if agent-to-agent conversations are enabled
+    const useConversations = await step.run("check-conversations-flag", async () => {
+      try {
+        return await AGENT_CONVERSATIONS()
+      } catch {
+        return false
+      }
+    })
+
+    // When AGENT_CONVERSATIONS flag is ON, dispatch conversation events
+    // instead of doing direct single-shot evaluation
+    if (useConversations) {
+      await step.run("dispatch-conversations", async () => {
+        // Evaluate candidates with a quick initial score first
+        const conversationsDispatched: string[] = []
+
+        for (const seekerId of candidateIds) {
+          const seeker = await db.jobSeeker.findUnique({ where: { id: seekerId } })
+          if (!seeker) continue
+
+          const candidate: CandidateInput = {
+            name: seeker.name,
+            headline: seeker.headline,
+            skills: seeker.skills,
+            experience: seeker.experience as unknown[],
+            education: seeker.education as unknown[],
+            location: seeker.location,
+            profileCompleteness: seeker.profileCompleteness,
+          }
+
+          const evaluation = await evaluateCandidate(
+            context.posting!,
+            candidate,
+            context.apiKey!,
+            context.provider!,
+          )
+
+          // Only dispatch conversations for candidates above the conversation threshold
+          if (evaluation && evaluation.score >= MATCH_SCORE_THRESHOLD) {
+            conversationsDispatched.push(seekerId)
+          }
+        }
+
+        return conversationsDispatched
+      })
+
+      // Send conversation start events for qualifying candidates
+      const dispatched = await step.run("send-conversation-events", async () => {
+        // Re-fetch since step.run results aren't shared
+        return candidateIds
+      })
+
+      // Use step.sendEvent for each candidate
+      for (const seekerId of dispatched as string[]) {
+        await step.sendEvent({
+          name: "conversations/start",
+          data: { jobPostingId, seekerId, employerId },
+        })
+      }
+
+      return {
+        status: "COMPLETED" as const,
+        totalCandidates: candidateIds.length,
+        mode: "conversations" as const,
+        conversationsDispatched: (dispatched as string[]).length,
+      }
+    }
+
+    // Step 3: Evaluate in batches (original Feature 5 behavior when flag is OFF)
     let matchesCreated = 0
     let skippedCount = 0
 

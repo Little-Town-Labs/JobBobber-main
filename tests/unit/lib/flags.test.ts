@@ -42,6 +42,11 @@ describe("feature flags — default values", () => {
     expect(await FEEDBACK_INSIGHTS()).toBe(false)
   })
 
+  it("AGENT_CONVERSATIONS defaults to false", async () => {
+    const { AGENT_CONVERSATIONS } = await import("@/lib/flags")
+    expect(await AGENT_CONVERSATIONS()).toBe(false)
+  })
+
   it("PRIVATE_PARAMS defaults to false", async () => {
     const { PRIVATE_PARAMS } = await import("@/lib/flags")
     expect(await PRIVATE_PARAMS()).toBe(false)

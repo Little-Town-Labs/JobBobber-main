@@ -43,6 +43,12 @@ export const FEEDBACK_INSIGHTS = flag<boolean>({
   description: "Enable AI-generated feedback insights panel (Feature 9)",
 })
 
+export const PRIVATE_PARAMS = flag<boolean>({
+  key: "private-params",
+  defaultValue: false,
+  description: "Enable private negotiation parameters for seekers and employers (Feature 8)",
+})
+
 /**
  * Assert that a feature flag is enabled.
  * Throws `TRPCError({ code: "NOT_FOUND" })` if the flag is off.

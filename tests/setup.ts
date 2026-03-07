@@ -10,3 +10,9 @@ import { vi } from "vitest"
 // server-only enforces that imports only happen in server modules.
 // In tests (Node environment) we bypass this constraint by mocking the module.
 vi.mock("server-only", () => ({}))
+
+// Vercel Flags SDK makes network calls to resolve flags at runtime.
+// Mock it globally so all tests get deterministic default values without network.
+vi.mock("@vercel/flags/next", () => ({
+  flag: <T>(opts: { defaultValue: T }) => () => opts.defaultValue,
+}))

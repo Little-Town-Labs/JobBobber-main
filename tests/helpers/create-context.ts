@@ -30,7 +30,7 @@ function createMockDb() {
     },
     agentConversation: { findMany: vi.fn() },
     seekerSettings: { findUnique: vi.fn(), upsert: vi.fn() },
-    employerSettings: { findUnique: vi.fn(), upsert: vi.fn() },
+    jobSettings: { findUnique: vi.fn(), upsert: vi.fn() },
   }
 }
 

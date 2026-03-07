@@ -11,7 +11,8 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest"
 import type { PrismaClient } from "@prisma/client"
 
-const hasDb = !!process.env["DATABASE_URL"]
+// Skip integration tests unless INTEGRATION_TEST=true is explicitly set
+const hasDb = process.env["INTEGRATION_TEST"] === "true"
 
 // ---------------------------------------------------------------------------
 // Module mocks — must be declared before any imports that use them

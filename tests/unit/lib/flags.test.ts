@@ -1,10 +1,12 @@
 /**
  * T5.1T — Feature flags tests
  *
- * Confirms all five platform feature flags default to false and can be
- * overridden in test contexts.
+ * Confirms all platform feature flags default to false and assertFlagEnabled
+ * throws NOT_FOUND when a flag is disabled.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+
+// @vercel/flags/next is mocked globally in tests/setup.ts
 
 describe("feature flags — default values", () => {
   beforeEach(() => {
@@ -38,6 +40,11 @@ describe("feature flags — default values", () => {
   it("FEEDBACK_INSIGHTS defaults to false", async () => {
     const { FEEDBACK_INSIGHTS } = await import("@/lib/flags")
     expect(await FEEDBACK_INSIGHTS()).toBe(false)
+  })
+
+  it("PRIVATE_PARAMS defaults to false", async () => {
+    const { PRIVATE_PARAMS } = await import("@/lib/flags")
+    expect(await PRIVATE_PARAMS()).toBe(false)
   })
 })
 

@@ -15,9 +15,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 const mockVerify = vi.fn()
 
 vi.mock("svix", () => ({
-  Webhook: vi.fn().mockImplementation(() => ({
-    verify: mockVerify,
-  })),
+  Webhook: class MockWebhook {
+    verify = mockVerify
+  },
 }))
 
 const mockJobSeekerUpsert = vi.fn()
@@ -35,6 +35,16 @@ vi.mock("@clerk/nextjs/server", () => ({
 }))
 
 vi.mock("@/lib/inngest", () => ({ inngest: {} }))
+
+// next/headers requires App Router request scope. Mock it to extract
+// headers from the global test request instead.
+let currentTestRequest: Request | null = null
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => {
+    if (!currentTestRequest) throw new Error("No test request set")
+    return currentTestRequest.headers
+  }),
+}))
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -60,7 +70,7 @@ function makeRequest(body: string, headers: Record<string, string> = {}): Reques
 
 describe("Clerk webhook handler", () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
     process.env["CLERK_WEBHOOK_SECRET"] = "whsec_test_secret_value"
   })
 
@@ -73,6 +83,7 @@ describe("Clerk webhook handler", () => {
       headers: { "content-type": "application/json" },
       // No svix-id, svix-timestamp, svix-signature
     })
+    currentTestRequest = req
 
     const res = await POST(req)
     expect(res.status).toBe(400)
@@ -85,6 +96,7 @@ describe("Clerk webhook handler", () => {
 
     const { POST } = await import("@/app/api/webhooks/clerk/route")
     const req = makeRequest(JSON.stringify({ type: "user.created", data: {} }))
+    currentTestRequest = req
 
     const res = await POST(req)
     expect(res.status).toBe(401)
@@ -105,6 +117,7 @@ describe("Clerk webhook handler", () => {
 
     const { POST } = await import("@/app/api/webhooks/clerk/route")
     const req = makeRequest(JSON.stringify(payload))
+    currentTestRequest = req
 
     const res = await POST(req)
     expect(res.status).toBe(200)
@@ -127,6 +140,7 @@ describe("Clerk webhook handler", () => {
 
     const { POST } = await import("@/app/api/webhooks/clerk/route")
     const req = makeRequest(JSON.stringify(payload))
+    currentTestRequest = req
 
     const res = await POST(req)
     expect(res.status).toBe(200)
@@ -142,6 +156,7 @@ describe("Clerk webhook handler", () => {
 
     const { POST } = await import("@/app/api/webhooks/clerk/route")
     const req = makeRequest(JSON.stringify(payload))
+    currentTestRequest = req
 
     const res = await POST(req)
     expect(res.status).toBe(200)

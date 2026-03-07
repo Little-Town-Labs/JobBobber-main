@@ -25,7 +25,7 @@ describe("env validation", () => {
     process.env["INNGEST_SIGNING_KEY"] = "signkey-test"
     process.env["INNGEST_EVENT_KEY"] = "eventkey-test"
     process.env["ENCRYPTION_KEY"] = "a".repeat(64) // 64 hex chars = 32 bytes
-    process.env["ENCRYPTION_IV_SALT"] = "test-salt-value"
+    process.env["ENCRYPTION_IV_SALT"] = "test-salt-value-ok"
     process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] = "pk_test_abc"
     process.env["NEXT_PUBLIC_CLERK_SIGN_IN_URL"] = "/sign-in"
     process.env["NEXT_PUBLIC_CLERK_SIGN_UP_URL"] = "/sign-up"
@@ -46,7 +46,7 @@ describe("env validation", () => {
     process.env["INNGEST_SIGNING_KEY"] = "signkey-test"
     process.env["INNGEST_EVENT_KEY"] = "eventkey-test"
     process.env["ENCRYPTION_KEY"] = "tooshort" // invalid
-    process.env["ENCRYPTION_IV_SALT"] = "test-salt-value"
+    process.env["ENCRYPTION_IV_SALT"] = "test-salt-value-ok"
     process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] = "pk_test_abc"
     process.env["NEXT_PUBLIC_CLERK_SIGN_IN_URL"] = "/sign-in"
     process.env["NEXT_PUBLIC_CLERK_SIGN_UP_URL"] = "/sign-up"

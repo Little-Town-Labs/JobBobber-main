@@ -82,15 +82,22 @@ export async function encrypt(plaintext: string, userId: string): Promise<string
  *
  * @throws Error if decryption fails (wrong userId, tampered ciphertext, etc.)
  */
-export async function decrypt(ciphertext: string, _userId: string): Promise<string> {
+export async function decrypt(ciphertext: string, userId: string): Promise<string> {
   const packed = Buffer.from(ciphertext, "base64")
 
-  const iv = packed.subarray(0, IV_BYTES)
+  const storedIv = packed.subarray(0, IV_BYTES)
   const authTag = packed.subarray(IV_BYTES, IV_BYTES + AUTH_TAG_BYTES)
   const encrypted = packed.subarray(IV_BYTES + AUTH_TAG_BYTES)
 
+  // Re-derive IV from userId — must match the one used during encryption.
+  // If userId differs, derived IV won't match stored IV, and GCM auth will fail.
+  const expectedIv = deriveIv(userId)
+  if (!storedIv.equals(expectedIv)) {
+    throw new Error("Decryption failed: userId mismatch")
+  }
+
   const key = getKey()
-  const decipher = createDecipheriv(ALGORITHM, key, iv)
+  const decipher = createDecipheriv(ALGORITHM, key, storedIv)
   decipher.setAuthTag(authTag)
 
   const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()])

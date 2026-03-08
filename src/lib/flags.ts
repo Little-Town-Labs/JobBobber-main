@@ -83,6 +83,13 @@ export const PRIVATE_PARAMS = flag<boolean>({
   decide: () => false,
 })
 
+export const CUSTOM_PROMPTS = flag<boolean>({
+  key: "custom-prompts",
+  defaultValue: false,
+  description: "Enable custom agent prompting with injection detection (Feature 15)",
+  decide: () => false,
+})
+
 /**
  * Assert that a feature flag is enabled.
  * Throws `TRPCError({ code: "NOT_FOUND" })` if the flag is off.

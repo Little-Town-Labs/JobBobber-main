@@ -17,6 +17,8 @@ vi.mock("@clerk/nextjs/server", () => ({
 let flagEnabled = true
 vi.mock("@/lib/flags", () => ({
   PRIVATE_PARAMS: () => flagEnabled,
+  CUSTOM_PROMPTS: () => true,
+  CONVERSATION_LOGS: () => true,
   SEEKER_PROFILE: () => true,
   EMPLOYER_PROFILE: () => true,
   AI_MATCHING: () => true,
@@ -29,6 +31,17 @@ vi.mock("@/lib/flags", () => ({
       throw new TRPCError({ code: "NOT_FOUND", message: "This feature is not yet available." })
     }
   },
+}))
+
+// Mock encryption helpers — settings router now encrypts/decrypts custom prompts
+// decryptPrompt passes through the input value (identity transform for test simplicity)
+vi.mock("./settings-prompt-helpers", () => ({
+  encryptAndValidatePrompt: vi
+    .fn()
+    .mockImplementation((prompt: string | null) => Promise.resolve(prompt)),
+  decryptPrompt: vi
+    .fn()
+    .mockImplementation((encrypted: string | null) => Promise.resolve(encrypted ?? null)),
 }))
 
 const EMPLOYER = {

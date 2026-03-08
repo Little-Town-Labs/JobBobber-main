@@ -12,6 +12,7 @@ import { resumeRouter } from "@/server/api/routers/resume"
 import { notificationsRouter } from "@/server/api/routers/notifications"
 import { conversationsRouter } from "@/server/api/routers/conversations"
 import { teamRouter } from "@/server/api/routers/team"
+import { customPromptsRouter } from "@/server/api/routers/custom-prompts"
 
 /**
  * Root tRPC router — assembles all sub-routers.
@@ -33,6 +34,7 @@ export const appRouter = createTRPCRouter({
   notifications: notificationsRouter,
   conversations: conversationsRouter,
   team: teamRouter,
+  customPrompts: customPromptsRouter,
 })
 
 /** AppRouter type — used by tRPC client for end-to-end type safety */

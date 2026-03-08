@@ -518,8 +518,8 @@ Phase 2 complete → Phase 3:
 - [x] 11-vector-search P1
 - [x] 12-agent-conversation-logs P1
 - [x] 13-multi-member-employer-accounts P1
-- [ ] 14-aggregate-feedback-insights P1
-- [ ] 15-custom-agent-prompting P2
+- [x] 14-aggregate-feedback-insights P1
+- [x] 15-custom-agent-prompting P2
 - [ ] 16-subscription-billing P0
 - [ ] 17-advanced-employer-dashboard P2
 - [ ] 18-compliance-security P1

@@ -32,7 +32,11 @@ const CONCURRENCY_LIMIT = 50
 // Agent wrapper functions (adapt existing agents to orchestrator interface)
 // ---------------------------------------------------------------------------
 
-function makeEmployerAgentFn(posting: PostingInput, candidate: CandidateInput) {
+function makeEmployerAgentFn(
+  posting: PostingInput,
+  candidate: CandidateInput,
+  customPrompt?: string | null,
+) {
   return async (
     _posting: unknown,
     _candidate: unknown,
@@ -41,36 +45,14 @@ function makeEmployerAgentFn(posting: PostingInput, candidate: CandidateInput) {
     apiKey: string,
     provider: string,
   ) => {
-    // Re-use employer agent's evaluation but adapted for conversation turns
     const { generateObject } = await import("ai")
-    const { createProvider } = await import("@/server/agents/employer-agent")
+    const { createProvider, buildEmployerSystemPrompt } =
+      await import("@/server/agents/employer-agent")
     const { agentTurnOutputSchema } = await import("@/lib/conversation-schemas")
 
     const historyText = messages.map((m) => `[${m.role}]: ${m.content}`).join("\n\n")
 
-    const system = `You are an AI recruitment agent evaluating a candidate for a specific role.
-You are in the ${phase} phase of a multi-turn evaluation conversation.
-
-EVALUATION GUIDELINES:
-- Evaluate the candidate ONLY on skills, experience, qualifications, and role alignment.
-- You MUST NOT consider or reference protected characteristics (race, gender, age, disability, religion, national origin).
-- Be fair and balanced. Focus on objective fit.
-
-PRIVACY RULES:
-- You must NOT disclose exact salary budgets, urgency levels, or internal hiring parameters.
-- Express preferences qualitatively: "compensation is competitive" not exact figures.
-
-OUTPUT REQUIREMENTS:
-- content: Your conversational response (10-2000 chars)
-- phase: Current conversation phase (${phase})
-- decision: CONTINUE (need more info), MATCH (recommend proceeding), or NO_MATCH (not a fit)
-- evaluation: (REQUIRED when decision is MATCH or NO_MATCH) Structured evaluation with:
-  - agentRole: "employer_agent"
-  - overallScore: 0-100 assessment of overall fit
-  - recommendation: "MATCH" or "NO_MATCH"
-  - reasoning: 20-500 char explanation (qualitative terms, no exact figures)
-  - dimensions: Array of 4-6 scored dimensions, each with name, score (0-100), and reasoning (10-200 chars).
-    Dimension names: skills_alignment, experience_fit, compensation_alignment, work_arrangement, culture_fit, growth_potential`
+    const system = buildEmployerSystemPrompt(phase, customPrompt)
 
     const prompt = `## Job Posting
 ${JSON.stringify(posting, null, 2)}
@@ -98,7 +80,11 @@ Provide your response for the ${phase} phase.`
   }
 }
 
-function makeSeekerAgentFn(profile: CandidateInput, privateSettings: SeekerPrivateSettings) {
+function makeSeekerAgentFn(
+  profile: CandidateInput,
+  privateSettings: SeekerPrivateSettings,
+  customPrompt?: string | null,
+) {
   return async (
     opportunity: unknown,
     _privateSettings: unknown,
@@ -123,6 +109,7 @@ function makeSeekerAgentFn(profile: CandidateInput, privateSettings: SeekerPriva
       provider,
       messages,
       phase,
+      customPrompt,
     )
   }
 }
@@ -254,6 +241,13 @@ export function buildConversationWorkflow() {
         privateVals,
         employerProvider: employer.byokProvider,
         seekerProvider: seekerSettings.byokProvider,
+        // Encrypted prompt refs for per-turn decryption (not serialized as plaintext)
+        seekerPromptRef: seekerSettings.customPrompt
+          ? { encrypted: seekerSettings.customPrompt, salt: seekerSettings.seekerId }
+          : null,
+        employerPromptRef: jobSettings?.customPrompt
+          ? { encrypted: jobSettings.customPrompt, salt: jobPostingId }
+          : null,
         // Key refs for decryption inside turn steps (not serialized)
         employerKeyRef: { encrypted: employer.byokApiKeyEncrypted, salt: employer.id },
         seekerKeyRef: {
@@ -275,6 +269,8 @@ export function buildConversationWorkflow() {
       privateVals: PrivateValues
       employerProvider: string
       seekerProvider: string
+      seekerPromptRef: { encrypted: string; salt: string } | null
+      employerPromptRef: { encrypted: string; salt: string } | null
       employerKeyRef: { encrypted: string; salt: string }
       seekerKeyRef: { encrypted: string; salt: string }
     }
@@ -318,8 +314,26 @@ export function buildConversationWorkflow() {
           minTurnsBeforeDecision: MIN_TURNS_BEFORE_DECISION,
         }
 
-        const employerAgentFn = makeEmployerAgentFn(ctx.postingInput, ctx.candidateInput)
-        const seekerAgentFn = makeSeekerAgentFn(ctx.candidateInput, ctx.seekerPrivate)
+        // Decrypt custom prompts fresh each turn (same pattern as API keys)
+        const [employerCustomPrompt, seekerCustomPrompt] = await Promise.all([
+          ctx.employerPromptRef
+            ? decrypt(ctx.employerPromptRef.encrypted, ctx.employerPromptRef.salt, "customPrompt")
+            : Promise.resolve(null),
+          ctx.seekerPromptRef
+            ? decrypt(ctx.seekerPromptRef.encrypted, ctx.seekerPromptRef.salt, "customPrompt")
+            : Promise.resolve(null),
+        ])
+
+        const employerAgentFn = makeEmployerAgentFn(
+          ctx.postingInput,
+          ctx.candidateInput,
+          employerCustomPrompt,
+        )
+        const seekerAgentFn = makeSeekerAgentFn(
+          ctx.candidateInput,
+          ctx.seekerPrivate,
+          seekerCustomPrompt,
+        )
 
         // Build messages from prior turn results (replay-safe)
         const messages = turnResults.map((r) => r.message)

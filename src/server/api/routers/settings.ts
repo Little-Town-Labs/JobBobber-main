@@ -8,7 +8,8 @@ import {
   jobPosterProcedure,
   adminProcedure,
 } from "@/server/api/trpc"
-import { assertFlagEnabled, PRIVATE_PARAMS, CONVERSATION_LOGS } from "@/lib/flags"
+import { assertFlagEnabled, PRIVATE_PARAMS, CONVERSATION_LOGS, CUSTOM_PROMPTS } from "@/lib/flags"
+import { encryptAndValidatePrompt, decryptPrompt } from "./settings-prompt-helpers"
 
 /**
  * Settings router — private negotiation parameters for seekers and employers.
@@ -55,7 +56,11 @@ export const settingsRouter = createTRPCRouter({
       select: seekerSettingsSelect,
     })
 
-    return settings ?? null
+    if (!settings) return null
+
+    // Decrypt custom prompt if present
+    const decryptedPrompt = await decryptPrompt(settings.customPrompt, ctx.seeker.id)
+    return { ...settings, customPrompt: decryptedPrompt }
   }),
 
   /** Update the seeker's private settings (upsert). */
@@ -73,9 +78,17 @@ export const settingsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await assertFlagEnabled(PRIVATE_PARAMS)
 
+      // Encrypt and validate custom prompt if provided
+      let encryptedPrompt: string | null | undefined
+      if (input.customPrompt !== undefined) {
+        await assertFlagEnabled(CUSTOM_PROMPTS)
+        encryptedPrompt = await encryptAndValidatePrompt(input.customPrompt ?? null, ctx.seeker.id)
+      }
+
       const data = {
         ...input,
         salaryRules: input.salaryRules as Prisma.InputJsonValue | undefined,
+        ...(encryptedPrompt !== undefined ? { customPrompt: encryptedPrompt } : {}),
       }
       const result = await ctx.db.seekerSettings.upsert({
         where: { seekerId: ctx.seeker.id },
@@ -84,7 +97,9 @@ export const settingsRouter = createTRPCRouter({
         select: seekerSettingsSelect,
       })
 
-      return result
+      // Decrypt custom prompt before returning
+      const decryptedPrompt = await decryptPrompt(result.customPrompt, ctx.seeker.id)
+      return { ...result, customPrompt: decryptedPrompt }
     }),
 
   /** Get private settings for a specific job posting. */
@@ -100,7 +115,10 @@ export const settingsRouter = createTRPCRouter({
         select: jobSettingsSelect,
       })
 
-      return settings ?? null
+      if (!settings) return null
+
+      const decryptedPrompt = await decryptPrompt(settings.customPrompt, input.jobPostingId)
+      return { ...settings, customPrompt: decryptedPrompt }
     }),
 
   /** Update private settings for a job posting (upsert). */
@@ -121,10 +139,21 @@ export const settingsRouter = createTRPCRouter({
 
       await assertPostingOwnership(ctx, input.jobPostingId)
 
+      // Encrypt and validate custom prompt if provided
+      let encryptedPrompt: string | null | undefined
+      if (input.customPrompt !== undefined) {
+        await assertFlagEnabled(CUSTOM_PROMPTS)
+        encryptedPrompt = await encryptAndValidatePrompt(
+          input.customPrompt ?? null,
+          input.jobPostingId,
+        )
+      }
+
       const { jobPostingId, ...rawData } = input
       const jobData = {
         ...rawData,
         minQualOverride: rawData.minQualOverride as Prisma.InputJsonValue | undefined,
+        ...(encryptedPrompt !== undefined ? { customPrompt: encryptedPrompt } : {}),
       }
       const result = await ctx.db.jobSettings.upsert({
         where: { jobPostingId },
@@ -133,7 +162,8 @@ export const settingsRouter = createTRPCRouter({
         select: jobSettingsSelect,
       })
 
-      return result
+      const decryptedPrompt = await decryptPrompt(result.customPrompt, jobPostingId)
+      return { ...result, customPrompt: decryptedPrompt }
     }),
 
   /** Get data usage opt-out preference for seeker */

@@ -41,13 +41,13 @@ function getKey(): Buffer {
   return Buffer.from(hex, "hex")
 }
 
-function deriveIv(userId: string): Buffer {
+function deriveIv(scopeId: string, fieldName = "default"): Buffer {
   const salt = process.env["ENCRYPTION_IV_SALT"]
   if (!salt) {
     throw new Error("ENCRYPTION_IV_SALT is required")
   }
   const hmac = createHmac("sha256", salt)
-  hmac.update(userId)
+  hmac.update(`${scopeId}:${fieldName}`)
   return hmac.digest().subarray(0, IV_BYTES)
 }
 
@@ -57,15 +57,17 @@ function deriveIv(userId: string): Buffer {
  *
  * @throws Error if plaintext is empty
  */
-export async function encrypt(plaintext: string, userId: string): Promise<string> {
+export async function encrypt(
+  plaintext: string,
+  scopeId: string,
+  fieldName = "default",
+): Promise<string> {
   if (!plaintext) {
     throw new Error("Cannot encrypt empty value")
   }
 
   const key = getKey()
-  const iv = deriveIv(userId)
-  // WARNING: IV is deterministic per userId. Only safe if one plaintext is ever
-  // encrypted per userId. See module-level SECURITY NOTE before extending.
+  const iv = deriveIv(scopeId, fieldName)
   const cipher = createCipheriv(ALGORITHM, key, iv)
 
   const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
@@ -80,20 +82,23 @@ export async function encrypt(plaintext: string, userId: string): Promise<string
  * Decrypt a ciphertext string for a specific user.
  * The userId must match the one used during encryption (determines IV).
  *
- * @throws Error if decryption fails (wrong userId, tampered ciphertext, etc.)
+ * @throws Error if decryption fails (wrong scopeId, tampered ciphertext, etc.)
  */
-export async function decrypt(ciphertext: string, userId: string): Promise<string> {
+export async function decrypt(
+  ciphertext: string,
+  scopeId: string,
+  fieldName = "default",
+): Promise<string> {
   const packed = Buffer.from(ciphertext, "base64")
 
   const storedIv = packed.subarray(0, IV_BYTES)
   const authTag = packed.subarray(IV_BYTES, IV_BYTES + AUTH_TAG_BYTES)
   const encrypted = packed.subarray(IV_BYTES + AUTH_TAG_BYTES)
 
-  // Re-derive IV from userId — must match the one used during encryption.
-  // If userId differs, derived IV won't match stored IV, and GCM auth will fail.
-  const expectedIv = deriveIv(userId)
+  // Re-derive IV from scopeId+fieldName — must match the one used during encryption.
+  const expectedIv = deriveIv(scopeId, fieldName)
   if (!storedIv.equals(expectedIv)) {
-    throw new Error("Decryption failed: userId mismatch")
+    throw new Error("Decryption failed: scopeId mismatch")
   }
 
   const key = getKey()

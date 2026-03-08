@@ -1,0 +1,154 @@
+openapi: 3.0.0
+info:
+  title: Custom Agent Prompting API
+  description: |
+    tRPC procedures for managing custom agent prompts.
+    All procedures are gated behind the CUSTOM_PROMPTS feature flag.
+    Existing settings procedures already handle storage — this documents
+    the new validation and integration layer.
+  version: 1.0.0
+
+paths:
+  /trpc/settings.updateSeekerSettings:
+    post:
+      summary: Update seeker settings (existing — adds encryption + injection detection)
+      description: |
+        Existing procedure. Enhancement: when customPrompt is provided,
+        run injection detection before saving, encrypt before storage.
+        Gated behind CUSTOM_PROMPTS flag for the customPrompt field specifically.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customPrompt:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                  description: Custom agent prompt (plaintext input, encrypted at rest)
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customPrompt:
+                    type: string
+                    nullable: true
+                    description: Decrypted custom prompt (returned to owning user only)
+        "400":
+          description: Prompt injection detected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InjectionError"
+
+  /trpc/settings.updateJobSettings:
+    post:
+      summary: Update job settings (existing — adds encryption + injection detection)
+      description: |
+        Existing procedure. Same enhancement as seeker settings.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                jobPostingId:
+                  type: string
+                customPrompt:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+      responses:
+        "200":
+          description: Settings updated
+        "400":
+          description: Prompt injection detected
+
+  /trpc/customPrompts.getExamples:
+    get:
+      summary: Get example prompts for a user type
+      description: |
+        Returns curated example prompts with descriptions.
+        No authentication required (examples are public).
+        Gated behind CUSTOM_PROMPTS flag.
+      parameters:
+        - name: userType
+          in: query
+          schema:
+            type: string
+            enum: [seeker, employer]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PromptExample"
+
+  /trpc/customPrompts.validatePrompt:
+    post:
+      summary: Validate a prompt for injection patterns (dry-run)
+      description: |
+        Client-side validation endpoint. Runs injection detection
+        without saving. Allows real-time feedback in the UI.
+        Gated behind CUSTOM_PROMPTS flag.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt:
+                  type: string
+                  maxLength: 2000
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  reason:
+                    type: string
+                    nullable: true
+                    description: Human-friendly rejection reason (null if valid)
+
+components:
+  schemas:
+    PromptExample:
+      type: object
+      required: [id, title, description, prompt, userType]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          description: Short title for the example
+        description:
+          type: string
+          description: What this prompt does
+        prompt:
+          type: string
+          description: The full example prompt text
+        userType:
+          type: string
+          enum: [seeker, employer]
+
+    InjectionError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [BAD_REQUEST]
+        message:
+          type: string
+          description: User-friendly message explaining why the prompt was rejected

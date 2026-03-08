@@ -103,6 +103,7 @@ const JOB_SETTINGS_SELECTED = {
 
 const mockDb = {
   employer: { findUnique: vi.fn().mockResolvedValue(EMPLOYER), update: vi.fn() },
+  employerMember: { findUnique: vi.fn() },
   jobSeeker: { findUnique: vi.fn().mockResolvedValue(SEEKER) },
   seekerSettings: {
     findUnique: vi.fn().mockResolvedValue(null),
@@ -161,6 +162,12 @@ beforeEach(() => {
   vi.clearAllMocks()
   flagEnabled = true
   mockDb.employer.findUnique.mockResolvedValue(EMPLOYER)
+  mockDb.employerMember.findUnique.mockResolvedValue({
+    id: "member-1",
+    employerId: "emp_01",
+    clerkUserId: "user_emp_01",
+    role: "ADMIN",
+  })
   mockDb.jobSeeker.findUnique.mockResolvedValue(SEEKER)
   mockDb.seekerSettings.findUnique.mockResolvedValue(null)
   mockDb.seekerSettings.upsert.mockResolvedValue(SEEKER_SETTINGS_SELECTED)

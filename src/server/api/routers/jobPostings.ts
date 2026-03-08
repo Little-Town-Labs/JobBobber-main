@@ -1,8 +1,14 @@
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
-import { createTRPCRouter, publicProcedure, employerProcedure } from "@/server/api/trpc"
+import {
+  createTRPCRouter,
+  publicProcedure,
+  employerProcedure,
+  jobPosterProcedure,
+} from "@/server/api/trpc"
 import { toFullJobPosting, toPublicJobPosting } from "@/server/api/helpers/employer-mapper"
 import { canTransition, canActivate } from "@/lib/job-posting-status"
+import { logActivity } from "@/lib/activity-log"
 
 const createPostingSchema = z
   .object({
@@ -139,7 +145,7 @@ export const jobPostingsRouter = createTRPCRouter({
       return toPublicJobPosting(posting)
     }),
 
-  create: employerProcedure.input(createPostingSchema).mutation(async ({ ctx, input }) => {
+  create: jobPosterProcedure.input(createPostingSchema).mutation(async ({ ctx, input }) => {
     const posting = await ctx.db.$transaction(async (tx) => {
       const created = await tx.jobPosting.create({
         data: {
@@ -152,10 +158,19 @@ export const jobPostingsRouter = createTRPCRouter({
       })
       return created
     })
+    await logActivity({
+      employerId: ctx.employer.id,
+      actorClerkUserId: ctx.userId,
+      actorName: ctx.member.clerkUserId,
+      action: "posting.created",
+      targetType: "JobPosting",
+      targetId: posting.id,
+      targetLabel: posting.title,
+    })
     return toFullJobPosting(posting)
   }),
 
-  update: employerProcedure.input(updatePostingSchema).mutation(async ({ ctx, input }) => {
+  update: jobPosterProcedure.input(updatePostingSchema).mutation(async ({ ctx, input }) => {
     const { id, ...data } = input
     const existing = await ctx.db.jobPosting.findUnique({ where: { id } })
     if (!existing || existing.employerId !== ctx.employer.id) {
@@ -165,10 +180,19 @@ export const jobPostingsRouter = createTRPCRouter({
       where: { id },
       data,
     })
+    await logActivity({
+      employerId: ctx.employer.id,
+      actorClerkUserId: ctx.userId,
+      actorName: ctx.member.clerkUserId,
+      action: "posting.updated",
+      targetType: "JobPosting",
+      targetId: updated.id,
+      targetLabel: updated.title,
+    })
     return toFullJobPosting(updated)
   }),
 
-  updateStatus: employerProcedure
+  updateStatus: jobPosterProcedure
     .input(
       z.object({ id: z.string().min(1), status: z.enum(["ACTIVE", "PAUSED", "CLOSED", "FILLED"]) }),
     )
@@ -204,10 +228,20 @@ export const jobPostingsRouter = createTRPCRouter({
         })
       }
 
+      await logActivity({
+        employerId: ctx.employer.id,
+        actorClerkUserId: ctx.userId,
+        actorName: ctx.member.clerkUserId,
+        action: "posting.status_changed",
+        targetType: "JobPosting",
+        targetId: updated.id,
+        targetLabel: `${previousStatus} → ${input.status}`,
+      })
+
       return toFullJobPosting(updated)
     }),
 
-  delete: employerProcedure
+  delete: jobPosterProcedure
     .input(z.object({ id: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       const posting = await ctx.db.jobPosting.findUnique({ where: { id: input.id } })
@@ -221,6 +255,15 @@ export const jobPostingsRouter = createTRPCRouter({
         })
       }
       await ctx.db.jobPosting.delete({ where: { id: input.id } })
+      await logActivity({
+        employerId: ctx.employer.id,
+        actorClerkUserId: ctx.userId,
+        actorName: ctx.member.clerkUserId,
+        action: "posting.deleted",
+        targetType: "JobPosting",
+        targetId: input.id,
+        targetLabel: posting.title,
+      })
       return { success: true }
     }),
 })

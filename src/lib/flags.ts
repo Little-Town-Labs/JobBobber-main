@@ -69,6 +69,13 @@ export const CONVERSATION_LOGS = flag<boolean>({
   decide: () => false,
 })
 
+export const MULTI_MEMBER_EMPLOYER = flag<boolean>({
+  key: "multi-member-employer",
+  defaultValue: false,
+  description: "Enable multi-member employer accounts with role-based access (Feature 13)",
+  decide: () => false,
+})
+
 export const PRIVATE_PARAMS = flag<boolean>({
   key: "private-params",
   defaultValue: false,

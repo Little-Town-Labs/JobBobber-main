@@ -1,7 +1,13 @@
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
 import { type Prisma, type PrismaClient } from "@prisma/client"
-import { createTRPCRouter, seekerProcedure, employerProcedure } from "@/server/api/trpc"
+import {
+  createTRPCRouter,
+  seekerProcedure,
+  employerProcedure,
+  jobPosterProcedure,
+  adminProcedure,
+} from "@/server/api/trpc"
 import { assertFlagEnabled, PRIVATE_PARAMS, CONVERSATION_LOGS } from "@/lib/flags"
 
 /**
@@ -98,7 +104,7 @@ export const settingsRouter = createTRPCRouter({
     }),
 
   /** Update private settings for a job posting (upsert). */
-  updateJobSettings: employerProcedure
+  updateJobSettings: jobPosterProcedure
     .input(
       z.object({
         jobPostingId: z.string().cuid(),
@@ -165,7 +171,7 @@ export const settingsRouter = createTRPCRouter({
   }),
 
   /** Update data usage opt-out preference for employer */
-  updateEmployerDataUsageOptOut: employerProcedure
+  updateEmployerDataUsageOptOut: adminProcedure
     .input(z.object({ optOut: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       await assertFlagEnabled(CONVERSATION_LOGS)

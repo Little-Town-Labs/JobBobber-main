@@ -21,6 +21,7 @@ const mockDb = vi.hoisted(() => ({
   agentConversation: { findMany: vi.fn() },
   jobSeeker: { findUnique: vi.fn() },
   employer: { findUnique: vi.fn() },
+  employerMember: { findUnique: vi.fn() },
   user: { findUnique: vi.fn() },
 }))
 
@@ -38,6 +39,12 @@ vi.mock("@clerk/nextjs/server", () => ({
 async function makeEmployerCaller(employerId: string, orgId: string) {
   // Mock the middleware DB lookups
   mockDb.employer.findUnique.mockResolvedValue({ id: employerId, clerkOrgId: orgId })
+  mockDb.employerMember.findUnique.mockResolvedValue({
+    id: "member-1",
+    employerId,
+    clerkUserId: "user-1",
+    role: "ADMIN",
+  })
 
   const { createCallerFactory, createTRPCRouter } = await import("@/server/api/trpc")
   const { matchesRouter } = await import("@/server/api/routers/matches")

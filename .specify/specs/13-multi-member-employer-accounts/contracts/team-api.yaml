@@ -1,0 +1,243 @@
+openapi: 3.0.0
+info:
+  title: Multi-Member Employer Team Management API
+  description: tRPC procedures for team member management, invitations, and activity logs
+  version: 1.0.0
+
+# NOTE: These are tRPC procedures, not REST endpoints.
+# OpenAPI is used for contract documentation only.
+# Actual calls go through tRPC client, not HTTP.
+
+paths:
+  /team.listMembers:
+    post:
+      summary: List all members of the employer organization
+      description: |
+        Procedure: employerProcedure (all roles can view)
+        Returns members with their roles and join dates.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamMember"
+
+  /team.invite:
+    post:
+      summary: Invite a new member by email
+      description: |
+        Procedure: adminProcedure (admin only)
+        Creates a Clerk organization invitation and stores it in the Invitation table.
+        Sends invitation email via Clerk.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  $ref: "#/components/schemas/EmployerMemberRole"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+
+  /team.updateRole:
+    post:
+      summary: Change a team member's role
+      description: |
+        Procedure: adminProcedure (admin only)
+        Cannot demote the last admin.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [memberId, role]
+              properties:
+                memberId:
+                  type: string
+                role:
+                  $ref: "#/components/schemas/EmployerMemberRole"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMember"
+
+  /team.removeMember:
+    post:
+      summary: Remove a member from the organization
+      description: |
+        Procedure: adminProcedure (admin only)
+        Cannot remove the last admin.
+        Also removes the member from Clerk organization.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [memberId]
+              properties:
+                memberId:
+                  type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /team.listInvitations:
+    post:
+      summary: List pending invitations
+      description: |
+        Procedure: adminProcedure (admin only)
+        Returns all non-expired, non-revoked invitations.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invitation"
+
+  /team.revokeInvitation:
+    post:
+      summary: Revoke a pending invitation
+      description: |
+        Procedure: adminProcedure (admin only)
+        Also revokes the Clerk invitation if applicable.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invitationId]
+              properties:
+                invitationId:
+                  type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /team.getActivityLog:
+    post:
+      summary: Get team activity log
+      description: |
+        Procedure: adminProcedure (admin only)
+        Returns paginated activity log entries in reverse chronological order.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cursor:
+                  type: string
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 20
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ActivityLogEntry"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                  hasMore:
+                    type: boolean
+
+components:
+  schemas:
+    EmployerMemberRole:
+      type: string
+      enum: [ADMIN, JOB_POSTER, VIEWER]
+
+    TeamMember:
+      type: object
+      properties:
+        id:
+          type: string
+        clerkUserId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/EmployerMemberRole"
+        joinedAt:
+          type: string
+          format: date-time
+
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/EmployerMemberRole"
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, EXPIRED, REVOKED]
+        invitedByName:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    ActivityLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        actorName:
+          type: string
+        action:
+          type: string
+        targetLabel:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time

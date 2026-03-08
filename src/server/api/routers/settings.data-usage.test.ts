@@ -7,6 +7,7 @@ const {
   flagState,
   mockSeekerFindUnique,
   mockEmployerFindUnique,
+  mockEmployerMemberFindUnique,
   mockSeekerSettingsFindUnique,
   mockSeekerSettingsUpsert,
   mockEmployerUpdate,
@@ -14,6 +15,7 @@ const {
   flagState: { enabled: true },
   mockSeekerFindUnique: vi.fn(),
   mockEmployerFindUnique: vi.fn(),
+  mockEmployerMemberFindUnique: vi.fn(),
   mockSeekerSettingsFindUnique: vi.fn(),
   mockSeekerSettingsUpsert: vi.fn(),
   mockEmployerUpdate: vi.fn(),
@@ -42,6 +44,7 @@ vi.mock("@/lib/db", () => ({
   db: {
     jobSeeker: { findUnique: mockSeekerFindUnique },
     employer: { findUnique: mockEmployerFindUnique, update: mockEmployerUpdate },
+    employerMember: { findUnique: mockEmployerMemberFindUnique },
     seekerSettings: {
       findUnique: mockSeekerSettingsFindUnique,
       upsert: mockSeekerSettingsUpsert,
@@ -177,6 +180,12 @@ describe("settings.getEmployerDataUsageOptOut", () => {
     flagState.enabled = true
     mockSeekerFindUnique.mockResolvedValue(SEEKER)
     mockEmployerFindUnique.mockResolvedValue(EMPLOYER)
+    mockEmployerMemberFindUnique.mockResolvedValue({
+      id: "member-1",
+      employerId: "emp_01",
+      clerkUserId: "user_emp_01",
+      role: "ADMIN",
+    })
   })
 
   it("returns employer opt-out preference", async () => {
@@ -193,6 +202,12 @@ describe("settings.updateEmployerDataUsageOptOut", () => {
     flagState.enabled = true
     mockSeekerFindUnique.mockResolvedValue(SEEKER)
     mockEmployerFindUnique.mockResolvedValue(EMPLOYER)
+    mockEmployerMemberFindUnique.mockResolvedValue({
+      id: "member-1",
+      employerId: "emp_01",
+      clerkUserId: "user_emp_01",
+      role: "ADMIN",
+    })
     mockEmployerUpdate.mockResolvedValue({ ...EMPLOYER, dataUsageOptOut: true })
   })
 

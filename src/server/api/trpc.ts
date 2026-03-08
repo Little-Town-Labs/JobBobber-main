@@ -3,19 +3,18 @@ import { initTRPC, TRPCError } from "@trpc/server"
 import { auth } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 import { inngest } from "@/lib/inngest"
-import type { Employer, JobSeeker } from "@prisma/client"
+import type { Employer, EmployerMember, JobSeeker } from "@prisma/client"
 
 /**
  * tRPC initialisation — context creation, procedure builders, middleware chain.
  *
- * Context hierarchy (matches contracts/trpc-api.ts):
+ * Context hierarchy:
  *   publicProcedure
  *     └─ protectedProcedure  (requires Clerk session)
- *           ├─ seekerProcedure    (requires JobSeeker row)
- *           └─ employerProcedure  (requires Employer row + orgId)
- *                 └─ adminProcedure (requires org:admin role)
- *
- * @see .specify/specs/1-foundation-infrastructure/contracts/trpc-api.ts
+ *           ├─ seekerProcedure      (requires JobSeeker row)
+ *           └─ employerProcedure    (requires Employer + EmployerMember rows)
+ *                 ├─ jobPosterProcedure (requires ADMIN or JOB_POSTER role)
+ *                 └─ adminProcedure     (requires org:admin role)
  */
 
 // ---------------------------------------------------------------------------
@@ -125,6 +124,12 @@ const enforceEmployer = t.middleware(async ({ ctx, next }) => {
   if (!employer) {
     throw new TRPCError({ code: "FORBIDDEN", message: "Employer profile not found" })
   }
+  const member = await ctx.db.employerMember.findUnique({
+    where: { employerId_clerkUserId: { employerId: employer.id, clerkUserId: ctx.userId } },
+  })
+  if (!member) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Not a member of this organization" })
+  }
   return next({
     ctx: {
       ...ctx,
@@ -133,8 +138,17 @@ const enforceEmployer = t.middleware(async ({ ctx, next }) => {
       orgRole: ctx.orgRole ?? ("org:member" as const),
       userRole: "EMPLOYER" as const,
       employer,
+      member,
     },
   })
+})
+
+const enforceJobPoster = t.middleware(async ({ ctx, next }) => {
+  const member = (ctx as unknown as { member: EmployerMember }).member
+  if (member.role === "VIEWER") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Job Poster or Admin role required" })
+  }
+  return next({ ctx })
 })
 
 const enforceAdmin = t.middleware(async ({ ctx, next }) => {
@@ -155,6 +169,7 @@ export const onboardingProcedure = t.procedure.use(enforceSession)
 export const protectedProcedure = t.procedure.use(enforceAuthenticated)
 export const seekerProcedure = protectedProcedure.use(enforceSeeker)
 export const employerProcedure = protectedProcedure.use(enforceEmployer)
+export const jobPosterProcedure = employerProcedure.use(enforceJobPoster)
 export const adminProcedure = employerProcedure.use(enforceAdmin)
 
 // ---------------------------------------------------------------------------
@@ -203,6 +218,15 @@ async function callEmployer(partial: PartialCtx) {
   return caller.probe()
 }
 
+async function callJobPoster(partial: PartialCtx) {
+  const caller = createCallerFactory(
+    createTRPCRouter({
+      probe: jobPosterProcedure.query(() => "ok"),
+    }),
+  )(makeTestCtx(partial))
+  return caller.probe()
+}
+
 async function callAdmin(partial: PartialCtx) {
   const caller = createCallerFactory(
     createTRPCRouter({
@@ -217,8 +241,9 @@ export const testHelpers = {
   callProtected,
   callSeeker,
   callEmployer,
+  callJobPoster,
   callAdmin,
 }
 
 // Re-export context sub-types for router use
-export type { JobSeeker, Employer }
+export type { JobSeeker, Employer, EmployerMember }

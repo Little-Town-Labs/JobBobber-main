@@ -23,7 +23,17 @@ export default function EmployerDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Employer Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Employer Dashboard</h1>
+        <nav className="flex gap-4 text-sm">
+          <Link href="/dashboard/conversations" className="text-blue-600 hover:underline">
+            Conversations
+          </Link>
+          <Link href="/dashboard/team" className="text-blue-600 hover:underline">
+            Team
+          </Link>
+        </nav>
+      </div>
       <CompanyProfileCard employer={employer} />
       <div>
         <div className="mb-3 flex items-center justify-between">

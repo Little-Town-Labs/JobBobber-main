@@ -205,10 +205,12 @@ model Employer {
   // Feature 12: data usage opt-out for conversation logs
   dataUsageOptOut Boolean @default(false)
 
-  members     EmployerMember[]
-  jobPostings JobPosting[]
-  matches     Match[]
-  feedback    FeedbackInsights[]
+  members      EmployerMember[]
+  jobPostings  JobPosting[]
+  matches      Match[]
+  feedback     FeedbackInsights[]
+  invitations  Invitation[]
+  activityLogs ActivityLog[]
 
   @@index([clerkOrgId])
   @@index([industry])
@@ -230,6 +232,57 @@ model EmployerMember {
   @@index([clerkUserId])
   @@index([employerId])
   @@map("employer_members")
+}
+
+// =============================================================================
+// Feature 13: Multi-Member Employer Accounts
+// =============================================================================
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+/// Invitation to join an employer organization.
+model Invitation {
+  id                String             @id @default(cuid())
+  employerId        String
+  email             String
+  role              EmployerMemberRole
+  invitedBy         String             // Clerk user ID of admin who invited
+  clerkInvitationId String?            @unique
+  status            InvitationStatus   @default(PENDING)
+  expiresAt         DateTime
+  createdAt         DateTime           @default(now())
+  acceptedAt        DateTime?
+
+  employer Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  @@index([employerId, status])
+  @@index([email, employerId])
+  @@index([expiresAt])
+  @@map("invitations")
+}
+
+/// Audit log of team member actions within an employer organization.
+model ActivityLog {
+  id               String   @id @default(cuid())
+  employerId       String
+  actorClerkUserId String
+  actorName        String
+  action           String   // e.g. "posting.created", "member.invited"
+  targetType       String?  // e.g. "JobPosting", "EmployerMember"
+  targetId         String?
+  targetLabel      String?  // human-readable label (e.g. posting title)
+  createdAt        DateTime @default(now())
+
+  employer Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  @@index([employerId, createdAt])
+  @@index([actorClerkUserId])
+  @@map("activity_logs")
 }
 
 /// Public job posting created by an Employer.

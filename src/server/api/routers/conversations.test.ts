@@ -20,6 +20,7 @@ const {
   mockEmployerFindUnique,
   mockSeekerFindUnique,
   mockPostingFindUnique,
+  mockEmployerMemberFindUnique,
 } = vi.hoisted(() => ({
   flagState: { enabled: true },
   mockConversationFindMany: vi.fn(),
@@ -28,6 +29,7 @@ const {
   mockEmployerFindUnique: vi.fn(),
   mockSeekerFindUnique: vi.fn(),
   mockPostingFindUnique: vi.fn(),
+  mockEmployerMemberFindUnique: vi.fn(),
 }))
 
 vi.mock("@/lib/flags", () => ({
@@ -44,6 +46,7 @@ vi.mock("@/lib/flags", () => ({
 vi.mock("@/lib/db", () => ({
   db: {
     employer: { findUnique: mockEmployerFindUnique },
+    employerMember: { findUnique: mockEmployerMemberFindUnique },
     jobSeeker: { findUnique: mockSeekerFindUnique },
     jobPosting: { findUnique: mockPostingFindUnique },
     agentConversation: {
@@ -228,6 +231,12 @@ describe("conversations.listForEmployer", () => {
     flagState.enabled = true
     mockSeekerFindUnique.mockResolvedValue(SEEKER)
     mockEmployerFindUnique.mockResolvedValue(EMPLOYER)
+    mockEmployerMemberFindUnique.mockResolvedValue({
+      id: "member-1",
+      employerId: "emp_01",
+      clerkUserId: "user_emp_01",
+      role: "ADMIN",
+    })
   })
 
   it("returns conversations for employer's posting", async () => {
@@ -296,6 +305,12 @@ describe("conversations.getById", () => {
     flagState.enabled = true
     mockSeekerFindUnique.mockResolvedValue(SEEKER)
     mockEmployerFindUnique.mockResolvedValue(EMPLOYER)
+    mockEmployerMemberFindUnique.mockResolvedValue({
+      id: "member-1",
+      employerId: "emp_01",
+      clerkUserId: "user_emp_01",
+      role: "ADMIN",
+    })
   })
 
   it("returns conversation with redacted messages for seeker", async () => {

@@ -60,6 +60,7 @@ const SEEKER = {
 
 const mockDb = {
   employer: { findUnique: vi.fn().mockResolvedValue(EMPLOYER) },
+  employerMember: { findUnique: vi.fn() },
   jobSeeker: { findUnique: vi.fn().mockResolvedValue(SEEKER) },
   jobPosting: { findUnique: vi.fn() },
   match: {
@@ -114,6 +115,12 @@ async function makeMatchesCaller(ctx?: {
 beforeEach(() => {
   vi.clearAllMocks()
   mockDb.employer.findUnique.mockResolvedValue(EMPLOYER)
+  mockDb.employerMember.findUnique.mockResolvedValue({
+    id: "member-1",
+    employerId: "emp_01",
+    clerkUserId: "user_clerk_01",
+    role: "ADMIN",
+  })
   mockDb.jobSeeker.findUnique.mockResolvedValue(SEEKER)
 })
 

@@ -28,6 +28,9 @@ vi.mock("@/lib/db", () => ({
     employer: {
       findUnique: vi.fn(),
     },
+    employerMember: {
+      findUnique: vi.fn(),
+    },
   },
 }))
 
@@ -139,6 +142,14 @@ describe("adminProcedure middleware", () => {
     vi.mocked(db.employer.findUnique).mockResolvedValue(
       createMockEmployer({ id: "emp_01", clerkOrgId: "org_xyz", name: "Acme" }) as never,
     )
+    vi.mocked(db.employerMember.findUnique).mockResolvedValue({
+      id: "mem_01",
+      employerId: "emp_01",
+      clerkUserId: "user_abc",
+      role: "ADMIN",
+      invitedBy: null,
+      joinedAt: new Date(),
+    } as never)
 
     const { testHelpers } = await import("@/server/api/trpc")
 

@@ -22,11 +22,14 @@ vi.mock("@clerk/nextjs/server", () => ({
 const mockEmployerFindUnique = vi.fn()
 const mockEmployerUpdate = vi.fn()
 
+const mockEmployerMemberFindUnique = vi.fn()
+
 const mockDb = {
   employer: {
     findUnique: mockEmployerFindUnique,
     update: mockEmployerUpdate,
   },
+  employerMember: { findUnique: mockEmployerMemberFindUnique },
   jobSeeker: { findUnique: vi.fn() },
   seekerSettings: { findFirst: vi.fn() },
 }
@@ -91,6 +94,12 @@ async function makeEmployersCaller(ctx: {
 beforeEach(() => {
   vi.clearAllMocks()
   mockEmployerFindUnique.mockResolvedValue(EMPLOYER)
+  mockEmployerMemberFindUnique.mockResolvedValue({
+    id: "member-1",
+    employerId: "emp_01",
+    clerkUserId: "user_clerk_01",
+    role: "ADMIN",
+  })
 })
 
 describe("employers.getMe", () => {

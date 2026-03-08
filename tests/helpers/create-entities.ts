@@ -90,6 +90,18 @@ export function createMockJobPosting(overrides?: Record<string, unknown>) {
   }
 }
 
+export function createMockEmployerMember(overrides?: Record<string, unknown>) {
+  return {
+    id: nextId(),
+    employerId: nextId(),
+    clerkUserId: `clerk-user-${nextId()}`,
+    role: "ADMIN" as const,
+    invitedBy: null,
+    joinedAt: NOW,
+    ...overrides,
+  }
+}
+
 export function createMockMatch(overrides?: Record<string, unknown>) {
   return {
     id: nextId(),

@@ -10,9 +10,12 @@ import { db } from "@/lib/db"
  * each supported event type to the appropriate database operation.
  *
  * Supported events:
- *   user.created       → db.jobSeeker.upsert (stub — profile fields populated in Feature 3)
- *   organization.created → db.employer.upsert (stub — org fields populated in Feature 4)
- *   (all others)       → acknowledged (HTTP 200), not processed
+ *   user.created                      → db.jobSeeker.upsert
+ *   organization.created              → db.employer.upsert
+ *   organizationMembership.created    → db.employerMember.upsert (Feature 13)
+ *   organizationMembership.deleted    → db.employerMember.deleteMany (Feature 13)
+ *   organizationInvitation.accepted   → db.invitation.updateMany (Feature 13)
+ *   (all others)                      → acknowledged (HTTP 200), not processed
  *
  * Security:
  *   - Returns HTTP 401 on invalid signature (no additional info leaked)
@@ -37,9 +40,38 @@ interface ClerkOrgCreatedEvent {
   }
 }
 
+interface ClerkOrgMembershipCreatedEvent {
+  type: "organizationMembership.created"
+  data: {
+    organization: { id: string }
+    public_user_data: { user_id: string }
+    role: string
+  }
+}
+
+interface ClerkOrgMembershipDeletedEvent {
+  type: "organizationMembership.deleted"
+  data: {
+    organization: { id: string }
+    public_user_data: { user_id: string }
+  }
+}
+
+interface ClerkOrgInvitationAcceptedEvent {
+  type: "organizationInvitation.accepted"
+  data: {
+    id: string
+    organization: { id: string }
+    email_address: string
+  }
+}
+
 type ClerkWebhookEvent =
   | ClerkUserCreatedEvent
   | ClerkOrgCreatedEvent
+  | ClerkOrgMembershipCreatedEvent
+  | ClerkOrgMembershipDeletedEvent
+  | ClerkOrgInvitationAcceptedEvent
   | { type: string; data: unknown }
 
 export async function POST(req: Request): Promise<Response> {
@@ -104,6 +136,58 @@ export async function POST(req: Request): Promise<Response> {
           // TODO Feature 4: populate org fields from Clerk organization data
         },
         update: {},
+      })
+      break
+    }
+
+    case "organizationMembership.created": {
+      const { organization, public_user_data, role } =
+        event.data as ClerkOrgMembershipCreatedEvent["data"]
+      const employer = await db.employer.findUnique({
+        where: { clerkOrgId: organization.id },
+      })
+      if (employer) {
+        const dbRole = role === "org:admin" ? "ADMIN" : "VIEWER"
+        await db.employerMember.upsert({
+          where: {
+            employerId_clerkUserId: {
+              employerId: employer.id,
+              clerkUserId: public_user_data.user_id,
+            },
+          },
+          create: {
+            employerId: employer.id,
+            clerkUserId: public_user_data.user_id,
+            role: dbRole,
+          },
+          update: {},
+        })
+      }
+      break
+    }
+
+    case "organizationMembership.deleted": {
+      const { organization, public_user_data } =
+        event.data as ClerkOrgMembershipDeletedEvent["data"]
+      const employer = await db.employer.findUnique({
+        where: { clerkOrgId: organization.id },
+      })
+      if (employer) {
+        await db.employerMember.deleteMany({
+          where: {
+            employerId: employer.id,
+            clerkUserId: public_user_data.user_id,
+          },
+        })
+      }
+      break
+    }
+
+    case "organizationInvitation.accepted": {
+      const { id: clerkInvitationId } = event.data as ClerkOrgInvitationAcceptedEvent["data"]
+      await db.invitation.updateMany({
+        where: { clerkInvitationId, status: "PENDING" },
+        data: { status: "ACCEPTED", acceptedAt: new Date() },
       })
       break
     }

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { trpc } from "@/lib/trpc/client"
 import { MatchList } from "@/components/matches/match-list"
+import { InsightsPanel } from "@/components/insights/insights-panel"
 
 type StatusFilter = "ALL" | "PENDING" | "ACCEPTED" | "DECLINED"
 type SortOption = "confidence" | "newest"
@@ -89,6 +90,11 @@ export default function SeekerMatchesPage() {
         onAccept={handleAccept}
         onDecline={handleDecline}
       />
+
+      <section className="rounded-lg border p-6">
+        <h2 className="mb-4 text-lg font-semibold">Feedback Insights</h2>
+        <InsightsPanel variant="seeker" />
+      </section>
     </div>
   )
 }

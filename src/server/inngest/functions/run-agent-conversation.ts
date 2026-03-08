@@ -476,6 +476,18 @@ export function buildConversationWorkflow() {
     const lastTurn = turnResults[turnResults.length - 1]
     const finalStatus = deriveFinalStatus(allMessages, !!lastTurn?.terminated)
 
+    // Emit insight threshold check events for both parties
+    if (finalStatus !== "IN_PROGRESS") {
+      await step.sendEvent("insight-check-seeker", {
+        name: "insights/conversation.completed",
+        data: { userId: seekerId, userType: "JOB_SEEKER" },
+      })
+      await step.sendEvent("insight-check-employer", {
+        name: "insights/conversation.completed",
+        data: { userId: employerId, userType: "EMPLOYER" },
+      })
+    }
+
     return {
       status: finalStatus,
       conversationId: conversation.id,

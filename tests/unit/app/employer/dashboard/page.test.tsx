@@ -37,6 +37,10 @@ vi.mock("@/components/employer/job-posting-list", () => ({
   ),
 }))
 
+vi.mock("@/components/insights/insights-panel", () => ({
+  InsightsPanel: () => <div data-testid="insights-panel" />,
+}))
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
   useSearchParams: () => ({ get: () => null }),

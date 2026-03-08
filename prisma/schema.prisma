@@ -442,9 +442,10 @@ model FeedbackInsights {
   inProgressCount         Int              @default(0)
   matchRate               Float            @default(0)
   interviewConversionRate Float            @default(0)
-  trendDirection          TrendDirection   @default(STABLE)
-  generatedAt             DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
+  trendDirection                TrendDirection @default(STABLE)
+  lastInsightConversationCount  Int            @default(0)
+  generatedAt                   DateTime       @default(now())
+  updatedAt                     DateTime       @updatedAt
 
   // Polymorphic back-references for cascade safety.
   // Named map prevents duplicate constraint names (both use userId FK field).

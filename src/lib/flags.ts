@@ -44,7 +44,7 @@ export const MATCH_DASHBOARD = flag<boolean>({
 export const FEEDBACK_INSIGHTS = flag<boolean>({
   key: "feedback-insights",
   defaultValue: false,
-  description: "Enable AI-generated feedback insights panel (Feature 9)",
+  description: "Enable AI-generated aggregate feedback insights (Feature 14)",
   decide: () => false,
 })
 

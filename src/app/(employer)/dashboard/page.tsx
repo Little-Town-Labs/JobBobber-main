@@ -4,6 +4,7 @@ import Link from "next/link"
 import { trpc } from "@/lib/trpc/client"
 import { CompanyProfileCard } from "@/components/employer/company-profile-card"
 import { JobPostingList } from "@/components/employer/job-posting-list"
+import { InsightsPanel } from "@/components/insights/insights-panel"
 
 export default function EmployerDashboardPage() {
   const { data: employer, isLoading: loadingEmployer } = trpc.employers.getMe.useQuery()
@@ -44,6 +45,10 @@ export default function EmployerDashboardPage() {
         </div>
         <JobPostingList postings={postingsData?.items ?? []} />
       </div>
+      <section className="rounded-lg border p-6">
+        <h2 className="mb-4 text-lg font-semibold">Feedback Insights</h2>
+        <InsightsPanel variant="employer" />
+      </section>
     </div>
   )
 }

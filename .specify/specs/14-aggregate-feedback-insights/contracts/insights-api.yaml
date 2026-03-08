@@ -1,0 +1,143 @@
+openapi: 3.0.0
+info:
+  title: Feedback Insights tRPC API Contract
+  version: 1.0.0
+  description: |
+    tRPC procedures for the insights router.
+    All procedures gated behind FEEDBACK_INSIGHTS feature flag.
+
+paths:
+  /insights.getSeekerInsights:
+    get:
+      summary: Get seeker's aggregate feedback insights
+      description: |
+        Returns the authenticated seeker's AI-generated insights.
+        Uses seekerProcedure (identity from ctx.seeker).
+        No input required.
+      tags: [insights]
+      security:
+        - seekerAuth: []
+      responses:
+        "200":
+          description: Insights or null if below threshold / not yet generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightsResponse"
+        "404":
+          description: Feature flag disabled
+
+  /insights.getEmployerInsights:
+    get:
+      summary: Get employer's aggregate feedback insights
+      description: |
+        Returns insights for the authenticated employer.
+        Uses employerProcedure (identity from ctx.employer).
+        Optional jobPostingId to scope insights to a specific posting.
+      tags: [insights]
+      security:
+        - employerAuth: []
+      parameters:
+        - name: jobPostingId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: cuid
+      responses:
+        "200":
+          description: Insights or null if below threshold / not yet generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightsResponse"
+        "404":
+          description: Feature flag disabled or posting not found
+
+  /insights.refreshInsights:
+    post:
+      summary: Manually trigger insight regeneration
+      description: |
+        Rate-limited to once per hour per user.
+        Dispatches an Inngest event for async processing.
+        Returns immediately with acknowledgement.
+      tags: [insights]
+      security:
+        - protectedAuth: []
+      responses:
+        "200":
+          description: Refresh request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshResponse"
+        "429":
+          description: Rate limited (last refresh < 1 hour ago)
+
+components:
+  schemas:
+    InsightsResponse:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+          format: cuid
+        strengths:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+        weaknesses:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+        recommendations:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+        metrics:
+          $ref: "#/components/schemas/InsightMetrics"
+        trendDirection:
+          type: string
+          enum: [IMPROVING, STABLE, DECLINING]
+        generatedAt:
+          type: string
+          format: date-time
+        belowThreshold:
+          type: boolean
+          description: True if user hasn't met minimum conversation count
+        thresholdProgress:
+          type: object
+          properties:
+            current:
+              type: integer
+            required:
+              type: integer
+
+    InsightMetrics:
+      type: object
+      properties:
+        totalConversations:
+          type: integer
+        inProgressCount:
+          type: integer
+        matchRate:
+          type: number
+          format: float
+        interviewConversionRate:
+          type: number
+          format: float
+
+    RefreshResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [queued, rate_limited, no_byok_key]
+        nextRefreshAvailableAt:
+          type: string
+          format: date-time
+          nullable: true

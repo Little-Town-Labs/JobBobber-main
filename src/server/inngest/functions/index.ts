@@ -12,6 +12,8 @@ import {
 import { runAgentConversation } from "./run-agent-conversation"
 import { generateProfileEmbedding } from "./generate-profile-embedding"
 import { generatePostingEmbedding } from "./generate-posting-embedding"
+import { generateFeedbackInsightsFunction } from "./generate-feedback-insights"
+import { checkInsightThreshold } from "./check-insight-threshold"
 
 export const functions = [
   evaluateCandidates,
@@ -20,4 +22,6 @@ export const functions = [
   runAgentConversation,
   generateProfileEmbedding,
   generatePostingEmbedding,
+  generateFeedbackInsightsFunction,
+  checkInsightThreshold,
 ]

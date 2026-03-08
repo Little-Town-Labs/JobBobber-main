@@ -126,8 +126,9 @@ model JobSeeker {
 
   // pgvector field — used exclusively via db.$queryRaw for similarity search.
   // Declared Unsupported so Prisma does not attempt typed access.
-  // Dimension 1536 matches openai/text-embedding-3-large output.
-  profileEmbedding Unsupported("vector(1536)")?
+  // Dimension 1536 matches openai/text-embedding-3-small output.
+  profileEmbedding   Unsupported("vector(1536)")?
+  embeddingUpdatedAt DateTime?
 
   // Relations
   settings        SeekerSettings?
@@ -161,6 +162,7 @@ model SeekerSettings {
   // Feature 2: masked key for display — avoids decryption on every status check.
   // Format: "sk-...xxxx" — last 4 chars of plaintext. Never contains the full key.
   byokMaskedKey        String?
+  dataUsageOptOut      Boolean  @default(false)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -199,6 +201,9 @@ model Employer {
 
   // Feature 6: notification preferences (match-dashboard)
   notifPrefs  Json     @default("{}")
+
+  // Feature 12: data usage opt-out for conversation logs
+  dataUsageOptOut Boolean @default(false)
 
   members     EmployerMember[]
   jobPostings JobPosting[]
@@ -250,7 +255,8 @@ model JobPosting {
   updatedAt        DateTime         @updatedAt
 
   // pgvector field for semantic job-to-seeker matching (Feature 11).
-  jobEmbedding Unsupported("vector(1536)")?
+  jobEmbedding       Unsupported("vector(1536)")?
+  embeddingUpdatedAt DateTime?
 
   employer      Employer            @relation(fields: [employerId], references: [id], onDelete: Cascade)
   settings      JobSettings?
@@ -330,6 +336,9 @@ model Match {
   employerStatus     MatchPartyStatus @default(PENDING)
   seekerContactInfo  Json?
   seekerAvailability Json?
+  employerSummary    String?
+  seekerSummary      String?
+  evaluationData     Json?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 

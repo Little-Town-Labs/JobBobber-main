@@ -55,6 +55,20 @@ export const AGENT_CONVERSATIONS = flag<boolean>({
   decide: () => false,
 })
 
+export const VECTOR_SEARCH = flag<boolean>({
+  key: "vector-search",
+  defaultValue: false,
+  description: "Enable pgvector semantic search for candidate shortlisting (Feature 11)",
+  decide: () => false,
+})
+
+export const CONVERSATION_LOGS = flag<boolean>({
+  key: "conversation-logs",
+  defaultValue: false,
+  description: "Enable read-only conversation log viewing in dashboards (Feature 12)",
+  decide: () => false,
+})
+
 export const PRIVATE_PARAMS = flag<boolean>({
   key: "private-params",
   defaultValue: false,

@@ -2,7 +2,7 @@ import { z } from "zod"
 import { TRPCError } from "@trpc/server"
 import { type Prisma, type PrismaClient } from "@prisma/client"
 import { createTRPCRouter, seekerProcedure, employerProcedure } from "@/server/api/trpc"
-import { assertFlagEnabled, PRIVATE_PARAMS } from "@/lib/flags"
+import { assertFlagEnabled, PRIVATE_PARAMS, CONVERSATION_LOGS } from "@/lib/flags"
 
 /**
  * Settings router — private negotiation parameters for seekers and employers.
@@ -128,6 +128,54 @@ export const settingsRouter = createTRPCRouter({
       })
 
       return result
+    }),
+
+  /** Get data usage opt-out preference for seeker */
+  getSeekerDataUsageOptOut: seekerProcedure.query(async ({ ctx }) => {
+    await assertFlagEnabled(CONVERSATION_LOGS)
+
+    const settings = await ctx.db.seekerSettings.findUnique({
+      where: { seekerId: ctx.seeker.id },
+      select: { dataUsageOptOut: true },
+    })
+
+    return { optOut: settings?.dataUsageOptOut ?? false }
+  }),
+
+  /** Update data usage opt-out preference for seeker */
+  updateSeekerDataUsageOptOut: seekerProcedure
+    .input(z.object({ optOut: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await assertFlagEnabled(CONVERSATION_LOGS)
+
+      await ctx.db.seekerSettings.upsert({
+        where: { seekerId: ctx.seeker.id },
+        create: { seekerId: ctx.seeker.id, dataUsageOptOut: input.optOut },
+        update: { dataUsageOptOut: input.optOut },
+      })
+
+      return { optOut: input.optOut }
+    }),
+
+  /** Get data usage opt-out preference for employer */
+  getEmployerDataUsageOptOut: employerProcedure.query(async ({ ctx }) => {
+    await assertFlagEnabled(CONVERSATION_LOGS)
+
+    return { optOut: ctx.employer.dataUsageOptOut }
+  }),
+
+  /** Update data usage opt-out preference for employer */
+  updateEmployerDataUsageOptOut: employerProcedure
+    .input(z.object({ optOut: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await assertFlagEnabled(CONVERSATION_LOGS)
+
+      await ctx.db.employer.update({
+        where: { id: ctx.employer.id },
+        data: { dataUsageOptOut: input.optOut },
+      })
+
+      return { optOut: input.optOut }
     }),
 })
 

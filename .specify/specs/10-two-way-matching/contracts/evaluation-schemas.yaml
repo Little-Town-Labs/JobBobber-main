@@ -1,0 +1,92 @@
+# Evaluation Schemas Contract — Two-Way Matching
+# These Zod schemas define the structured evaluation output agents produce
+# on their final decision turn.
+
+# AgentDimensionScore
+# One dimension of an agent's evaluation
+AgentDimensionScore:
+  type: object
+  required: [name, score, reasoning]
+  properties:
+    name:
+      type: string
+      enum:
+        - skills_alignment
+        - experience_fit
+        - compensation_alignment
+        - work_arrangement
+        - culture_fit
+        - growth_potential
+    score:
+      type: integer
+      minimum: 0
+      maximum: 100
+    reasoning:
+      type: string
+      minLength: 10
+      maxLength: 200
+
+# AgentEvaluation
+# Structured evaluation produced by one agent at decision time
+AgentEvaluation:
+  type: object
+  required: [agentRole, overallScore, recommendation, reasoning, dimensions]
+  properties:
+    agentRole:
+      type: string
+      enum: [employer_agent, seeker_agent]
+    overallScore:
+      type: integer
+      minimum: 0
+      maximum: 100
+    recommendation:
+      type: string
+      enum: [MATCH, NO_MATCH]
+    reasoning:
+      type: string
+      minLength: 20
+      maxLength: 500
+    dimensions:
+      type: array
+      minItems: 4
+      maxItems: 6
+      items:
+        $ref: "#/AgentDimensionScore"
+
+# MatchEvaluationData
+# Combined evaluation stored on Match.evaluationData
+MatchEvaluationData:
+  type: object
+  required: [employerEvaluation, seekerEvaluation, confidenceInputs]
+  properties:
+    employerEvaluation:
+      $ref: "#/AgentEvaluation"
+    seekerEvaluation:
+      $ref: "#/AgentEvaluation"
+    confidenceInputs:
+      type: object
+      required: [averageScore, dimensionCount, weakestDimension, weakestScore]
+      properties:
+        averageScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        dimensionCount:
+          type: integer
+        weakestDimension:
+          type: string
+        weakestScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+# Extended AgentTurnOutput (decision turn only)
+# Adds optional evaluation field to existing AgentTurnOutput
+AgentTurnOutputWithEvaluation:
+  allOf:
+    - description: "Existing AgentTurnOutput schema from conversation-schemas.ts"
+    - type: object
+      properties:
+        evaluation:
+          description: "Present only when decision is MATCH or NO_MATCH"
+          $ref: "#/AgentEvaluation"

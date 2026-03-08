@@ -37,13 +37,13 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 
 ### Features
 
-- [ ] 1-foundation-infrastructure
-- [ ] 2-authentication-byok
-- [ ] 3-job-seeker-profile
-- [ ] 4-employer-profile-job-posting
-- [ ] 5-basic-ai-matching
-- [ ] 6-match-dashboard
-- [ ] 7-testing-infrastructure
+- [x] 1-foundation-infrastructure
+- [x] 2-authentication-byok
+- [x] 3-job-seeker-profile
+- [x] 4-employer-profile-job-posting
+- [x] 5-basic-ai-matching
+- [x] 6-match-dashboard
+- [x] 7-testing-infrastructure
 
 ---
 
@@ -54,9 +54,9 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 
 ### Features
 
-- [ ] 8-private-negotiation-parameters
-- [ ] 9-agent-to-agent-conversations
-- [ ] 10-two-way-matching
+- [x] 8-private-negotiation-parameters
+- [x] 9-agent-to-agent-conversations
+- [x] 10-two-way-matching
 - [ ] 11-vector-search
 - [ ] 12-agent-conversation-logs
 - [ ] 13-multi-member-employer-accounts
@@ -505,16 +505,16 @@ Phase 2 complete → Phase 3:
 <!-- Machine-readable section parsed by speckit-ralph roadmap_tracker.sh -->
 <!-- Format: - [ ] N-feature-name Px  (Px = P0/P1/P2/P3) -->
 
-- [ ] 1-foundation-infrastructure P0
-- [ ] 2-authentication-byok P0
-- [ ] 3-job-seeker-profile P0
-- [ ] 4-employer-profile-job-posting P0
-- [ ] 5-basic-ai-matching P0
-- [ ] 6-match-dashboard P1
-- [ ] 7-testing-infrastructure P0
-- [ ] 8-private-negotiation-parameters P1
-- [ ] 9-agent-to-agent-conversations P0
-- [ ] 10-two-way-matching P0
+- [x] 1-foundation-infrastructure P0
+- [x] 2-authentication-byok P0
+- [x] 3-job-seeker-profile P0
+- [x] 4-employer-profile-job-posting P0
+- [x] 5-basic-ai-matching P0
+- [x] 6-match-dashboard P1
+- [x] 7-testing-infrastructure P0
+- [x] 8-private-negotiation-parameters P1
+- [x] 9-agent-to-agent-conversations P0
+- [x] 10-two-way-matching P0
 - [ ] 11-vector-search P1
 - [ ] 12-agent-conversation-logs P1
 - [ ] 13-multi-member-employer-accounts P1

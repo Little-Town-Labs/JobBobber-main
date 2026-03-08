@@ -155,8 +155,19 @@ export async function runConversationTurn(params: RunTurnParams): Promise<TurnRe
     }
   }
 
-  // Apply privacy filter to content before storage
+  // Apply privacy filter to content and evaluation reasoning before storage
   const filteredContent = filterPrivateValues(agentOutput.content, input.privateValues)
+
+  const filteredEvaluation = agentOutput.evaluation
+    ? {
+        ...agentOutput.evaluation,
+        reasoning: filterPrivateValues(agentOutput.evaluation.reasoning, input.privateValues),
+        dimensions: agentOutput.evaluation.dimensions.map((d) => ({
+          ...d,
+          reasoning: filterPrivateValues(d.reasoning, input.privateValues),
+        })),
+      }
+    : undefined
 
   const message: ConversationMessage = {
     role: isEmployerTurn ? "employer_agent" : "seeker_agent",
@@ -165,6 +176,7 @@ export async function runConversationTurn(params: RunTurnParams): Promise<TurnRe
     timestamp: new Date().toISOString(),
     turnNumber,
     decision: agentOutput.decision,
+    evaluation: filteredEvaluation,
   }
 
   return { message, terminated: false }

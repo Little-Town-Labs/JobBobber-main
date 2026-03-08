@@ -6,28 +6,23 @@ import { trpc } from "@/lib/trpc/client"
 export default function SeekerPrivateSettingsPage() {
   const utils = trpc.useUtils()
 
-  const {
-    data: settings,
-    isLoading,
-    error,
-  } = (
-    trpc.settings.getSeekerSettings as unknown as {
-      useQuery: () => {
-        data:
-          | {
-              minSalary?: number | null
-              salaryRules?: Record<string, unknown> | null
-              dealBreakers?: string[] | null
-              priorities?: string[] | null
-              exclusions?: string[] | null
-              customPrompt?: string | null
-            }
-          | undefined
-        isLoading: boolean
-        error: Error | null
-      }
-    }
-  ).useQuery()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tRPC type inference overflow (TS2589)
+  const settingsQuery = (trpc.settings.getSeekerSettings as any).useQuery() as {
+    data:
+      | {
+          minSalary: number | null
+          salaryRules: unknown
+          dealBreakers: string[]
+          priorities: string[]
+          exclusions: string[]
+          customPrompt: string | null
+        }
+      | null
+      | undefined
+    isLoading: boolean
+    error: { data?: { code?: string } } | null
+  }
+  const { data: settings, isLoading, error } = settingsQuery
 
   const updateSettings = trpc.settings.updateSeekerSettings.useMutation({
     onSuccess: () => {
@@ -48,7 +43,7 @@ export default function SeekerPrivateSettingsPage() {
     setMinSalary(settings.minSalary?.toString() ?? "")
     setSalaryRulesText(
       typeof settings.salaryRules === "object" && settings.salaryRules
-        ? (settings.salaryRules.type?.toString() ?? "")
+        ? ((settings.salaryRules as Record<string, unknown>).type?.toString() ?? "")
         : "",
     )
     setDealBreakers((settings.dealBreakers ?? []).join("\n"))
@@ -58,7 +53,7 @@ export default function SeekerPrivateSettingsPage() {
     setInitialized(true)
   }
 
-  if ((error as unknown as { data?: { code?: string } })?.data?.code === "NOT_FOUND") {
+  if (error?.data?.code === "NOT_FOUND") {
     return (
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6">
         <p className="text-yellow-800">This feature is not yet available.</p>
@@ -219,6 +214,53 @@ export default function SeekerPrivateSettingsPage() {
           <p className="text-sm text-red-600">Failed to save settings. Please try again.</p>
         )}
       </form>
+
+      <DataUsageOptOut />
+    </div>
+  )
+}
+
+function DataUsageOptOut() {
+  const utils = trpc.useUtils()
+
+  const { data, isLoading } = trpc.settings.getSeekerDataUsageOptOut.useQuery()
+
+  const toggle = trpc.settings.updateSeekerDataUsageOptOut.useMutation({
+    onSuccess: () => {
+      utils.settings.getSeekerDataUsageOptOut.invalidate()
+    },
+  })
+
+  if (isLoading) return null
+
+  return (
+    <div className="border-t pt-6">
+      <h2 className="text-lg font-semibold">Data Usage</h2>
+      <div className="mt-3 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-700">Opt out of model improvement</p>
+          <p className="text-xs text-gray-500">
+            When enabled, your conversation data will not be used for model training. This applies
+            to future conversations only.
+          </p>
+        </div>
+        <button
+          role="switch"
+          aria-checked={data?.optOut ?? false}
+          onClick={() => toggle.mutate({ optOut: !(data?.optOut ?? false) })}
+          disabled={toggle.isPending}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+            data?.optOut ? "bg-blue-600" : "bg-gray-200"
+          } disabled:opacity-50`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              data?.optOut ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </button>
+      </div>
+      {toggle.isSuccess && <p className="mt-1 text-xs text-green-600">Preference updated.</p>}
     </div>
   )
 }

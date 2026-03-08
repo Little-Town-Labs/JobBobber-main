@@ -10,6 +10,7 @@ import { onboardingRouter } from "@/server/api/routers/onboarding"
 import { byokRouter } from "@/server/api/routers/byok"
 import { resumeRouter } from "@/server/api/routers/resume"
 import { notificationsRouter } from "@/server/api/routers/notifications"
+import { conversationsRouter } from "@/server/api/routers/conversations"
 
 /**
  * Root tRPC router — assembles all sub-routers.
@@ -29,6 +30,7 @@ export const appRouter = createTRPCRouter({
   byok: byokRouter,
   resume: resumeRouter,
   notifications: notificationsRouter,
+  conversations: conversationsRouter,
 })
 
 /** AppRouter type — used by tRPC client for end-to-end type safety */

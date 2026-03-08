@@ -16,7 +16,8 @@ import {
   type CandidateInput,
 } from "@/server/agents/employer-agent"
 import { scoreToConfidence, MATCH_SCORE_THRESHOLD } from "@/lib/matching-schemas"
-import { AGENT_CONVERSATIONS } from "@/lib/flags"
+import { AGENT_CONVERSATIONS, VECTOR_SEARCH } from "@/lib/flags"
+import { findSimilarCandidates } from "@/lib/embeddings"
 
 const BATCH_SIZE = 10
 
@@ -71,9 +72,37 @@ export const evaluateCandidates = inngest.createFunction(
     // Narrow the union type after error check
     const { posting, apiKey, provider } = context as Extract<typeof context, { error: null }>
 
-    // Step 2: Find eligible candidates
+    // Step 2: Check vector search availability
+    const vectorContext = await step.run("check-vector-search", async () => {
+      try {
+        const useVector = await VECTOR_SEARCH()
+        if (!useVector) return { available: false }
+
+        // Check if posting has an embedding
+        const rows = await db.$queryRaw<{ job_embedding: unknown }[]>`
+          SELECT job_embedding FROM job_postings WHERE id = ${jobPostingId}
+        `
+        const hasEmbedding = rows.length > 0 && rows[0]!.job_embedding != null
+        return { available: hasEmbedding }
+      } catch {
+        return { available: false }
+      }
+    })
+
+    // Step 2b: Find eligible candidates (vector or fallback)
     const candidateIds = await step.run("find-candidates", async () => {
-      // Find already-matched candidates to exclude
+      if (vectorContext.available) {
+        // Use vector similarity search
+        // pgvector returns embedding as a string like "[0.1,0.2,...]"
+        const rows = await db.$queryRaw<{ job_embedding: string }[]>`
+          SELECT job_embedding::text FROM job_postings WHERE id = ${jobPostingId}
+        `
+        const embedding = JSON.parse(rows[0]!.job_embedding) as number[]
+        const similar = await findSimilarCandidates(embedding, jobPostingId)
+        return similar.map((s) => s.seekerId)
+      }
+
+      // Fallback: fetch all eligible candidates
       const existingConversations = await db.agentConversation.findMany({
         where: { jobPostingId },
         select: { seekerId: true },
@@ -92,12 +121,16 @@ export const evaluateCandidates = inngest.createFunction(
       return candidates.map((c) => c.id).filter((id) => !excludeIds.has(id))
     })
 
+    const searchMode = vectorContext.available ? "vector" : "fallback"
+
     if (candidateIds.length === 0) {
       return {
         status: "COMPLETED" as const,
         totalCandidates: 0,
         matchesCreated: 0,
         skippedCount: 0,
+        searchMode,
+        shortlistSize: 0,
       }
     }
 
@@ -162,6 +195,8 @@ export const evaluateCandidates = inngest.createFunction(
         totalCandidates: candidateIds.length,
         mode: "conversations" as const,
         conversationsDispatched: qualifiedIds.length,
+        searchMode,
+        shortlistSize: candidateIds.length,
       }
     }
 
@@ -256,6 +291,8 @@ export const evaluateCandidates = inngest.createFunction(
       totalCandidates: candidateIds.length,
       matchesCreated,
       skippedCount,
+      searchMode,
+      shortlistSize: candidateIds.length,
     }
   },
 )

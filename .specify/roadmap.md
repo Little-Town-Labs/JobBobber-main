@@ -56,7 +56,7 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 
 - [x] 8-private-negotiation-parameters
 - [x] 9-agent-to-agent-conversations
-- [ ] 10-two-way-matching
+- [x] 10-two-way-matching
 - [ ] 11-vector-search
 - [ ] 12-agent-conversation-logs
 - [ ] 13-multi-member-employer-accounts
@@ -514,7 +514,7 @@ Phase 2 complete → Phase 3:
 - [x] 7-testing-infrastructure P0
 - [x] 8-private-negotiation-parameters P1
 - [x] 9-agent-to-agent-conversations P0
-- [ ] 10-two-way-matching P0
+- [x] 10-two-way-matching P0
 - [ ] 11-vector-search P1
 - [ ] 12-agent-conversation-logs P1
 - [ ] 13-multi-member-employer-accounts P1

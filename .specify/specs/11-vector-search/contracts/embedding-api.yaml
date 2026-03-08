@@ -1,0 +1,66 @@
+## Embedding Service API Contract
+
+## Internal Module: src/lib/embeddings.ts
+
+### generateEmbedding(text, apiKey)
+Input:
+  text: string (structured text representation, max 8000 chars)
+  apiKey: string (decrypted BYOK OpenAI API key)
+Output:
+  number[] (1536-dimensional float vector)
+  null (on failure — invalid key, rate limit, or API error)
+Behavior:
+  - Calls OpenAI text-embedding-3-small endpoint
+  - Returns normalized embedding vector
+  - Retries up to 3 times on transient failures
+  - Returns null on permanent failures (invalid key, malformed input)
+
+### buildProfileText(seeker)
+Input:
+  seeker: { headline, skills, experience, education, location }
+Output:
+  string (structured text for embedding, max 8000 chars)
+Behavior:
+  - Constructs template: "Title: ... Skills: ... Experience: ... Education: ... Location: ..."
+  - Truncates to 8000 chars if necessary
+  - Returns empty string if profile has insufficient content
+
+### buildPostingText(posting)
+Input:
+  posting: { title, description, requiredSkills, experienceLevel, employmentType, locationType, salaryMin, salaryMax }
+Output:
+  string (structured text for embedding, max 8000 chars)
+
+### findSimilarCandidates(postingEmbedding, jobPostingId, limit, minSimilarity)
+Input:
+  postingEmbedding: number[] (1536-d vector)
+  jobPostingId: string (for excluding already-evaluated candidates)
+  limit: number (default 20, max 100)
+  minSimilarity: number (default 0.3, range 0-1)
+Output:
+  Array<{ seekerId: string, similarity: number }>
+Behavior:
+  - Executes pgvector cosine similarity query via db.$queryRaw
+  - Excludes candidates with existing conversations for this posting
+  - Excludes candidates without embeddings
+  - Returns results sorted by similarity descending
+
+## Inngest Events
+
+### embeddings/profile.updated
+Trigger: Job seeker profile created or substantially updated
+Data: { seekerId: string }
+Handler: generate-profile-embedding function
+
+### embeddings/posting.activated
+Trigger: Job posting transitions to ACTIVE
+Data: { jobPostingId: string, employerId: string }
+Handler: generate-posting-embedding function
+
+## Configuration Constants
+
+EMBEDDING_MODEL: "text-embedding-3-small"
+EMBEDDING_DIMENSIONS: 1536
+DEFAULT_SHORTLIST_SIZE: 20
+MIN_SIMILARITY_THRESHOLD: 0.3
+MAX_EMBEDDING_AGE_DAYS: 30

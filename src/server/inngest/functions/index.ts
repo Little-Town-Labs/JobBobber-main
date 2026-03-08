@@ -10,10 +10,14 @@ import {
   sendMutualAcceptNotification,
 } from "./send-match-notification"
 import { runAgentConversation } from "./run-agent-conversation"
+import { generateProfileEmbedding } from "./generate-profile-embedding"
+import { generatePostingEmbedding } from "./generate-posting-embedding"
 
 export const functions = [
   evaluateCandidates,
   sendMatchCreatedNotification,
   sendMutualAcceptNotification,
   runAgentConversation,
+  generateProfileEmbedding,
+  generatePostingEmbedding,
 ]

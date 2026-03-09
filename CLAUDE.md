@@ -35,7 +35,7 @@ This file contains cross-project preferences for working with Claude Code. These
   - Use prefixes: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`
   - Write clear, concise commit messages
   - Focus on the "why" rather than the "what"
-  - Always include: `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`
+  - Always include: `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>`
 - **Commit Timing**: Only create commits when explicitly requested
 - **Safety**: Never use `--force`, `--amend`, or skip hooks unless explicitly asked
 

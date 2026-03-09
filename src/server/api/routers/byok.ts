@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server"
 import { clerkClient } from "@clerk/nextjs/server"
 import { createTRPCRouter, onboardingProcedure } from "@/server/api/trpc"
 import { encrypt } from "@/lib/encryption"
+import { logAudit } from "@/lib/audit"
 
 /**
  * BYOK (Bring Your Own Key) router — API key management.
@@ -198,6 +199,15 @@ export const byokRouter = createTRPCRouter({
       publicMetadata: { hasByokKey: true },
     })
 
+    void logAudit({
+      actorId: ctx.userId,
+      actorType: ctx.userRole === "JOB_SEEKER" ? "JOB_SEEKER" : "EMPLOYER",
+      action: "byok.store_key",
+      entityType: "ApiKey",
+      metadata: { provider },
+      result: "SUCCESS",
+    })
+
     return { success: true as const, provider, maskedKey }
   }),
 
@@ -238,6 +248,14 @@ export const byokRouter = createTRPCRouter({
     const clerk = await clerkClient()
     await clerk.users.updateUserMetadata(ctx.userId, {
       publicMetadata: { hasByokKey: false },
+    })
+
+    void logAudit({
+      actorId: ctx.userId,
+      actorType: ctx.userRole === "JOB_SEEKER" ? "JOB_SEEKER" : "EMPLOYER",
+      action: "byok.delete_key",
+      entityType: "ApiKey",
+      result: "SUCCESS",
     })
 
     return { success: true as const }

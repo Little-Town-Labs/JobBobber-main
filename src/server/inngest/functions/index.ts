@@ -15,6 +15,7 @@ import { generatePostingEmbedding } from "./generate-posting-embedding"
 import { generateFeedbackInsightsFunction } from "./generate-feedback-insights"
 import { checkInsightThreshold } from "./check-insight-threshold"
 import { processStripeEvent } from "./process-stripe-event"
+import { executeAccountDeletion } from "./execute-account-deletion"
 
 export const functions = [
   evaluateCandidates,
@@ -26,4 +27,5 @@ export const functions = [
   generateFeedbackInsightsFunction,
   checkInsightThreshold,
   processStripeEvent,
+  executeAccountDeletion,
 ]

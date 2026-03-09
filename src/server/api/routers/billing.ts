@@ -5,6 +5,7 @@ import { getPlansForUserType, getPlanForUser, getPlanById } from "@/lib/billing-
 import { checkConversationLimit, checkPostingLimit } from "@/lib/plan-limits"
 import { createCheckoutSession, createPortalSession } from "@/lib/stripe-sessions"
 import { stripe } from "@/lib/stripe"
+import { logAudit } from "@/lib/audit"
 
 export const billingRouter = createTRPCRouter({
   /**
@@ -140,7 +141,7 @@ export const billingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await assertFlagEnabled(SUBSCRIPTION_BILLING)
 
-      return createCheckoutSession({
+      const session = await createCheckoutSession({
         userId: ctx.userId,
         userType: ctx.userRole!,
         planId: input.planId,
@@ -148,6 +149,17 @@ export const billingRouter = createTRPCRouter({
         couponCode: input.couponCode,
         db: ctx.db as never,
       })
+
+      void logAudit({
+        actorId: ctx.userId,
+        actorType: ctx.userRole === "JOB_SEEKER" ? "JOB_SEEKER" : "EMPLOYER",
+        action: "billing.create_checkout",
+        entityType: "Subscription",
+        metadata: { planId: input.planId },
+        result: "SUCCESS",
+      })
+
+      return session
     }),
 
   /**
@@ -174,6 +186,14 @@ export const billingRouter = createTRPCRouter({
     if (!stripeCustomerId) {
       throw new Error("No Stripe customer found. Subscribe to a plan first.")
     }
+
+    void logAudit({
+      actorId: ctx.userId,
+      actorType: ctx.userRole === "JOB_SEEKER" ? "JOB_SEEKER" : "EMPLOYER",
+      action: "billing.access_portal",
+      entityType: "Subscription",
+      result: "SUCCESS",
+    })
 
     return createPortalSession(stripeCustomerId)
   }),

@@ -10,6 +10,7 @@ import {
 } from "@/server/api/trpc"
 import { assertFlagEnabled, PRIVATE_PARAMS, CONVERSATION_LOGS, CUSTOM_PROMPTS } from "@/lib/flags"
 import { encryptAndValidatePrompt, decryptPrompt } from "./settings-prompt-helpers"
+import { logAudit } from "@/lib/audit"
 
 /**
  * Settings router — private negotiation parameters for seekers and employers.
@@ -97,6 +98,16 @@ export const settingsRouter = createTRPCRouter({
         select: seekerSettingsSelect,
       })
 
+      void logAudit({
+        actorId: ctx.userId,
+        actorType: "JOB_SEEKER",
+        action: "settings.update_seeker",
+        entityType: "SeekerSettings",
+        entityId: result.id,
+        metadata: { fields: Object.keys(input) },
+        result: "SUCCESS",
+      })
+
       // Decrypt custom prompt before returning
       const decryptedPrompt = await decryptPrompt(result.customPrompt, ctx.seeker.id)
       return { ...result, customPrompt: decryptedPrompt }
@@ -162,6 +173,16 @@ export const settingsRouter = createTRPCRouter({
         select: jobSettingsSelect,
       })
 
+      void logAudit({
+        actorId: ctx.userId,
+        actorType: "EMPLOYER",
+        action: "settings.update_job",
+        entityType: "JobSettings",
+        entityId: result.id,
+        metadata: { jobPostingId, fields: Object.keys(rawData) },
+        result: "SUCCESS",
+      })
+
       const decryptedPrompt = await decryptPrompt(result.customPrompt, jobPostingId)
       return { ...result, customPrompt: decryptedPrompt }
     }),
@@ -190,6 +211,15 @@ export const settingsRouter = createTRPCRouter({
         update: { dataUsageOptOut: input.optOut },
       })
 
+      void logAudit({
+        actorId: ctx.userId,
+        actorType: "JOB_SEEKER",
+        action: "privacy.data_usage_optout",
+        entityType: "SeekerSettings",
+        metadata: { optOut: input.optOut },
+        result: "SUCCESS",
+      })
+
       return { optOut: input.optOut }
     }),
 
@@ -209,6 +239,16 @@ export const settingsRouter = createTRPCRouter({
       await ctx.db.employer.update({
         where: { id: ctx.employer.id },
         data: { dataUsageOptOut: input.optOut },
+      })
+
+      void logAudit({
+        actorId: ctx.userId,
+        actorType: "EMPLOYER",
+        action: "privacy.data_usage_optout",
+        entityType: "Employer",
+        entityId: ctx.employer.id,
+        metadata: { optOut: input.optOut },
+        result: "SUCCESS",
       })
 
       return { optOut: input.optOut }

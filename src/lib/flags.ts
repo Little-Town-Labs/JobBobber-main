@@ -97,6 +97,14 @@ export const SUBSCRIPTION_BILLING = flag<boolean>({
   decide: () => false,
 })
 
+export const COMPLIANCE_SECURITY = flag<boolean>({
+  key: "compliance-security",
+  defaultValue: false,
+  description:
+    "Enable compliance and security features: GDPR export/deletion, rate limiting, audit logging (Feature 18)",
+  decide: () => false,
+})
+
 export const ADVANCED_EMPLOYER_DASHBOARD = flag<boolean>({
   key: "advanced-employer-dashboard",
   defaultValue: false,

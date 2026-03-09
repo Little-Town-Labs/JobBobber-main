@@ -380,8 +380,8 @@ model AgentConversation {
   outcome      String?
   inngestRunId String?
 
-  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Restrict)
-  seeker     JobSeeker  @relation(fields: [seekerId], references: [id], onDelete: Restrict)
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  seeker     JobSeeker  @relation(fields: [seekerId], references: [id], onDelete: Cascade)
   match      Match?
 
   @@index([seekerId])
@@ -412,10 +412,10 @@ model Match {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
-  conversation AgentConversation @relation(fields: [conversationId], references: [id], onDelete: Restrict)
-  jobPosting   JobPosting        @relation(fields: [jobPostingId], references: [id], onDelete: Restrict)
-  seeker       JobSeeker         @relation(fields: [seekerId], references: [id], onDelete: Restrict)
-  employer     Employer          @relation(fields: [employerId], references: [id], onDelete: Restrict)
+  conversation AgentConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  jobPosting   JobPosting        @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  seeker       JobSeeker         @relation(fields: [seekerId], references: [id], onDelete: Cascade)
+  employer     Employer          @relation(fields: [employerId], references: [id], onDelete: Cascade)
 
   @@index([seekerId])
   @@index([employerId])
@@ -521,4 +521,71 @@ model StripeEvent {
 
   @@index([processed])
   @@map("stripe_events")
+}
+
+// =============================================================================
+// Feature 18: Compliance & Security
+// =============================================================================
+
+enum AuditActorType {
+  JOB_SEEKER
+  EMPLOYER
+  SYSTEM
+}
+
+enum AuditResult {
+  SUCCESS
+  FAILURE
+}
+
+enum DeletionUserType {
+  JOB_SEEKER
+  EMPLOYER
+}
+
+enum DeletionStatus {
+  PENDING
+  CANCELLED
+  EXECUTING
+  COMPLETED
+  FAILED
+}
+
+/// Platform-wide compliance audit log.
+/// Separate from ActivityLog (employer team actions).
+/// Append-only at application level — no update/delete procedures.
+model AuditLog {
+  id         String         @id @default(cuid())
+  actorId    String
+  actorType  AuditActorType
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json           @default("{}")
+  ipHash     String?
+  result     AuditResult
+  createdAt  DateTime       @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// Tracks account deletion requests with 72-hour grace period.
+/// Standalone — no FK relationships (persists after user deletion).
+model DeletionRequest {
+  id             String         @id @default(cuid())
+  clerkUserId    String         @unique
+  userType       DeletionUserType
+  status         DeletionStatus @default(PENDING)
+  reason         String?
+  scheduledAt    DateTime
+  executedAt     DateTime?
+  inngestEventId String?
+  requestedAt    DateTime       @default(now())
+
+  @@index([status, scheduledAt])
+  @@index([status])
+  @@map("deletion_requests")
 }

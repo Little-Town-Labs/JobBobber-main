@@ -15,6 +15,7 @@ import {
 import { toMatchResponse } from "@/server/api/helpers/match-mapper"
 import { ADVANCED_EMPLOYER_DASHBOARD, assertFlagEnabled } from "@/lib/flags"
 import { logActivity } from "@/lib/activity-log"
+import { logAudit } from "@/lib/audit"
 
 export const matchesRouter = createTRPCRouter({
   /** List matches for a specific job posting (employer view) */
@@ -170,6 +171,15 @@ export const matchesRouter = createTRPCRouter({
           data: { seekerStatus: input.status },
         })
 
+        void logAudit({
+          actorId: ctx.userId,
+          actorType: "JOB_SEEKER",
+          action: `match.${input.status.toLowerCase()}`,
+          entityType: "Match",
+          entityId: input.matchId,
+          result: "SUCCESS",
+        })
+
         // Check for mutual accept
         if (input.status === "ACCEPTED" && updated.employerStatus === "ACCEPTED") {
           const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
@@ -203,6 +213,15 @@ export const matchesRouter = createTRPCRouter({
         const updated = await ctx.db.match.update({
           where: { id: input.matchId },
           data: { employerStatus: input.status },
+        })
+
+        void logAudit({
+          actorId: ctx.userId,
+          actorType: "EMPLOYER",
+          action: `match.${input.status.toLowerCase()}`,
+          entityType: "Match",
+          entityId: input.matchId,
+          result: "SUCCESS",
         })
 
         // Check for mutual accept
@@ -388,6 +407,16 @@ export const matchesRouter = createTRPCRouter({
 
       const updated = result.count
       const skipped = total - updated
+
+      void logAudit({
+        actorId: ctx.userId,
+        actorType: "EMPLOYER",
+        action: `match.bulk_${input.status.toLowerCase()}`,
+        entityType: "Match",
+        entityId: input.jobPostingId,
+        metadata: { updated, skipped, total },
+        result: "SUCCESS",
+      })
 
       // Fire-and-forget activity log
       logActivity({

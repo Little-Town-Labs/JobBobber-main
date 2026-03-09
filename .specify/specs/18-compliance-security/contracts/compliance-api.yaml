@@ -1,0 +1,200 @@
+# tRPC API Contracts — Feature 18: Compliance & Security
+# Namespace: compliance.*
+
+# All procedures gated behind COMPLIANCE_SECURITY feature flag.
+
+# ===========================================================================
+# compliance.exportMyData
+# ===========================================================================
+# Procedure: protectedProcedure (seeker or employer)
+# Type: query
+# Input: none (identity from ctx)
+# Output:
+#   {
+#     exportData: {
+#       exportedAt: string (ISO 8601)
+#       userType: "JOB_SEEKER" | "EMPLOYER"
+#       profile: object (full profile data)
+#       settings: object | null (private settings, decrypted custom prompt)
+#       matches: Array<{
+#         id: string
+#         jobPostingTitle: string
+#         confidenceScore: string
+#         matchSummary: string
+#         seekerStatus: string
+#         employerStatus: string
+#         createdAt: string
+#       }>
+#       conversations: Array<{
+#         id: string
+#         jobPostingTitle: string
+#         status: string
+#         messages: Array<object> (redacted)
+#         startedAt: string
+#         completedAt: string | null
+#       }>
+#       feedbackInsights: object | null
+#       dataUsageOptOut: boolean
+#     }
+#   }
+# Audit: logs "data.exported" to AuditLog
+# Notes:
+#   - API keys (byokApiKeyEncrypted) EXCLUDED from export
+#   - Conversation messages redacted using existing redaction.ts
+#   - For employers: includes all job postings and their matches/conversations
+
+# ===========================================================================
+# compliance.requestDeletion
+# ===========================================================================
+# Procedure: protectedProcedure (seeker or employer)
+# Type: mutation
+# Input:
+#   {
+#     confirmation: string (must equal "DELETE MY ACCOUNT")
+#     reason?: string (max 500 chars)
+#   }
+# Output:
+#   {
+#     id: string (DeletionRequest ID)
+#     status: "PENDING"
+#     scheduledAt: string (ISO 8601, requestedAt + 72h)
+#   }
+# Audit: logs "account.deletion_requested" to AuditLog
+# Errors:
+#   - CONFLICT: deletion already pending
+#   - BAD_REQUEST: confirmation text doesn't match
+# Notes:
+#   - Schedules Inngest event "compliance/account.deletion.execute"
+#   - User can still log in during grace period
+
+# ===========================================================================
+# compliance.cancelDeletion
+# ===========================================================================
+# Procedure: protectedProcedure
+# Type: mutation
+# Input: none (identity from ctx)
+# Output:
+#   {
+#     id: string
+#     status: "CANCELLED"
+#   }
+# Audit: logs "account.deletion_cancelled" to AuditLog
+# Errors:
+#   - NOT_FOUND: no pending deletion request
+#   - BAD_REQUEST: deletion already executing or completed
+
+# ===========================================================================
+# compliance.getDeletionStatus
+# ===========================================================================
+# Procedure: protectedProcedure
+# Type: query
+# Input: none (identity from ctx)
+# Output:
+#   {
+#     hasPendingDeletion: boolean
+#     request?: {
+#       id: string
+#       status: "PENDING" | "CANCELLED" | "EXECUTING" | "COMPLETED" | "FAILED"
+#       scheduledAt: string
+#       requestedAt: string
+#     }
+#   }
+
+# ===========================================================================
+# compliance.getAuditLog (admin-only)
+# ===========================================================================
+# Procedure: adminProcedure
+# Type: query
+# Input:
+#   {
+#     action?: string (filter by action type)
+#     actorId?: string (filter by actor)
+#     dateFrom?: string (ISO 8601)
+#     dateTo?: string (ISO 8601)
+#     cursor?: string
+#     limit?: number (1-100, default 50)
+#   }
+# Output:
+#   {
+#     items: Array<{
+#       id: string
+#       actorId: string
+#       actorType: "JOB_SEEKER" | "EMPLOYER" | "SYSTEM"
+#       action: string
+#       entityType: string | null
+#       entityId: string | null
+#       metadata: object
+#       result: "SUCCESS" | "FAILURE"
+#       createdAt: string
+#     }>
+#     nextCursor: string | null
+#     hasMore: boolean
+#   }
+
+# ===========================================================================
+# compliance.getMfaStatus
+# ===========================================================================
+# Procedure: protectedProcedure
+# Type: query
+# Input: none
+# Output:
+#   {
+#     mfaEnabled: boolean
+#     mfaDismissedAt: string | null (ISO 8601)
+#     shouldPrompt: boolean
+#   }
+# Notes:
+#   - Checks Clerk user's MFA enrollment via Clerk SDK
+#   - shouldPrompt = !mfaEnabled && (dismissedAt is null || dismissedAt > 7 days ago)
+
+# ===========================================================================
+# compliance.dismissMfaPrompt
+# ===========================================================================
+# Procedure: protectedProcedure
+# Type: mutation
+# Input: none
+# Output:
+#   { dismissed: true }
+# Notes:
+#   - Stores dismissal timestamp in user metadata (Clerk publicMetadata)
+#   - Re-prompts after 7 days
+
+# ===========================================================================
+# Inngest Functions
+# ===========================================================================
+
+# compliance/account.deletion.execute
+# Trigger: scheduled event (72h after request)
+# Steps:
+#   1. Verify DeletionRequest still PENDING (not cancelled)
+#   2. Update status → EXECUTING
+#   3. Terminate active agent conversations (set status TERMINATED)
+#   4. Close active job postings (employer only)
+#   5. Delete user entity (Prisma cascades handle related records)
+#   6. Delete Clerk user/organization
+#   7. Update DeletionRequest status → COMPLETED
+#   8. Log "account.deletion_completed" to AuditLog (with SYSTEM actor)
+# Retry: 3 attempts with exponential backoff
+# Failure: Update DeletionRequest status → FAILED, alert admin
+
+# ===========================================================================
+# Rate Limiting Middleware
+# ===========================================================================
+
+# Applied as tRPC middleware (not per-procedure):
+#
+# Categories and limits:
+#   - auth: 20 req/min (unauthenticated endpoints)
+#   - read: 100 req/min (authenticated reads)
+#   - write: 30 req/min (authenticated mutations)
+#   - agent: 10 req/min (agent-triggering operations)
+#   - webhook: 200 req/min (Stripe/Clerk webhooks)
+#
+# Response headers on all requests:
+#   X-RateLimit-Limit: <max requests in window>
+#   X-RateLimit-Remaining: <requests remaining>
+#   X-RateLimit-Reset: <unix timestamp when window resets>
+#
+# On limit exceeded:
+#   HTTP 429 with Retry-After header
+#   tRPC error code: TOO_MANY_REQUESTS

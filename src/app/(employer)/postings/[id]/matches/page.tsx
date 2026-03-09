@@ -46,7 +46,8 @@ export default function PostingMatchesPage() {
     jobPostingId: params.id,
   })
 
-  const { data: matchesData, isLoading: loadingMatches } = trpc.matches.listForPosting.useQuery({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tRPC type inference overflow (TS2589)
+  const matchesQuery = (trpc.matches.listForPosting as any).useQuery({
     jobPostingId: params.id,
     ...(statusFilter !== "ALL" ? { status: statusFilter } : {}),
     sort,
@@ -54,6 +55,15 @@ export default function PostingMatchesPage() {
       ? { confidenceLevel: filters.confidenceLevel as ("STRONG" | "GOOD" | "POTENTIAL")[] }
       : {}),
   })
+  /* eslint-disable @typescript-eslint/no-explicit-any -- tRPC returns correct shape at runtime */
+  const { data: matchesRawData, isLoading: loadingMatches } = matchesQuery as {
+    data: any
+    isLoading: boolean
+  }
+  const matchesData = matchesRawData as
+    | { items: any[]; nextCursor: string | null; hasMore: boolean }
+    | undefined
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const { data: workflowStatus, isLoading: loadingWorkflow } =
     trpc.matches.getWorkflowStatus.useQuery({ jobPostingId: params.id })

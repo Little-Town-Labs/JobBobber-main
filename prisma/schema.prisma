@@ -91,6 +91,19 @@ enum FeedbackUserType {
   EMPLOYER
 }
 
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+  INCOMPLETE
+}
+
+enum SubscriptionUserType {
+  JOB_SEEKER
+  EMPLOYER
+}
+
 enum TrendDirection {
   IMPROVING
   STABLE
@@ -107,6 +120,7 @@ enum TrendDirection {
 model JobSeeker {
   id                   String   @id @default(cuid())
   clerkUserId          String   @unique
+  stripeCustomerId     String?  @unique
   name                 String
   headline             String?
   bio                  String?
@@ -136,6 +150,7 @@ model JobSeeker {
   matches         Match[]
   feedback        FeedbackInsights[]
   extractionCache ExtractionCache[]
+  subscriptions   Subscription[]
 
   @@index([clerkUserId])
   @@index([isActive])
@@ -174,9 +189,10 @@ model SeekerSettings {
 /// Public profile for an employer organisation.
 /// clerkOrgId links to Clerk's Organization — stored as a plain String.
 model Employer {
-  id           String   @id @default(cuid())
-  clerkOrgId   String   @unique
-  name         String
+  id               String   @id @default(cuid())
+  clerkOrgId       String   @unique
+  stripeCustomerId String?  @unique
+  name             String
   industry     String?
   size         String?
   description  String?
@@ -205,12 +221,13 @@ model Employer {
   // Feature 12: data usage opt-out for conversation logs
   dataUsageOptOut Boolean @default(false)
 
-  members      EmployerMember[]
-  jobPostings  JobPosting[]
-  matches      Match[]
-  feedback     FeedbackInsights[]
-  invitations  Invitation[]
-  activityLogs ActivityLog[]
+  members       EmployerMember[]
+  jobPostings   JobPosting[]
+  matches       Match[]
+  feedback      FeedbackInsights[]
+  invitations   Invitation[]
+  activityLogs  ActivityLog[]
+  subscriptions Subscription[]
 
   @@index([clerkOrgId])
   @@index([industry])
@@ -457,4 +474,51 @@ model FeedbackInsights {
   @@index([userType])
   @@index([trendDirection])
   @@map("feedback_insights")
+}
+
+// =============================================================================
+// Feature 16: Subscription Billing
+// =============================================================================
+
+/// Tracks a Stripe subscription lifecycle for a user (seeker or employer).
+/// Source of truth for subscription status is kept in sync via Stripe webhooks.
+model Subscription {
+  id                   String               @id @default(cuid())
+  stripeSubscriptionId String               @unique
+  stripeCustomerId     String
+  userId               String
+  userType             SubscriptionUserType
+  employerId           String?
+  seekerId             String?
+  planId               String
+  status               SubscriptionStatus   @default(INCOMPLETE)
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean              @default(false)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  employer Employer?  @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  seeker   JobSeeker? @relation(fields: [seekerId], references: [id], onDelete: Cascade)
+
+  @@index([stripeCustomerId])
+  @@index([userId])
+  @@index([employerId])
+  @@index([seekerId])
+  @@map("subscriptions")
+}
+
+/// Idempotency table for Stripe webhook events.
+/// Prevents duplicate processing of the same event.
+model StripeEvent {
+  id            String    @id @default(cuid())
+  stripeEventId String    @unique
+  type          String
+  processed     Boolean   @default(false)
+  processedAt   DateTime?
+  payload       Json
+  createdAt     DateTime  @default(now())
+
+  @@index([processed])
+  @@map("stripe_events")
 }

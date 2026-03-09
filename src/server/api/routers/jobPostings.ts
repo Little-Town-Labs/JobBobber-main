@@ -9,6 +9,7 @@ import {
 import { toFullJobPosting, toPublicJobPosting } from "@/server/api/helpers/employer-mapper"
 import { canTransition, canActivate } from "@/lib/job-posting-status"
 import { logActivity } from "@/lib/activity-log"
+import { checkPostingLimit } from "@/lib/plan-limits"
 
 const createPostingSchema = z
   .object({
@@ -146,6 +147,15 @@ export const jobPostingsRouter = createTRPCRouter({
     }),
 
   create: jobPosterProcedure.input(createPostingSchema).mutation(async ({ ctx, input }) => {
+    // Check posting limit (no-op when SUBSCRIPTION_BILLING flag is OFF)
+    const limitCheck = await checkPostingLimit(ctx.db as never, ctx.userId)
+    if (!limitCheck.allowed) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: limitCheck.message ?? "Posting limit reached. Upgrade your plan.",
+      })
+    }
+
     const posting = await ctx.db.$transaction(async (tx) => {
       const created = await tx.jobPosting.create({
         data: {

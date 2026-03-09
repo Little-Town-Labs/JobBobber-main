@@ -90,6 +90,13 @@ export const CUSTOM_PROMPTS = flag<boolean>({
   decide: () => false,
 })
 
+export const SUBSCRIPTION_BILLING = flag<boolean>({
+  key: "subscription-billing",
+  defaultValue: false,
+  description: "Enable subscription billing with tiered plans (Feature 16)",
+  decide: () => false,
+})
+
 /**
  * Assert that a feature flag is enabled.
  * Throws `TRPCError({ code: "NOT_FOUND" })` if the flag is off.

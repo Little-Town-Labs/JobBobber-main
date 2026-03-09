@@ -1,0 +1,244 @@
+openapi: 3.0.3
+info:
+  title: JobBobber Billing API
+  description: tRPC procedures for subscription billing (Feature 16)
+  version: 1.0.0
+
+# Note: These are tRPC procedures, not REST endpoints.
+# OpenAPI format used for documentation clarity.
+
+paths:
+  /billing.getPlans:
+    get:
+      summary: Get available subscription plans for user type
+      description: Returns plan definitions with pricing and feature lists. Gated by SUBSCRIPTION_BILLING flag.
+      parameters:
+        - name: userType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [JOB_SEEKER, EMPLOYER]
+      responses:
+        "200":
+          description: List of available plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Plan"
+
+  /billing.getSubscription:
+    get:
+      summary: Get current user's active subscription
+      description: Returns the active subscription or null if on free tier. Requires authentication.
+      responses:
+        "200":
+          description: Current subscription or null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /billing.getUsage:
+    get:
+      summary: Get current usage against plan limits
+      description: Returns current month usage counters and plan limits.
+      responses:
+        "200":
+          description: Usage summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageSummary"
+
+  /billing.getPaymentHistory:
+    get:
+      summary: Get payment history
+      description: Returns list of past invoices from Stripe.
+      responses:
+        "200":
+          description: Payment history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+
+  /billing.createCheckoutSession:
+    post:
+      summary: Create Stripe Checkout session for plan upgrade
+      description: Returns a Stripe Checkout URL. User is redirected to complete payment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId]
+              properties:
+                planId:
+                  type: string
+                  enum: [seeker_pro, employer_business]
+                couponCode:
+                  type: string
+                  description: Optional promotional coupon code
+      responses:
+        "200":
+          description: Checkout session URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkoutUrl:
+                    type: string
+                    format: uri
+
+  /billing.createPortalSession:
+    post:
+      summary: Create Stripe Customer Portal session
+      description: Returns a Stripe Portal URL for payment method updates and cancellation.
+      responses:
+        "200":
+          description: Portal session URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  portalUrl:
+                    type: string
+                    format: uri
+
+  /billing.checkLimit:
+    get:
+      summary: Check if a specific action is within plan limits
+      description: Used before rate-limited operations to check if user can proceed.
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [create_conversation, create_posting]
+      responses:
+        "200":
+          description: Limit check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LimitCheck"
+
+  /api/webhooks/stripe:
+    post:
+      summary: Stripe webhook endpoint
+      description: Receives Stripe events, verifies signature, dispatches to Inngest.
+      responses:
+        "200":
+          description: Event received
+        "400":
+          description: Invalid payload
+        "401":
+          description: Invalid signature
+
+components:
+  schemas:
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        userType:
+          type: string
+          enum: [JOB_SEEKER, EMPLOYER]
+        monthlyPrice:
+          type: number
+        features:
+          type: array
+          items:
+            type: string
+        limits:
+          type: object
+          properties:
+            maxConversationsPerMonth:
+              type: integer
+              nullable: true
+            maxActivePostings:
+              type: integer
+              nullable: true
+        isEnterprise:
+          type: boolean
+
+    Subscription:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+        planId:
+          type: string
+        planName:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, PAST_DUE, CANCELLED, EXPIRED, INCOMPLETE]
+        monthlyPrice:
+          type: number
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        cancelAtPeriodEnd:
+          type: boolean
+
+    UsageSummary:
+      type: object
+      properties:
+        conversationsThisMonth:
+          type: integer
+        conversationLimit:
+          type: integer
+          nullable: true
+        activePostings:
+          type: integer
+        postingLimit:
+          type: integer
+          nullable: true
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date-time
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [paid, open, void, uncollectible]
+        invoiceUrl:
+          type: string
+          format: uri
+          nullable: true
+
+    LimitCheck:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        currentUsage:
+          type: integer
+        limit:
+          type: integer
+          nullable: true
+        upgradeRequired:
+          type: boolean
+        message:
+          type: string
+          nullable: true

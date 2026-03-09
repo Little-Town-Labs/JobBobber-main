@@ -59,7 +59,7 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 - [x] 10-two-way-matching
 - [x] 11-vector-search
 - [x] 12-agent-conversation-logs
-- [ ] 13-multi-member-employer-accounts
+- [x] 13-multi-member-employer-accounts
 
 ---
 
@@ -70,11 +70,11 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 
 ### Features
 
-- [ ] 14-aggregate-feedback-insights
-- [ ] 15-custom-agent-prompting
-- [ ] 16-subscription-billing
-- [ ] 17-advanced-employer-dashboard
-- [ ] 18-compliance-security
+- [x] 14-aggregate-feedback-insights
+- [x] 15-custom-agent-prompting
+- [x] 16-subscription-billing
+- [x] 17-advanced-employer-dashboard
+- [x] 18-compliance-security
 
 ---
 
@@ -520,9 +520,9 @@ Phase 2 complete → Phase 3:
 - [x] 13-multi-member-employer-accounts P1
 - [x] 14-aggregate-feedback-insights P1
 - [x] 15-custom-agent-prompting P2
-- [ ] 16-subscription-billing P0
-- [ ] 17-advanced-employer-dashboard P2
-- [ ] 18-compliance-security P1
+- [x] 16-subscription-billing P0
+- [x] 17-advanced-employer-dashboard P2
+- [x] 18-compliance-security P1
 
 ---
 

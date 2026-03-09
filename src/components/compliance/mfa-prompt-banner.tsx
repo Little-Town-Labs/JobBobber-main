@@ -36,7 +36,7 @@ export function MfaPromptBanner() {
         </a>
       </div>
       <button
-        onClick={() => dismissMfa.mutateAsync()}
+        onClick={() => dismissMfa.mutate()}
         disabled={dismissMfa.isPending}
         data-testid="dismiss-mfa-button"
         className="ml-4 text-sm text-gray-500 hover:text-gray-700"

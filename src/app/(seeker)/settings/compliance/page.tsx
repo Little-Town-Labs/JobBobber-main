@@ -159,7 +159,7 @@ export default function SeekerCompliancePage() {
               </a>
               {mfaStatus.data?.shouldPrompt && (
                 <button
-                  onClick={() => dismissMfa.mutateAsync()}
+                  onClick={() => dismissMfa.mutate()}
                   disabled={dismissMfa.isPending}
                   className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   data-testid="dismiss-mfa-button"

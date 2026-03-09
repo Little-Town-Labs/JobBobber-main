@@ -1,14 +1,23 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { useParams, useSearchParams } from "next/navigation"
 import { trpc } from "@/lib/trpc/client"
 import { MatchList } from "@/components/matches/match-list"
 import { WorkflowStatus } from "@/components/matches/workflow-status"
-import { CandidateComparison } from "@/components/matches/candidate-comparison"
-import { BulkActionBar } from "@/components/matches/bulk-action-bar"
-import { AdvancedFilters } from "@/components/matches/advanced-filters"
 import { PostingMetricsCard } from "@/components/dashboard/posting-metrics-card"
+
+const CandidateComparison = dynamic(
+  () => import("@/components/matches/candidate-comparison").then((mod) => mod.CandidateComparison),
+  { loading: () => <div className="h-64 w-full animate-pulse rounded bg-gray-200" /> },
+)
+const BulkActionBar = dynamic(() =>
+  import("@/components/matches/bulk-action-bar").then((mod) => mod.BulkActionBar),
+)
+const AdvancedFilters = dynamic(() =>
+  import("@/components/matches/advanced-filters").then((mod) => mod.AdvancedFilters),
+)
 
 type StatusFilter = "ALL" | "PENDING" | "ACCEPTED" | "DECLINED"
 type SortOption = "confidence" | "newest"

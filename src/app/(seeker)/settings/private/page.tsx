@@ -38,7 +38,7 @@ export default function SeekerPrivateSettingsPage() {
   const [customPrompt, setCustomPrompt] = useState<string>("")
   const [initialized, setInitialized] = useState(false)
 
-  // Populate form once data loads
+  // Populate form once data loads (React 18+ batches these setState calls)
   if (settings && !initialized) {
     setMinSalary(settings.minSalary?.toString() ?? "")
     setSalaryRulesText(

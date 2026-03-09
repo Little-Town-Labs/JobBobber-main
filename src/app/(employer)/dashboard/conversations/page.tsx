@@ -1,9 +1,15 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import dynamic from "next/dynamic"
 import { trpc } from "@/lib/trpc/client"
 import { ConversationList } from "@/components/conversations/conversation-list"
-import { ConversationDetail } from "@/components/conversations/conversation-detail"
+
+const ConversationDetail = dynamic(
+  () =>
+    import("@/components/conversations/conversation-detail").then((mod) => mod.ConversationDetail),
+  { loading: () => <div className="h-64 w-full animate-pulse rounded bg-gray-200" /> },
+)
 
 type StatusFilter = "ALL" | "IN_PROGRESS" | "COMPLETED_MATCH" | "COMPLETED_NO_MATCH" | "TERMINATED"
 

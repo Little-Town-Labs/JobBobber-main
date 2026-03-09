@@ -7,6 +7,30 @@ import { createCheckoutSession, createPortalSession } from "@/lib/stripe-session
 import { stripe } from "@/lib/stripe"
 import { logAudit } from "@/lib/audit"
 
+async function getStripeCustomerId(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma client type
+  db: any,
+  userRole: string | null,
+  userId: string,
+  orgId: string | null,
+): Promise<string | null> {
+  if (userRole === "JOB_SEEKER") {
+    const seeker = await db.jobSeeker.findUnique({
+      where: { clerkUserId: userId },
+      select: { stripeCustomerId: true },
+    })
+    return seeker?.stripeCustomerId ?? null
+  }
+  if (orgId) {
+    const employer = await db.employer.findUnique({
+      where: { clerkOrgId: orgId },
+      select: { stripeCustomerId: true },
+    })
+    return employer?.stripeCustomerId ?? null
+  }
+  return null
+}
+
 export const billingRouter = createTRPCRouter({
   /**
    * Get available plans for a user type.
@@ -56,31 +80,27 @@ export const billingRouter = createTRPCRouter({
     monthStart.setDate(1)
     monthStart.setHours(0, 0, 0, 0)
 
-    // Get active plan
-    const subscription = await ctx.db.subscription.findFirst({
-      where: { userId: ctx.userId, status: { in: ["ACTIVE", "PAST_DUE"] } },
-      orderBy: { createdAt: "desc" },
-      select: { planId: true },
-    })
-    const plan = getPlanForUser(ctx.userRole!, subscription?.planId ?? null)
-
-    // Count conversations this month
     const conversationWhere =
       ctx.userRole === "JOB_SEEKER"
         ? { seeker: { clerkUserId: ctx.userId }, startedAt: { gte: monthStart } }
         : { jobPosting: { employer: { clerkOrgId: ctx.orgId! } }, startedAt: { gte: monthStart } }
 
-    const conversationsThisMonth = await ctx.db.agentConversation.count({
-      where: conversationWhere,
-    })
+    // Parallelize all independent queries
+    const [subscription, conversationsThisMonth, activePostings] = await Promise.all([
+      ctx.db.subscription.findFirst({
+        where: { userId: ctx.userId, status: { in: ["ACTIVE", "PAST_DUE"] } },
+        orderBy: { createdAt: "desc" },
+        select: { planId: true },
+      }),
+      ctx.db.agentConversation.count({ where: conversationWhere }),
+      ctx.userRole === "EMPLOYER" && ctx.orgId
+        ? ctx.db.jobPosting.count({
+            where: { employer: { clerkOrgId: ctx.orgId }, status: "ACTIVE" },
+          })
+        : Promise.resolve(0),
+    ])
 
-    // Count active postings (employer only)
-    let activePostings = 0
-    if (ctx.userRole === "EMPLOYER" && ctx.orgId) {
-      activePostings = await ctx.db.jobPosting.count({
-        where: { employer: { clerkOrgId: ctx.orgId }, status: "ACTIVE" },
-      })
-    }
+    const plan = getPlanForUser(ctx.userRole!, subscription?.planId ?? null)
 
     return {
       conversationsThisMonth,
@@ -96,22 +116,12 @@ export const billingRouter = createTRPCRouter({
   getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
     await assertFlagEnabled(SUBSCRIPTION_BILLING)
 
-    // Look up Stripe customer ID
-    let stripeCustomerId: string | null = null
-    if (ctx.userRole === "JOB_SEEKER") {
-      const seeker = await ctx.db.jobSeeker.findUnique({
-        where: { clerkUserId: ctx.userId },
-        select: { stripeCustomerId: true },
-      })
-      stripeCustomerId = seeker?.stripeCustomerId ?? null
-    } else if (ctx.orgId) {
-      const employer = await ctx.db.employer.findUnique({
-        where: { clerkOrgId: ctx.orgId },
-        select: { stripeCustomerId: true },
-      })
-      stripeCustomerId = employer?.stripeCustomerId ?? null
-    }
-
+    const stripeCustomerId = await getStripeCustomerId(
+      ctx.db,
+      ctx.userRole,
+      ctx.userId,
+      ctx.orgId ?? null,
+    )
     if (!stripeCustomerId) return []
 
     const invoices = await stripe.invoices.list({
@@ -168,21 +178,12 @@ export const billingRouter = createTRPCRouter({
   createPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
     await assertFlagEnabled(SUBSCRIPTION_BILLING)
 
-    let stripeCustomerId: string | null = null
-    if (ctx.userRole === "JOB_SEEKER") {
-      const seeker = await ctx.db.jobSeeker.findUnique({
-        where: { clerkUserId: ctx.userId },
-        select: { stripeCustomerId: true },
-      })
-      stripeCustomerId = seeker?.stripeCustomerId ?? null
-    } else if (ctx.orgId) {
-      const employer = await ctx.db.employer.findUnique({
-        where: { clerkOrgId: ctx.orgId },
-        select: { stripeCustomerId: true },
-      })
-      stripeCustomerId = employer?.stripeCustomerId ?? null
-    }
-
+    const stripeCustomerId = await getStripeCustomerId(
+      ctx.db,
+      ctx.userRole,
+      ctx.userId,
+      ctx.orgId ?? null,
+    )
     if (!stripeCustomerId) {
       throw new Error("No Stripe customer found. Subscribe to a plan first.")
     }

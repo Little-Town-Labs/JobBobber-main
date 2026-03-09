@@ -106,25 +106,28 @@ export const matchesRouter = createTRPCRouter({
   getById: protectedProcedure
     .input(z.object({ id: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
-      const match = await ctx.db.match.findUnique({ where: { id: input.id } })
-      if (!match) return null
-
-      // Ownership check: must be the seeker or the employer
       const isSeeker = ctx.userRole === "JOB_SEEKER"
       const isEmployer = ctx.userRole === "EMPLOYER"
 
+      // Parallelize match fetch with ownership lookup
+      const [match, owner] = await Promise.all([
+        ctx.db.match.findUnique({ where: { id: input.id } }),
+        isSeeker
+          ? ctx.db.jobSeeker.findUnique({ where: { clerkUserId: ctx.userId } })
+          : isEmployer && ctx.orgId
+            ? ctx.db.employer.findUnique({ where: { clerkOrgId: ctx.orgId } })
+            : Promise.resolve(null),
+      ])
+
+      if (!match) return null
+
+      // Ownership check: must be the seeker or the employer
       if (isSeeker) {
-        const seeker = await ctx.db.jobSeeker.findUnique({
-          where: { clerkUserId: ctx.userId },
-        })
-        if (!seeker || seeker.id !== match.seekerId) {
+        if (!owner || owner.id !== match.seekerId) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
         }
       } else if (isEmployer && ctx.orgId) {
-        const employer = await ctx.db.employer.findUnique({
-          where: { clerkOrgId: ctx.orgId },
-        })
-        if (!employer || employer.id !== match.employerId) {
+        if (!owner || owner.id !== match.employerId) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
         }
       } else {
@@ -256,14 +259,15 @@ export const matchesRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Posting not found" })
       }
 
-      const conversations = await ctx.db.agentConversation.findMany({
-        where: { jobPostingId: input.jobPostingId },
-        select: { status: true },
-      })
-
-      const matches = await ctx.db.match.count({
-        where: { jobPostingId: input.jobPostingId },
-      })
+      const [conversations, matches] = await Promise.all([
+        ctx.db.agentConversation.findMany({
+          where: { jobPostingId: input.jobPostingId },
+          select: { status: true },
+        }),
+        ctx.db.match.count({
+          where: { jobPostingId: input.jobPostingId },
+        }),
+      ])
 
       const inProgress = conversations.filter((c) => c.status === "IN_PROGRESS").length
       const completed = conversations.filter(

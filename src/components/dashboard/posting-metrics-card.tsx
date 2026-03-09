@@ -10,6 +10,14 @@ interface PostingMetrics {
   matchCounts: { total: number; pending: number; accepted: number; declined: number }
 }
 
+const DEFAULT_METRICS: PostingMetrics = {
+  totalConversations: 0,
+  inProgressConversations: 0,
+  completedEvaluations: 0,
+  matchRate: 0,
+  matchCounts: { total: 0, pending: 0, accepted: 0, declined: 0 },
+}
+
 interface PostingMetricsCardProps {
   jobPostingId: string
 }
@@ -34,13 +42,7 @@ export function PostingMetricsCard({ jobPostingId }: PostingMetricsCardProps) {
     )
   }
 
-  const metrics = data ?? {
-    totalConversations: 0,
-    inProgressConversations: 0,
-    completedEvaluations: 0,
-    matchRate: 0,
-    matchCounts: { total: 0, pending: 0, accepted: 0, declined: 0 },
-  }
+  const metrics = data ?? DEFAULT_METRICS
 
   return (
     <div className="space-y-4">

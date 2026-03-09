@@ -1,7 +1,7 @@
 import "server-only"
 import { createHmac } from "crypto"
 import { db } from "@/lib/db"
-import type { AuditActorType, AuditResult } from "@prisma/client"
+import type { AuditActorType, AuditResult, Prisma } from "@prisma/client"
 
 interface LogAuditParams {
   actorId: string
@@ -27,7 +27,7 @@ export async function logAudit(params: LogAuditParams): Promise<void> {
         action: params.action,
         entityType: params.entityType,
         entityId: params.entityId,
-        metadata: params.metadata ?? {},
+        metadata: (params.metadata ?? {}) as Prisma.InputJsonValue,
         ipHash: params.ipHash ?? null,
         result: params.result,
       },

@@ -2,7 +2,7 @@
  * Feature 18 — Compliance router tests.
  * Tests export, deletion, audit log, and MFA stub procedures.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest"
 
 // ---------------------------------------------------------------------------
 // Mocks

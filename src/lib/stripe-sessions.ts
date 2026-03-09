@@ -1,4 +1,5 @@
 import "server-only"
+import type Stripe from "stripe"
 import { stripe } from "@/lib/stripe"
 import { getPlanById } from "@/lib/billing-plans"
 import type { PrismaClient } from "@prisma/client"
@@ -81,7 +82,7 @@ export async function createCheckoutSession(
   }
 
   // Create checkout session
-  const sessionParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: plan.stripePriceId, quantity: 1 }],
@@ -94,10 +95,7 @@ export async function createCheckoutSession(
         planId,
       },
     },
-  }
-
-  if (couponCode) {
-    sessionParams.discounts = [{ coupon: couponCode }]
+    ...(couponCode ? { discounts: [{ coupon: couponCode }] } : {}),
   }
 
   const session = await stripe.checkout.sessions.create(sessionParams)

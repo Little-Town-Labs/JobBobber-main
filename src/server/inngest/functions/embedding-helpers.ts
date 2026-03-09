@@ -8,7 +8,7 @@
 
 type FetchResult = { error: string } | { skip: true } | { text: string; error: null; skip: false }
 
-interface EmbeddingStepConfig {
+export interface EmbeddingStepConfig {
   step: {
     run: <T>(name: string, fn: () => Promise<T>) => Promise<T>
   }

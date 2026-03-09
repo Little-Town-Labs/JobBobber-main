@@ -99,7 +99,7 @@ export const settingsRouter = createTRPCRouter({
       })
 
       void logAudit({
-        actorId: ctx.userId,
+        actorId: ctx.userId ?? "",
         actorType: "JOB_SEEKER",
         action: "settings.update_seeker",
         entityType: "SeekerSettings",
@@ -174,7 +174,7 @@ export const settingsRouter = createTRPCRouter({
       })
 
       void logAudit({
-        actorId: ctx.userId,
+        actorId: ctx.userId ?? "",
         actorType: "EMPLOYER",
         action: "settings.update_job",
         entityType: "JobSettings",
@@ -212,7 +212,7 @@ export const settingsRouter = createTRPCRouter({
       })
 
       void logAudit({
-        actorId: ctx.userId,
+        actorId: ctx.userId ?? "",
         actorType: "JOB_SEEKER",
         action: "privacy.data_usage_optout",
         entityType: "SeekerSettings",
@@ -242,7 +242,7 @@ export const settingsRouter = createTRPCRouter({
       })
 
       void logAudit({
-        actorId: ctx.userId,
+        actorId: ctx.userId ?? "",
         actorType: "EMPLOYER",
         action: "privacy.data_usage_optout",
         entityType: "Employer",

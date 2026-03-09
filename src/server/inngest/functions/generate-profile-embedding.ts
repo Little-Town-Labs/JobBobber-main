@@ -13,7 +13,7 @@ import { inngest } from "@/lib/inngest"
 import { db } from "@/lib/db"
 import { decrypt } from "@/lib/encryption"
 import { buildProfileText, generateEmbedding, profileEmbeddingEventSchema } from "@/lib/embeddings"
-import { generateAndStoreEmbedding } from "./embedding-helpers"
+import { generateAndStoreEmbedding, type EmbeddingStepConfig } from "./embedding-helpers"
 
 export const generateProfileEmbedding = inngest.createFunction(
   { id: "generate-profile-embedding", retries: 3 },
@@ -26,7 +26,7 @@ export const generateProfileEmbedding = inngest.createFunction(
     const { seekerId } = parsed.data
 
     return generateAndStoreEmbedding({
-      step,
+      step: step as unknown as EmbeddingStepConfig["step"],
       fetchStepName: "fetch-seeker",
       fetchContext: async () => {
         const seeker = await db.jobSeeker.findUnique({

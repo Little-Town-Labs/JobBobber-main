@@ -165,7 +165,7 @@ describe("generate-profile-embedding", () => {
       error: { message: "Required" },
     } as never)
 
-    const result = await handler({ event: { data: {} }, step: mockStep })
+    const result = await handler({ event: { data: {} as { seekerId: string } }, step: mockStep })
 
     expect(result.status).toBe("FAILED")
     expect(result.error).toContain("Invalid event data")

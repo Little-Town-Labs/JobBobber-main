@@ -175,7 +175,10 @@ describe("generate-posting-embedding", () => {
       error: { message: "Required" },
     } as never)
 
-    const result = await handler({ event: { data: {} }, step: mockStep })
+    const result = await handler({
+      event: { data: {} as { jobPostingId: string; employerId: string } },
+      step: mockStep,
+    })
 
     expect(result.status).toBe("FAILED")
     expect(result.error).toContain("Invalid event data")

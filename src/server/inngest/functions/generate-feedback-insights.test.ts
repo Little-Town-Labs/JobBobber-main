@@ -22,6 +22,9 @@ const mockDb = vi.hoisted(() => ({
   jobSeeker: {
     findUnique: vi.fn(),
   },
+  seekerSettings: {
+    findUnique: vi.fn(),
+  },
   employer: {
     findUnique: vi.fn(),
   },
@@ -83,8 +86,7 @@ describe("generateFeedbackInsightsFunction", () => {
       recommendations: ["Expand portfolio"],
     }
 
-    mockDb.jobSeeker.findUnique.mockResolvedValue({
-      id: "seeker-1",
+    mockDb.seekerSettings.findUnique.mockResolvedValue({
       byokApiKeyEncrypted: "encrypted-key",
       byokProvider: "openai",
     })
@@ -149,8 +151,7 @@ describe("generateFeedbackInsightsFunction", () => {
   })
 
   it("stores metrics only when no BYOK key available", async () => {
-    mockDb.jobSeeker.findUnique.mockResolvedValue({
-      id: "seeker-1",
+    mockDb.seekerSettings.findUnique.mockResolvedValue({
       byokApiKeyEncrypted: null,
       byokProvider: null,
     })
@@ -184,8 +185,7 @@ describe("generateFeedbackInsightsFunction", () => {
   })
 
   it("skips generation when below threshold", async () => {
-    mockDb.jobSeeker.findUnique.mockResolvedValue({
-      id: "seeker-1",
+    mockDb.seekerSettings.findUnique.mockResolvedValue({
       byokApiKeyEncrypted: "key",
       byokProvider: "openai",
     })

@@ -14,10 +14,10 @@ const emptyFilters: FilterState = {
 }
 
 describe("AdvancedFilters", () => {
-  let onChange: ReturnType<typeof vi.fn>
+  let onChange: (filters: FilterState) => void
 
   beforeEach(() => {
-    onChange = vi.fn()
+    onChange = vi.fn<(filters: FilterState) => void>()
   })
 
   it("renders filter sections for status, experience, location, and confidence", () => {

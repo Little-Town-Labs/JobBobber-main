@@ -259,7 +259,7 @@ describe("executeAccountDeletionHandler", () => {
 
     // Last update call should set COMPLETED
     const updateCalls = mockDeletionRequestUpdate.mock.calls
-    const lastCall = updateCalls[updateCalls.length - 1]
+    const lastCall = updateCalls[updateCalls.length - 1]!
     expect(lastCall[0]).toEqual(
       expect.objectContaining({
         where: { id: "del_01" },

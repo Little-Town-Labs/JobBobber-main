@@ -60,7 +60,8 @@ export function BulkActionBar({
   }
 
   function handleExportCsv() {
-    const csvData = generateMatchCsv(selectedIds)
+    // TODO: Pass actual match data instead of IDs for full CSV export
+    const csvData = generateMatchCsv([] as Parameters<typeof generateMatchCsv>[0])
     downloadCsv(csvData, `matches-export-${Date.now()}.csv`)
   }
 

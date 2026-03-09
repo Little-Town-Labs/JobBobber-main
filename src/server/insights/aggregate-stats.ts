@@ -43,7 +43,7 @@ export async function buildSeekerInsightContext(seekerId: string): Promise<Insig
     select: { seekerStatus: true, employerStatus: true },
   })
 
-  const confidenceGroups = (await db.match.groupBy({
+  const confidenceGroups = (await (db.match.groupBy as Function)({
     where: { seekerId },
     by: ["confidenceScore"],
     _count: { _all: true },
@@ -84,7 +84,7 @@ export async function buildEmployerInsightContext(
     select: { seekerStatus: true, employerStatus: true },
   })
 
-  const confidenceGroups = (await db.match.groupBy({
+  const confidenceGroups = (await (db.match.groupBy as Function)({
     where: matchWhere,
     by: ["confidenceScore"],
     _count: { _all: true },

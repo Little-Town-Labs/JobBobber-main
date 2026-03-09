@@ -48,10 +48,10 @@ export const teamRouter = createTRPCRouter({
       // Create Clerk organization invitation
       const clerk = await clerkClient()
       const clerkInvitation = await clerk.organizations.createOrganizationInvitation({
-        organizationId: ctx.orgId,
+        organizationId: ctx.orgId ?? "",
         emailAddress: input.email,
         role: input.role === "ADMIN" ? "org:admin" : "org:member",
-        inviterUserId: ctx.userId,
+        inviterUserId: ctx.userId ?? "",
       })
 
       // Store invitation in DB
@@ -60,7 +60,7 @@ export const teamRouter = createTRPCRouter({
           employerId: ctx.employer.id,
           email: input.email,
           role: input.role,
-          invitedBy: ctx.userId,
+          invitedBy: ctx.userId ?? "",
           clerkInvitationId: clerkInvitation.id,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         },
@@ -68,8 +68,8 @@ export const teamRouter = createTRPCRouter({
 
       await logActivity({
         employerId: ctx.employer.id,
-        actorClerkUserId: ctx.userId,
-        actorName: ctx.member.clerkUserId,
+        actorClerkUserId: ctx.userId ?? "",
+        actorName: ctx.member.clerkUserId ?? "",
         action: "member.invited",
         targetLabel: input.email,
       })
@@ -121,8 +121,8 @@ export const teamRouter = createTRPCRouter({
 
       await logActivity({
         employerId: ctx.employer.id,
-        actorClerkUserId: ctx.userId,
-        actorName: ctx.member.clerkUserId,
+        actorClerkUserId: ctx.userId ?? "",
+        actorName: ctx.member.clerkUserId ?? "",
         action: "member.role_changed",
         targetType: "EmployerMember",
         targetId: input.memberId,
@@ -166,7 +166,7 @@ export const teamRouter = createTRPCRouter({
       try {
         const clerk = await clerkClient()
         await clerk.organizations.deleteOrganizationMembership({
-          organizationId: ctx.orgId,
+          organizationId: ctx.orgId ?? "",
           userId: member.clerkUserId,
         })
       } catch {
@@ -177,8 +177,8 @@ export const teamRouter = createTRPCRouter({
 
       await logActivity({
         employerId: ctx.employer.id,
-        actorClerkUserId: ctx.userId,
-        actorName: ctx.member.clerkUserId,
+        actorClerkUserId: ctx.userId ?? "",
+        actorName: ctx.member.clerkUserId ?? "",
         action: "member.removed",
         targetType: "EmployerMember",
         targetId: input.memberId,
@@ -233,9 +233,9 @@ export const teamRouter = createTRPCRouter({
         try {
           const clerk = await clerkClient()
           await clerk.organizations.revokeOrganizationInvitation({
-            organizationId: ctx.orgId,
+            organizationId: ctx.orgId ?? "",
             invitationId: invitation.clerkInvitationId,
-            requestingUserId: ctx.userId,
+            requestingUserId: ctx.userId ?? undefined,
           })
         } catch {
           // Best-effort Clerk sync
@@ -249,8 +249,8 @@ export const teamRouter = createTRPCRouter({
 
       await logActivity({
         employerId: ctx.employer.id,
-        actorClerkUserId: ctx.userId,
-        actorName: ctx.member.clerkUserId,
+        actorClerkUserId: ctx.userId ?? "",
+        actorName: ctx.member.clerkUserId ?? "",
         action: "invitation.revoked",
         targetLabel: invitation.email,
       })

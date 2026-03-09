@@ -179,14 +179,14 @@ async function mockLlmResponses(responses: Array<{ decision: string; evaluation?
   const { generateObject } = vi.mocked(await import("ai"))
   let callIndex = 0
   generateObject.mockImplementation(async () => {
-    const resp = responses[callIndex] ?? responses[responses.length - 1]
+    const resp = responses[callIndex] ?? responses[responses.length - 1]!
     callIndex++
     return {
       object: {
         content: `Agent response turn ${callIndex}. Detailed analysis of candidate fit and opportunity.`,
         phase: "decision",
-        decision: resp.decision,
-        evaluation: resp.evaluation,
+        decision: resp!.decision,
+        evaluation: resp!.evaluation,
       },
     } as never
   })
@@ -223,7 +223,7 @@ describe("two-way matching — end-to-end integration", () => {
       expect(result).toMatchObject({ status: "COMPLETED_MATCH" })
       expect(mockDb.match.create).toHaveBeenCalledTimes(1)
 
-      const matchData = mockDb.match.create.mock.calls[0][0].data
+      const matchData = mockDb.match.create.mock.calls[0]![0].data
       expect(matchData.evaluationData).not.toBeNull()
       expect(matchData.evaluationData.employerEvaluation).toBeDefined()
       expect(matchData.evaluationData.seekerEvaluation).toBeDefined()
@@ -322,7 +322,7 @@ describe("two-way matching — end-to-end integration", () => {
     const handler = buildConversationWorkflow()
     await handler({ event: { data: eventData }, step: createMockStep() } as never)
 
-    const matchData = mockDb.match.create.mock.calls[0][0].data
+    const matchData = mockDb.match.create.mock.calls[0]![0].data
     expect(matchData.confidenceScore).toBe("POTENTIAL") // avg ~37.5 → POTENTIAL
   })
 })

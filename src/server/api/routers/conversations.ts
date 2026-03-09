@@ -27,7 +27,7 @@ const listInput = z
     status: statusEnum.optional(),
   })
   .optional()
-  .default({})
+  .default({ limit: 20 })
 
 export const conversationsRouter = createTRPCRouter({
   /** List conversations for the authenticated seeker */

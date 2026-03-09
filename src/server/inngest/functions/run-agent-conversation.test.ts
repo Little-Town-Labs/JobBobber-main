@@ -303,14 +303,14 @@ describe("match creation with evaluations (Task 3.1)", () => {
     const { generateObject } = vi.mocked(await import("ai"))
     let callIndex = 0
     generateObject.mockImplementation(async () => {
-      const resp = responses[callIndex] ?? responses[responses.length - 1]
+      const resp = responses[callIndex] ?? responses[responses.length - 1]!
       callIndex++
       return {
         object: {
           content: `Agent response for turn ${callIndex}. This is a detailed analysis of the candidate.`,
           phase: "decision",
-          decision: resp.decision,
-          evaluation: resp.evaluation,
+          decision: resp!.decision,
+          evaluation: resp!.evaluation,
         },
       } as never
     })
@@ -356,7 +356,7 @@ describe("match creation with evaluations (Task 3.1)", () => {
       } as never)
 
       expect(mockDb.match.create).toHaveBeenCalledTimes(1)
-      const matchData = mockDb.match.create.mock.calls[0][0].data
+      const matchData = mockDb.match.create.mock.calls[0]![0].data
       expect(matchData.evaluationData).not.toBeNull()
       expect(matchData.evaluationData).toHaveProperty("employerEvaluation")
       expect(matchData.evaluationData).toHaveProperty("seekerEvaluation")
@@ -391,7 +391,7 @@ describe("match creation with evaluations (Task 3.1)", () => {
         step,
       } as never)
 
-      const matchData = mockDb.match.create.mock.calls[0][0].data
+      const matchData = mockDb.match.create.mock.calls[0]![0].data
       // Average of scores ~87.5 → STRONG (≥75)
       expect(matchData.confidenceScore).toBe("STRONG")
     },
@@ -423,7 +423,7 @@ describe("match creation with evaluations (Task 3.1)", () => {
         step,
       } as never)
 
-      const matchData = mockDb.match.create.mock.calls[0][0].data
+      const matchData = mockDb.match.create.mock.calls[0]![0].data
       expect(matchData.employerSummary).toContain("good fit")
       expect(matchData.seekerSummary).toContain("good fit")
     },
@@ -474,7 +474,7 @@ describe("match creation with evaluations (Task 3.1)", () => {
       step,
     } as never)
 
-    const matchData = mockDb.match.create.mock.calls[0][0].data
+    const matchData = mockDb.match.create.mock.calls[0]![0].data
     expect(matchData.confidenceScore).toBe("GOOD")
   })
 })

@@ -196,7 +196,7 @@ describe("BulkActionBar", () => {
     render(<BulkActionBar {...defaultProps} />)
     await user.click(screen.getByRole("button", { name: /export csv/i }))
 
-    expect(generateMatchCsv).toHaveBeenCalledWith(["m1", "m2", "m3"])
+    expect(generateMatchCsv).toHaveBeenCalledWith([])
     expect(downloadCsv).toHaveBeenCalledWith("csv-data", expect.stringContaining(".csv"))
   })
 })

@@ -148,7 +148,7 @@ export const jobPostingsRouter = createTRPCRouter({
 
   create: jobPosterProcedure.input(createPostingSchema).mutation(async ({ ctx, input }) => {
     // Check posting limit (no-op when SUBSCRIPTION_BILLING flag is OFF)
-    const limitCheck = await checkPostingLimit(ctx.db as never, ctx.userId)
+    const limitCheck = await checkPostingLimit(ctx.db as never, ctx.userId ?? "")
     if (!limitCheck.allowed) {
       throw new TRPCError({
         code: "FORBIDDEN",
@@ -170,8 +170,8 @@ export const jobPostingsRouter = createTRPCRouter({
     })
     await logActivity({
       employerId: ctx.employer.id,
-      actorClerkUserId: ctx.userId,
-      actorName: ctx.member.clerkUserId,
+      actorClerkUserId: ctx.userId ?? "",
+      actorName: ctx.member.clerkUserId ?? "",
       action: "posting.created",
       targetType: "JobPosting",
       targetId: posting.id,
@@ -192,8 +192,8 @@ export const jobPostingsRouter = createTRPCRouter({
     })
     await logActivity({
       employerId: ctx.employer.id,
-      actorClerkUserId: ctx.userId,
-      actorName: ctx.member.clerkUserId,
+      actorClerkUserId: ctx.userId ?? "",
+      actorName: ctx.member.clerkUserId ?? "",
       action: "posting.updated",
       targetType: "JobPosting",
       targetId: updated.id,
@@ -240,8 +240,8 @@ export const jobPostingsRouter = createTRPCRouter({
 
       await logActivity({
         employerId: ctx.employer.id,
-        actorClerkUserId: ctx.userId,
-        actorName: ctx.member.clerkUserId,
+        actorClerkUserId: ctx.userId ?? "",
+        actorName: ctx.member.clerkUserId ?? "",
         action: "posting.status_changed",
         targetType: "JobPosting",
         targetId: updated.id,
@@ -267,8 +267,8 @@ export const jobPostingsRouter = createTRPCRouter({
       await ctx.db.jobPosting.delete({ where: { id: input.id } })
       await logActivity({
         employerId: ctx.employer.id,
-        actorClerkUserId: ctx.userId,
-        actorName: ctx.member.clerkUserId,
+        actorClerkUserId: ctx.userId ?? "",
+        actorName: ctx.member.clerkUserId ?? "",
         action: "posting.deleted",
         targetType: "JobPosting",
         targetId: input.id,

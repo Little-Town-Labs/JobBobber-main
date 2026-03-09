@@ -95,7 +95,7 @@ describe("Clerk webhook — organizationMembership.created", () => {
     const res = await POST(makeRequest(JSON.stringify(event)))
     expect(res.status).toBe(200)
     expect(mockMemberUpsert).toHaveBeenCalledOnce()
-    const upsertArgs = mockMemberUpsert.mock.calls[0][0]
+    const upsertArgs = mockMemberUpsert.mock.calls[0]![0]
     expect(upsertArgs.where.employerId_clerkUserId).toEqual({
       employerId: "emp_01",
       clerkUserId: "user_new",
@@ -117,7 +117,7 @@ describe("Clerk webhook — organizationMembership.created", () => {
     mockMemberUpsert.mockResolvedValue({})
 
     await POST(makeRequest(JSON.stringify(event)))
-    const upsertArgs = mockMemberUpsert.mock.calls[0][0]
+    const upsertArgs = mockMemberUpsert.mock.calls[0]![0]
     expect(upsertArgs.create.role).toBe("ADMIN")
   })
 
@@ -177,7 +177,7 @@ describe("Clerk webhook — organizationMembership.deleted", () => {
     const res = await POST(makeRequest(JSON.stringify(event)))
     expect(res.status).toBe(200)
     expect(mockMemberDeleteMany).toHaveBeenCalledOnce()
-    const deleteArgs = mockMemberDeleteMany.mock.calls[0][0]
+    const deleteArgs = mockMemberDeleteMany.mock.calls[0]![0]
     expect(deleteArgs.where).toEqual({
       employerId: "emp_01",
       clerkUserId: "user_removed",
@@ -223,7 +223,7 @@ describe("Clerk webhook — organizationInvitation.accepted", () => {
     const res = await POST(makeRequest(JSON.stringify(event)))
     expect(res.status).toBe(200)
     expect(mockInvitationUpdateMany).toHaveBeenCalledOnce()
-    const updateArgs = mockInvitationUpdateMany.mock.calls[0][0]
+    const updateArgs = mockInvitationUpdateMany.mock.calls[0]![0]
     expect(updateArgs.where.clerkInvitationId).toBe("clerk_inv_01")
     expect(updateArgs.data.status).toBe("ACCEPTED")
   })

@@ -17,12 +17,30 @@ const GRID_COLS: Record<number, string> = {
 export function CandidateComparison({ jobPostingId, matchIds }: CandidateComparisonProps) {
   const utils = trpc.useUtils()
 
-  const { data: candidates, isLoading } = trpc.matches.getForComparison.useQuery(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: candidates, isLoading } = (trpc.matches.getForComparison as any).useQuery(
     { jobPostingId, matchIds },
     { enabled: matchIds.length >= 2 },
-  )
+  ) as {
+    data:
+      | Array<{
+          matchId: string
+          confidenceScore: string
+          matchSummary: string
+          seekerName: string
+          seekerSkills: string[]
+          seekerExperienceLevel: string | null
+          seekerLocation: string | null
+          employerStatus: string
+          createdAt: string
+        }>
+      | undefined
+    isLoading: boolean
+  }
 
-  const updateStatus = trpc.matches.updateStatus.useMutation()
+  const updateStatus = trpc.matches.updateStatus.useMutation() as {
+    mutateAsync: (input: { matchId: string; status: "ACCEPTED" | "DECLINED" }) => Promise<unknown>
+  }
 
   if (matchIds.length < 2) {
     return (
@@ -52,7 +70,7 @@ export function CandidateComparison({ jobPostingId, matchIds }: CandidateCompari
   const gridClass = GRID_COLS[colCount] ?? "grid-cols-2"
 
   async function handleStatusUpdate(matchId: string, status: "ACCEPTED" | "DECLINED") {
-    await updateStatus.mutateAsync({ jobPostingId, matchId, status })
+    await updateStatus.mutateAsync({ matchId, status })
     void utils.matches.listForPosting.invalidate()
   }
 

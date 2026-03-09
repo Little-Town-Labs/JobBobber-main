@@ -13,7 +13,7 @@ import { inngest } from "@/lib/inngest"
 import { db } from "@/lib/db"
 import { decrypt } from "@/lib/encryption"
 import { buildPostingText, generateEmbedding, postingEmbeddingEventSchema } from "@/lib/embeddings"
-import { generateAndStoreEmbedding } from "./embedding-helpers"
+import { generateAndStoreEmbedding, type EmbeddingStepConfig } from "./embedding-helpers"
 
 export const generatePostingEmbedding = inngest.createFunction(
   { id: "generate-posting-embedding", retries: 3 },
@@ -26,7 +26,7 @@ export const generatePostingEmbedding = inngest.createFunction(
     const { jobPostingId, employerId } = parsed.data
 
     return generateAndStoreEmbedding({
-      step,
+      step: step as unknown as EmbeddingStepConfig["step"],
       fetchStepName: "fetch-context",
       fetchContext: async () => {
         const posting = await db.jobPosting.findUnique({

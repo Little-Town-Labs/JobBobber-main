@@ -56,7 +56,7 @@ function makeEvalWithWeakDimension(
   const dims = makeDimensions(baseScore)
   const idx = dims.findIndex((d) => d.name === weakName)
   if (idx !== -1) {
-    dims[idx] = { ...dims[idx], score: weakScore }
+    dims[idx] = { ...dims[idx]!, score: weakScore }
   }
   return {
     agentRole: role,

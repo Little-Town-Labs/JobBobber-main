@@ -47,15 +47,15 @@ export function buildGenerateWorkflow() {
     // Step 3: Resolve BYOK key
     const byokInfo = await step.run("resolve-byok", async () => {
       if (userType === "JOB_SEEKER") {
-        const seeker = await db.jobSeeker.findUnique({
-          where: { id: userId },
+        const settings = await db.seekerSettings.findUnique({
+          where: { seekerId: userId },
           select: { byokApiKeyEncrypted: true, byokProvider: true },
         })
-        if (!seeker?.byokApiKeyEncrypted || !seeker.byokProvider) {
+        if (!settings?.byokApiKeyEncrypted || !settings.byokProvider) {
           return { apiKey: null, provider: null }
         }
-        const apiKey = await decrypt(seeker.byokApiKeyEncrypted, userId)
-        return { apiKey, provider: seeker.byokProvider }
+        const apiKey = await decrypt(settings.byokApiKeyEncrypted, userId)
+        return { apiKey, provider: settings.byokProvider }
       }
 
       const employer = await db.employer.findUnique({

@@ -157,10 +157,9 @@ describe("CandidateComparison", () => {
     render(<CandidateComparison jobPostingId="post_01" matchIds={["match_0", "match_1"]} />)
 
     const acceptButtons = screen.getAllByRole("button", { name: /accept/i })
-    await user.click(acceptButtons[0])
+    await user.click(acceptButtons[0]!)
 
     expect(mockUpdateStatus).toHaveBeenCalledWith({
-      jobPostingId: "post_01",
       matchId: "match_0",
       status: "ACCEPTED",
     })
@@ -175,10 +174,9 @@ describe("CandidateComparison", () => {
     render(<CandidateComparison jobPostingId="post_01" matchIds={["match_0", "match_1"]} />)
 
     const declineButtons = screen.getAllByRole("button", { name: /decline/i })
-    await user.click(declineButtons[1])
+    await user.click(declineButtons[1]!)
 
     expect(mockUpdateStatus).toHaveBeenCalledWith({
-      jobPostingId: "post_01",
       matchId: "match_1",
       status: "DECLINED",
     })

@@ -21,13 +21,16 @@ import { createCipheriv, createDecipheriv, createHmac } from "crypto"
  * @see data-model.md → BYOK Architecture section
  * @see tests/unit/lib/encryption.test.ts
  *
- * // SECURITY NOTE: Deterministic IV (same userId always maps to same IV) is a known
- * // trade-off. It means that two different plaintexts encrypted for the same user
- * // produce IVs from the same key stream start point. For BYOK single-key-per-user
- * // semantics this is acceptable; a user only has one BYOK key at a time.
- * // If semantics change (multiple keys per user), switch to random IV + store IV
- * // alongside the ciphertext.
+ * // SECURITY NOTE: Deterministic IV is a known trade-off. Each (scopeId, fieldName)
+ * // pair produces a unique IV via HMAC, so different fields (BYOK key vs custom prompt)
+ * // for the same user never share an IV. The EncryptionField union type enforces that
+ * // callers use only recognized field names, preventing accidental IV collisions.
+ * // Within a single field, the user has one value at a time (one BYOK key, one prompt),
+ * // so IV reuse across different plaintexts is not a concern.
  */
+
+/** Allowed encryption field names — prevents accidental IV reuse across fields. */
+export type EncryptionField = "default" | "customPrompt"
 
 const ALGORITHM = "aes-256-gcm" as const
 const IV_BYTES = 12
@@ -41,7 +44,7 @@ function getKey(): Buffer {
   return Buffer.from(hex, "hex")
 }
 
-function deriveIv(scopeId: string, fieldName = "default"): Buffer {
+function deriveIv(scopeId: string, fieldName: EncryptionField = "default"): Buffer {
   const salt = process.env["ENCRYPTION_IV_SALT"]
   if (!salt) {
     throw new Error("ENCRYPTION_IV_SALT is required")
@@ -60,7 +63,7 @@ function deriveIv(scopeId: string, fieldName = "default"): Buffer {
 export async function encrypt(
   plaintext: string,
   scopeId: string,
-  fieldName = "default",
+  fieldName: EncryptionField = "default",
 ): Promise<string> {
   if (!plaintext) {
     throw new Error("Cannot encrypt empty value")
@@ -87,7 +90,7 @@ export async function encrypt(
 export async function decrypt(
   ciphertext: string,
   scopeId: string,
-  fieldName = "default",
+  fieldName: EncryptionField = "default",
 ): Promise<string> {
   const packed = Buffer.from(ciphertext, "base64")
 

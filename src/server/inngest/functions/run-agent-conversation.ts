@@ -243,16 +243,16 @@ export function buildConversationWorkflow() {
         seekerProvider: seekerSettings.byokProvider,
         // Encrypted prompt refs for per-turn decryption (not serialized as plaintext)
         seekerPromptRef: seekerSettings.customPrompt
-          ? { encrypted: seekerSettings.customPrompt, salt: seekerSettings.seekerId }
+          ? { encrypted: seekerSettings.customPrompt, scopeId: seekerSettings.seekerId }
           : null,
         employerPromptRef: jobSettings?.customPrompt
-          ? { encrypted: jobSettings.customPrompt, salt: jobPostingId }
+          ? { encrypted: jobSettings.customPrompt, scopeId: jobPostingId }
           : null,
         // Key refs for decryption inside turn steps (not serialized)
-        employerKeyRef: { encrypted: employer.byokApiKeyEncrypted, salt: employer.id },
+        employerKeyRef: { encrypted: employer.byokApiKeyEncrypted, scopeId: employer.id },
         seekerKeyRef: {
           encrypted: seekerSettings.byokApiKeyEncrypted,
-          salt: seekerSettings.seekerId,
+          scopeId: seekerSettings.seekerId,
         },
       }
     })
@@ -269,10 +269,10 @@ export function buildConversationWorkflow() {
       privateVals: PrivateValues
       employerProvider: string
       seekerProvider: string
-      seekerPromptRef: { encrypted: string; salt: string } | null
-      employerPromptRef: { encrypted: string; salt: string } | null
-      employerKeyRef: { encrypted: string; salt: string }
-      seekerKeyRef: { encrypted: string; salt: string }
+      seekerPromptRef: { encrypted: string; scopeId: string } | null
+      employerPromptRef: { encrypted: string; scopeId: string } | null
+      employerKeyRef: { encrypted: string; scopeId: string }
+      seekerKeyRef: { encrypted: string; scopeId: string }
     }
 
     // Step 2: Create conversation record
@@ -296,8 +296,8 @@ export function buildConversationWorkflow() {
       const turnResult = (await step.run(`turn-${turn}`, async () => {
         // Decrypt keys fresh each turn — never serialized by Inngest
         const [employerApiKey, seekerApiKey] = await Promise.all([
-          decrypt(ctx.employerKeyRef.encrypted, ctx.employerKeyRef.salt),
-          decrypt(ctx.seekerKeyRef.encrypted, ctx.seekerKeyRef.salt),
+          decrypt(ctx.employerKeyRef.encrypted, ctx.employerKeyRef.scopeId),
+          decrypt(ctx.seekerKeyRef.encrypted, ctx.seekerKeyRef.scopeId),
         ])
 
         const orchestratorInput: OrchestratorInput = {
@@ -317,10 +317,14 @@ export function buildConversationWorkflow() {
         // Decrypt custom prompts fresh each turn (same pattern as API keys)
         const [employerCustomPrompt, seekerCustomPrompt] = await Promise.all([
           ctx.employerPromptRef
-            ? decrypt(ctx.employerPromptRef.encrypted, ctx.employerPromptRef.salt, "customPrompt")
+            ? decrypt(
+                ctx.employerPromptRef.encrypted,
+                ctx.employerPromptRef.scopeId,
+                "customPrompt",
+              )
             : Promise.resolve(null),
           ctx.seekerPromptRef
-            ? decrypt(ctx.seekerPromptRef.encrypted, ctx.seekerPromptRef.salt, "customPrompt")
+            ? decrypt(ctx.seekerPromptRef.encrypted, ctx.seekerPromptRef.scopeId, "customPrompt")
             : Promise.resolve(null),
         ])
 

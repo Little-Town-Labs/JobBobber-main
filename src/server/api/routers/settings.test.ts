@@ -13,11 +13,12 @@ vi.mock("@clerk/nextjs/server", () => ({
   }),
 }))
 
-// Mock the PRIVATE_PARAMS flag — tests toggle this
+// Mock flags — tests toggle these
 let flagEnabled = true
+let customPromptsEnabled = true
 vi.mock("@/lib/flags", () => ({
   PRIVATE_PARAMS: () => flagEnabled,
-  CUSTOM_PROMPTS: () => true,
+  CUSTOM_PROMPTS: () => customPromptsEnabled,
   CONVERSATION_LOGS: () => true,
   SEEKER_PROFILE: () => true,
   EMPLOYER_PROFILE: () => true,
@@ -174,6 +175,7 @@ function makeSeekerCaller() {
 beforeEach(() => {
   vi.clearAllMocks()
   flagEnabled = true
+  customPromptsEnabled = true
   mockDb.employer.findUnique.mockResolvedValue(EMPLOYER)
   mockDb.employerMember.findUnique.mockResolvedValue({
     id: "member-1",
@@ -398,6 +400,15 @@ describe("updateSeekerSettings", () => {
     const result = await caller.settings.updateSeekerSettings({ minSalary: 100000 })
 
     expect(result).not.toHaveProperty("byokApiKeyEncrypted")
+  })
+
+  it("rejects customPrompt when CUSTOM_PROMPTS flag is OFF", async () => {
+    customPromptsEnabled = false
+    const caller = await makeSeekerCaller()
+
+    await expect(
+      caller.settings.updateSeekerSettings({ customPrompt: "Be assertive on salary" }),
+    ).rejects.toThrow("not yet available")
   })
 })
 

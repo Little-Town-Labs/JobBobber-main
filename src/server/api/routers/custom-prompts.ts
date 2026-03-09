@@ -97,5 +97,5 @@ export const customPromptsRouter = createTRPCRouter({
 
   validatePrompt: protectedProcedure
     .input(z.object({ prompt: z.string().max(2000) }))
-    .query(({ input }) => validatePrompt({ input })),
+    .mutation(({ input }) => validatePrompt({ input })),
 })

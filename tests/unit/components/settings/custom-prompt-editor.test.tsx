@@ -9,11 +9,13 @@ import React from "react"
 const mockUseQuery = vi.hoisted(() => vi.fn())
 const mockUseMutation = vi.hoisted(() => vi.fn())
 
+const mockValidateMutation = vi.hoisted(() => vi.fn())
+
 vi.mock("@/lib/trpc/client", () => ({
   trpc: {
     customPrompts: {
       getExamples: { useQuery: mockUseQuery },
-      validatePrompt: { useQuery: vi.fn().mockReturnValue({ data: undefined }) },
+      validatePrompt: { useMutation: mockValidateMutation },
     },
     settings: {
       updateSeekerSettings: { useMutation: mockUseMutation },
@@ -29,6 +31,7 @@ describe("CustomPromptEditor", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseMutation.mockReturnValue({ mutate: mockSave, isPending: false })
+    mockValidateMutation.mockReturnValue({ mutate: vi.fn(), isPending: false })
     mockUseQuery.mockReturnValue({
       data: [
         {

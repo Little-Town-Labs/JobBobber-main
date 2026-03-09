@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { trpc } from "@/lib/trpc/client"
 
 const MAX_PROMPT_LENGTH = 2000
+const VALIDATION_DEBOUNCE_MS = 500
 
 interface CustomPromptEditorProps {
   userType: "seeker" | "employer"
@@ -18,16 +19,40 @@ export function CustomPromptEditor({
 }: CustomPromptEditorProps) {
   const [prompt, setPrompt] = useState(initialValue ?? "")
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
 
   const { data: examples } = trpc.customPrompts.getExamples.useQuery({ userType })
+  const validateMutation = trpc.customPrompts.validatePrompt.useMutation()
 
   const remaining = MAX_PROMPT_LENGTH - prompt.length
+
+  const runValidation = useCallback(
+    (value: string) => {
+      if (!value.trim()) {
+        setValidationError(null)
+        return
+      }
+      validateMutation.mutate(
+        { prompt: value },
+        {
+          onSuccess: (result) => {
+            setValidationError(result.valid ? null : (result.reason ?? "Invalid prompt."))
+          },
+        },
+      )
+    },
+    [validateMutation],
+  )
 
   function handleChange(value: string) {
     if (value.length <= MAX_PROMPT_LENGTH) {
       setPrompt(value)
-      setValidationError(null)
       onPromptChange?.(value)
+
+      // Debounced server-side validation
+      if (debounceTimer) clearTimeout(debounceTimer)
+      const timer = setTimeout(() => runValidation(value), VALIDATION_DEBOUNCE_MS)
+      setDebounceTimer(timer)
     }
   }
 

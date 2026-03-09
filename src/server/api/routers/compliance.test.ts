@@ -650,19 +650,28 @@ describe("compliance.getAuditLog", () => {
     )
   })
 
-  it("filters by actorId", async () => {
+  it("filters by actorId within org", async () => {
     mockAuditLogFindMany.mockResolvedValue([])
 
     const caller = await makeEmployerCaller()
-    await caller.compliance.getAuditLog({ actorId: "user_seeker_01" })
+    await caller.compliance.getAuditLog({ actorId: "user_employer_01" })
 
     expect(mockAuditLogFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          actorId: "user_seeker_01",
+          actorId: "user_employer_01",
         }),
       }),
     )
+  })
+
+  it("returns empty results for actorId outside org (cross-tenant protection)", async () => {
+    const caller = await makeEmployerCaller()
+    const result = await caller.compliance.getAuditLog({ actorId: "user_from_other_org" })
+
+    expect(result.items).toHaveLength(0)
+    expect(result.hasMore).toBe(false)
+    expect(mockAuditLogFindMany).not.toHaveBeenCalled()
   })
 })
 

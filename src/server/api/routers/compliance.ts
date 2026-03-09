@@ -27,9 +27,16 @@ export const complianceRouter = createTRPCRouter({
         where: { clerkUserId: ctx.userId },
       })
 
-      const rawSettings = await ctx.db.seekerSettings.findUnique({
-        where: { seekerId: profile?.id ?? "" },
-      })
+      const [rawSettings, matches, conversations, feedbackInsights] = profile
+        ? await Promise.all([
+            ctx.db.seekerSettings.findUnique({ where: { seekerId: profile.id } }),
+            ctx.db.match.findMany({ where: { seekerId: profile.id } }),
+            ctx.db.agentConversation.findMany({ where: { seekerId: profile.id } }),
+            ctx.db.feedbackInsights.findUnique({
+              where: { userId_userType: { userId: profile.id, userType: "JOB_SEEKER" } },
+            }),
+          ])
+        : [null, [], [], null]
 
       // Strip sensitive encrypted key from exported settings
       const settings = rawSettings
@@ -37,20 +44,6 @@ export const complianceRouter = createTRPCRouter({
             const { byokApiKeyEncrypted: _key, ...safe } = rawSettings
             return safe
           })()
-        : null
-
-      const matches = profile
-        ? await ctx.db.match.findMany({ where: { seekerId: profile.id } })
-        : []
-
-      const conversations = profile
-        ? await ctx.db.agentConversation.findMany({ where: { seekerId: profile.id } })
-        : []
-
-      const feedbackInsights = profile
-        ? await ctx.db.feedbackInsights.findUnique({
-            where: { userId_userType: { userId: profile.id, userType: "JOB_SEEKER" } },
-          })
         : null
 
       await logAudit({
@@ -87,12 +80,21 @@ export const complianceRouter = createTRPCRouter({
         })()
       : null
 
-    const jobPostings = rawProfile
-      ? await ctx.db.jobPosting.findMany({
-          where: { employerId: rawProfile.id },
-          include: { settings: true },
-        })
-      : []
+    const [jobPostings, matches, conversations, feedbackInsights] = rawProfile
+      ? await Promise.all([
+          ctx.db.jobPosting.findMany({
+            where: { employerId: rawProfile.id },
+            include: { settings: true },
+          }),
+          ctx.db.match.findMany({ where: { employerId: rawProfile.id } }),
+          ctx.db.agentConversation.findMany({
+            where: { jobPosting: { employerId: rawProfile.id } },
+          }),
+          ctx.db.feedbackInsights.findUnique({
+            where: { userId_userType: { userId: rawProfile.id, userType: "EMPLOYER" } },
+          }),
+        ])
+      : [[], [], [], null]
 
     // Strip byokApiKeyEncrypted from job settings
     const sanitizedPostings = jobPostings.map((jp) => {
@@ -102,24 +104,6 @@ export const complianceRouter = createTRPCRouter({
       }
       return jp
     })
-
-    const matches = rawProfile
-      ? await ctx.db.match.findMany({ where: { employerId: rawProfile.id } })
-      : []
-
-    const conversations = rawProfile
-      ? await ctx.db.agentConversation.findMany({
-          where: {
-            jobPosting: { employerId: rawProfile.id },
-          },
-        })
-      : []
-
-    const feedbackInsights = rawProfile
-      ? await ctx.db.feedbackInsights.findUnique({
-          where: { userId_userType: { userId: rawProfile.id, userType: "EMPLOYER" } },
-        })
-      : null
 
     await logAudit({
       actorId: ctx.userId,
@@ -295,7 +279,7 @@ export const complianceRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       await assertFlagEnabled(COMPLIANCE_SECURITY)
 
-      const { cursor, limit = 20, action, actorId, dateFrom, dateTo } = input ?? {}
+      const { cursor, limit, action, actorId, dateFrom, dateTo } = input
 
       // Scope audit logs to the caller's employer organization
       // Only show entries from users who are members of this org
@@ -305,11 +289,18 @@ export const complianceRouter = createTRPCRouter({
       })
       const orgUserIds = orgMembers.map((m) => m.clerkUserId)
 
+      const allowedActorIds = [...orgUserIds, "SYSTEM"]
       const where: Record<string, unknown> = {
-        actorId: { in: [...orgUserIds, "SYSTEM"] },
+        actorId: { in: allowedActorIds },
       }
       if (action) where.action = action
-      if (actorId) where.actorId = actorId
+      if (actorId) {
+        // Validate actorId belongs to this org to prevent cross-tenant access
+        if (!allowedActorIds.includes(actorId)) {
+          return { items: [], nextCursor: null, hasMore: false }
+        }
+        where.actorId = actorId
+      }
       if (dateFrom || dateTo) {
         const createdAt: Record<string, Date> = {}
         if (dateFrom) createdAt.gte = new Date(dateFrom)
@@ -339,7 +330,7 @@ export const complianceRouter = createTRPCRouter({
           result: entry.result,
           createdAt: entry.createdAt.toISOString(),
         })),
-        nextCursor: hasMore ? resultItems[resultItems.length - 1]!.id : null,
+        nextCursor: hasMore ? (resultItems.at(-1)?.id ?? null) : null,
         hasMore,
       }
     }),

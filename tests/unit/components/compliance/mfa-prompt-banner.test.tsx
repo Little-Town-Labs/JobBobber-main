@@ -23,7 +23,7 @@ vi.mock("@/lib/trpc/client", () => ({
       },
       dismissMfaPrompt: {
         useMutation: () => ({
-          mutateAsync: mockDismissMfaPrompt,
+          mutate: mockDismissMfaPrompt,
           isPending: false,
         }),
       },

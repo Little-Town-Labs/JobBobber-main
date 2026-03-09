@@ -37,10 +37,12 @@ vi.mock("@upstash/redis", () => ({
 // ---------------------------------------------------------------------------
 
 describe("checkRateLimit", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     MockRatelimit._constructorCalls = []
     MockRatelimit._lastInstance = null
+    const { _resetRateLimiterCache } = await import("@/lib/rate-limit")
+    _resetRateLimiterCache()
     process.env["UPSTASH_REDIS_REST_URL"] = "https://redis.example.com"
     process.env["UPSTASH_REDIS_REST_TOKEN"] = "test-token"
   })

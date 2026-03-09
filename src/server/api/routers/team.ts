@@ -264,15 +264,23 @@ export const teamRouter = createTRPCRouter({
         .object({
           cursor: z.string().optional(),
           limit: z.number().int().min(1).max(100).default(20),
+          // Feature 17: filter by team member or action type
+          actorClerkUserId: z.string().optional(),
+          action: z.string().optional(),
         })
         .default({ limit: 20 }),
     )
     .query(async ({ ctx, input }) => {
       await assertFlagEnabled(MULTI_MEMBER_EMPLOYER)
 
-      const { cursor, limit = 20 } = input ?? {}
+      const { cursor, limit = 20, actorClerkUserId, action } = input ?? {}
+
+      const where: Record<string, unknown> = { employerId: ctx.employer.id }
+      if (actorClerkUserId) where.actorClerkUserId = actorClerkUserId
+      if (action) where.action = action
+
       const items = await ctx.db.activityLog.findMany({
-        where: { employerId: ctx.employer.id },
+        where,
         orderBy: { createdAt: "desc" },
         take: limit + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),

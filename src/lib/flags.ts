@@ -97,6 +97,14 @@ export const SUBSCRIPTION_BILLING = flag<boolean>({
   decide: () => false,
 })
 
+export const ADVANCED_EMPLOYER_DASHBOARD = flag<boolean>({
+  key: "advanced-employer-dashboard",
+  defaultValue: false,
+  description:
+    "Enable advanced employer dashboard with pipeline view, comparison, and bulk ops (Feature 17)",
+  decide: () => false,
+})
+
 /**
  * Assert that a feature flag is enabled.
  * Throws `TRPCError({ code: "NOT_FOUND" })` if the flag is off.

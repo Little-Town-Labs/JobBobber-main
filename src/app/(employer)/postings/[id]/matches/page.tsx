@@ -1,19 +1,37 @@
 "use client"
 
 import { useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { trpc } from "@/lib/trpc/client"
 import { MatchList } from "@/components/matches/match-list"
 import { WorkflowStatus } from "@/components/matches/workflow-status"
+import { CandidateComparison } from "@/components/matches/candidate-comparison"
+import { BulkActionBar } from "@/components/matches/bulk-action-bar"
+import { AdvancedFilters } from "@/components/matches/advanced-filters"
+import { PostingMetricsCard } from "@/components/dashboard/posting-metrics-card"
 
 type StatusFilter = "ALL" | "PENDING" | "ACCEPTED" | "DECLINED"
 type SortOption = "confidence" | "newest"
 
+interface FilterState {
+  status?: string
+  experienceLevel?: string[]
+  locationType?: string[]
+  confidenceLevel?: string[]
+}
+
 export default function PostingMatchesPage() {
   const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL")
   const [sort, setSort] = useState<SortOption>("confidence")
+  const [filters, setFilters] = useState<FilterState>({})
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const utils = trpc.useUtils()
+
+  // Check for comparison mode via URL params
+  const compareParam = searchParams.get("compare")
+  const compareIds = compareParam ? compareParam.split(",").filter(Boolean) : []
 
   const { data: counts } = trpc.matches.getPostingStatusCounts.useQuery({
     jobPostingId: params.id,
@@ -23,6 +41,9 @@ export default function PostingMatchesPage() {
     jobPostingId: params.id,
     ...(statusFilter !== "ALL" ? { status: statusFilter } : {}),
     sort,
+    ...(filters.confidenceLevel?.length
+      ? { confidenceLevel: filters.confidenceLevel as ("STRONG" | "GOOD" | "POTENTIAL")[] }
+      : {}),
   })
 
   const { data: workflowStatus, isLoading: loadingWorkflow } =
@@ -43,12 +64,54 @@ export default function PostingMatchesPage() {
     updateStatus.mutate({ matchId, status: "DECLINED" })
   }
 
+  const handleSelectToggle = (matchId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(matchId) ? prev.filter((id) => id !== matchId) : [...prev, matchId],
+    )
+  }
+
+  const allMatchIds = matchesData?.items.map((m) => m.id) ?? []
+  const isAllSelected =
+    allMatchIds.length > 0 && allMatchIds.every((id) => selectedIds.includes(id))
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(allMatchIds)
+    }
+  }
+
+  const handleBulkComplete = () => {
+    setSelectedIds([])
+    utils.matches.listForPosting.invalidate({ jobPostingId: params.id })
+    utils.matches.getPostingStatusCounts.invalidate({ jobPostingId: params.id })
+  }
+
   if (loadingMatches || loadingWorkflow) {
     return (
       <div data-testid="matches-loading-skeleton">
         <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
         <div className="mt-4 h-24 w-full animate-pulse rounded bg-gray-200" />
         <div className="mt-4 h-64 w-full animate-pulse rounded bg-gray-200" />
+      </div>
+    )
+  }
+
+  // Comparison mode
+  if (compareIds.length >= 2) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Compare Candidates</h1>
+          <a
+            href={`/postings/${params.id}/matches`}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Back to matches
+          </a>
+        </div>
+        <CandidateComparison jobPostingId={params.id} matchIds={compareIds} />
       </div>
     )
   }
@@ -70,6 +133,10 @@ export default function PostingMatchesPage() {
       </div>
 
       {workflowStatus && <WorkflowStatus workflowStatus={workflowStatus} />}
+
+      <PostingMetricsCard jobPostingId={params.id} />
+
+      <AdvancedFilters filters={filters} onChange={setFilters} />
 
       <div className="flex items-center justify-between">
         <div className="flex gap-1 rounded-lg bg-gray-100 p-1" role="tablist">
@@ -100,11 +167,23 @@ export default function PostingMatchesPage() {
         </select>
       </div>
 
+      <BulkActionBar
+        selectedIds={selectedIds}
+        totalCount={matchesData?.items.length ?? 0}
+        onSelectAll={handleSelectAll}
+        onClearSelection={() => setSelectedIds([])}
+        isAllSelected={isAllSelected}
+        jobPostingId={params.id}
+        onComplete={handleBulkComplete}
+      />
+
       <MatchList
         matches={matchesData?.items ?? []}
         role="employer"
         onAccept={handleAccept}
         onDecline={handleDecline}
+        selectedIds={selectedIds}
+        onSelectToggle={handleSelectToggle}
       />
     </div>
   )

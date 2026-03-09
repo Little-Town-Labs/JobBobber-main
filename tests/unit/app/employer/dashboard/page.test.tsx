@@ -22,6 +22,11 @@ vi.mock("@/lib/trpc/client", () => ({
     jobPostings: {
       listMine: { useQuery: mockUseQueryPostings },
     },
+    dashboard: {
+      getPipelineSummary: {
+        useQuery: () => ({ data: undefined, isLoading: false }),
+      },
+    },
   },
 }))
 

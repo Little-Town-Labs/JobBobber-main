@@ -26,9 +26,18 @@ interface MatchListProps {
   role: "employer" | "seeker"
   onAccept?: (matchId: string) => void
   onDecline?: (matchId: string) => void
+  selectedIds?: string[]
+  onSelectToggle?: (matchId: string) => void
 }
 
-export function MatchList({ matches, role, onAccept, onDecline }: MatchListProps) {
+export function MatchList({
+  matches,
+  role,
+  onAccept,
+  onDecline,
+  selectedIds,
+  onSelectToggle,
+}: MatchListProps) {
   if (matches.length === 0) {
     return (
       <div className="rounded-lg border p-6 text-center">
@@ -45,13 +54,20 @@ export function MatchList({ matches, role, onAccept, onDecline }: MatchListProps
   return (
     <div className="space-y-3">
       {matches.map((match) => (
-        <MatchCard
-          key={match.id}
-          match={match}
-          role={role}
-          onAccept={onAccept}
-          onDecline={onDecline}
-        />
+        <div key={match.id} className="flex items-start gap-3">
+          {onSelectToggle && (
+            <input
+              type="checkbox"
+              checked={selectedIds?.includes(match.id) ?? false}
+              onChange={() => onSelectToggle(match.id)}
+              className="mt-4 h-4 w-4 rounded border-gray-300"
+              aria-label={`Select ${match.id}`}
+            />
+          )}
+          <div className="flex-1">
+            <MatchCard match={match} role={role} onAccept={onAccept} onDecline={onDecline} />
+          </div>
+        </div>
       ))}
     </div>
   )

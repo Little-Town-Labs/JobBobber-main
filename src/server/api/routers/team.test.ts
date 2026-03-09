@@ -393,6 +393,69 @@ describe("team.getActivityLog", () => {
   })
 })
 
+describe("team.getActivityLog — enhanced filters (Feature 17)", () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it("filters by actorClerkUserId", async () => {
+    mockActivityLogFindMany.mockResolvedValue([
+      {
+        id: "log_01",
+        actorName: "Alice",
+        action: "posting.created",
+        targetType: "JobPosting",
+        targetLabel: "Engineer",
+        createdAt: new Date("2026-03-08T12:00:00Z"),
+      },
+    ])
+
+    const caller = await makeCaller()
+    const result = await caller.team.getActivityLog({ actorClerkUserId: "user_alice" })
+
+    expect(result.items).toHaveLength(1)
+    expect(mockActivityLogFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          actorClerkUserId: "user_alice",
+        }),
+      }),
+    )
+  })
+
+  it("filters by action type", async () => {
+    mockActivityLogFindMany.mockResolvedValue([])
+
+    const caller = await makeCaller()
+    await caller.team.getActivityLog({ action: "posting.created" })
+
+    expect(mockActivityLogFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          action: "posting.created",
+        }),
+      }),
+    )
+  })
+
+  it("combines both filters", async () => {
+    mockActivityLogFindMany.mockResolvedValue([])
+
+    const caller = await makeCaller()
+    await caller.team.getActivityLog({
+      actorClerkUserId: "user_alice",
+      action: "member.invited",
+    })
+
+    expect(mockActivityLogFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          actorClerkUserId: "user_alice",
+          action: "member.invited",
+        }),
+      }),
+    )
+  })
+})
+
 describe("feature flag gating", () => {
   beforeEach(() => vi.clearAllMocks())
 

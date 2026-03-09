@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc/client"
 import { CompanyProfileCard } from "@/components/employer/company-profile-card"
 import { JobPostingList } from "@/components/employer/job-posting-list"
 import { InsightsPanel } from "@/components/insights/insights-panel"
+import { PipelineView } from "@/components/dashboard/pipeline-view"
 
 export default function EmployerDashboardPage() {
   const { data: employer, isLoading: loadingEmployer } = trpc.employers.getMe.useQuery()
@@ -36,6 +37,10 @@ export default function EmployerDashboardPage() {
         </nav>
       </div>
       <CompanyProfileCard employer={employer} />
+      <section className="rounded-lg border p-6">
+        <h2 className="mb-4 text-lg font-semibold">Pipeline Overview</h2>
+        <PipelineView />
+      </section>
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Job Postings</h2>

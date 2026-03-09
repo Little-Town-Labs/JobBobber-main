@@ -13,6 +13,8 @@ import {
   employerProcedure,
 } from "@/server/api/trpc"
 import { toMatchResponse } from "@/server/api/helpers/match-mapper"
+import { ADVANCED_EMPLOYER_DASHBOARD, assertFlagEnabled } from "@/lib/flags"
+import { logActivity } from "@/lib/activity-log"
 
 export const matchesRouter = createTRPCRouter({
   /** List matches for a specific job posting (employer view) */
@@ -24,6 +26,10 @@ export const matchesRouter = createTRPCRouter({
         limit: z.number().int().min(1).max(100).default(20),
         status: z.enum(["PENDING", "ACCEPTED", "DECLINED"]).optional(),
         sort: z.enum(["confidence", "newest"]).optional(),
+        // Advanced filters (Feature 17)
+        confidenceLevel: z.array(z.enum(["STRONG", "GOOD", "POTENTIAL"])).optional(),
+        experienceLevel: z.array(z.enum(["ENTRY", "MID", "SENIOR", "EXECUTIVE"])).optional(),
+        locationType: z.array(z.enum(["REMOTE", "HYBRID", "ONSITE"])).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -37,6 +43,7 @@ export const matchesRouter = createTRPCRouter({
 
       const where: Record<string, unknown> = { jobPostingId: input.jobPostingId }
       if (input.status) where.employerStatus = input.status
+      if (input.confidenceLevel?.length) where.confidenceScore = { in: input.confidenceLevel }
 
       const orderBy =
         input.sort === "newest"
@@ -301,6 +308,99 @@ export const matchesRouter = createTRPCRouter({
         if (key in counts) counts[key] = g._count._all
       }
       return counts
+    }),
+
+  /** Compare 2-4 candidates side-by-side (Feature 17) */
+  getForComparison: employerProcedure
+    .input(
+      z.object({
+        jobPostingId: z.string().min(1),
+        matchIds: z.array(z.string().min(1)).min(2).max(4),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      await assertFlagEnabled(ADVANCED_EMPLOYER_DASHBOARD)
+
+      const posting = await ctx.db.jobPosting.findUnique({
+        where: { id: input.jobPostingId },
+      })
+      if (!posting || posting.employerId !== ctx.employer.id) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Posting not found" })
+      }
+
+      const matches = await ctx.db.match.findMany({
+        where: {
+          id: { in: input.matchIds },
+          jobPostingId: input.jobPostingId,
+        },
+        include: {
+          seeker: {
+            select: { name: true, skills: true, location: true, experience: true },
+          },
+        },
+      })
+
+      return matches.map((m) => ({
+        matchId: m.id,
+        confidenceScore: m.confidenceScore,
+        matchSummary: m.matchSummary,
+        evaluationData: m.evaluationData,
+        seekerName: (m as unknown as { seeker: { name: string } }).seeker?.name ?? "Unknown",
+        seekerSkills: (m as unknown as { seeker: { skills: string[] } }).seeker?.skills ?? [],
+        seekerExperienceLevel: null as string | null,
+        seekerLocation:
+          (m as unknown as { seeker: { location: string | null } }).seeker?.location ?? null,
+        employerStatus: m.employerStatus,
+        createdAt: m.createdAt.toISOString(),
+      }))
+    }),
+
+  /** Bulk accept or decline multiple matches (Feature 17) */
+  bulkUpdateStatus: employerProcedure
+    .input(
+      z.object({
+        jobPostingId: z.string().min(1),
+        matchIds: z.array(z.string().min(1)).min(1).max(100),
+        status: z.enum(["ACCEPTED", "DECLINED"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertFlagEnabled(ADVANCED_EMPLOYER_DASHBOARD)
+
+      const posting = await ctx.db.jobPosting.findUnique({
+        where: { id: input.jobPostingId },
+      })
+      if (!posting || posting.employerId !== ctx.employer.id) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Posting not found" })
+      }
+
+      const total = input.matchIds.length
+
+      // Only update PENDING matches — skip already-decided ones (EC-4)
+      const result = await ctx.db.match.updateMany({
+        where: {
+          id: { in: input.matchIds },
+          jobPostingId: input.jobPostingId,
+          employerStatus: "PENDING",
+        },
+        data: { employerStatus: input.status },
+      })
+
+      const updated = result.count
+      const skipped = total - updated
+
+      // Fire-and-forget activity log
+      logActivity({
+        employerId: ctx.employer.id,
+        actorClerkUserId: ctx.userId,
+        actorName: ctx.member.clerkUserId,
+        action: `bulk.${input.status.toLowerCase()}`,
+        targetType: "Match",
+        targetId: input.jobPostingId,
+        targetLabel: `${updated} matches ${input.status.toLowerCase()}d for ${posting.title}`,
+      })
+
+      return { updated, skipped, total }
     }),
 })
 

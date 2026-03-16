@@ -13,6 +13,7 @@ import { inngest } from "@/lib/inngest"
 import { db } from "@/lib/db"
 import { decrypt } from "@/lib/encryption"
 import { buildProfileText, generateEmbedding, profileEmbeddingEventSchema } from "@/lib/embeddings"
+import { parseExperience, parseEducation } from "@/lib/schemas/typed-mappers"
 import { generateAndStoreEmbedding, type EmbeddingStepConfig } from "./embedding-helpers"
 
 export const generateProfileEmbedding = inngest.createFunction(
@@ -26,7 +27,7 @@ export const generateProfileEmbedding = inngest.createFunction(
     const { seekerId } = parsed.data
 
     return generateAndStoreEmbedding({
-      step: step as unknown as EmbeddingStepConfig["step"],
+      step: step as unknown as EmbeddingStepConfig["step"], // Inngest SDK step type doesn't match EmbeddingStepConfig
       fetchStepName: "fetch-seeker",
       fetchContext: async () => {
         const seeker = await db.jobSeeker.findUnique({
@@ -44,8 +45,8 @@ export const generateProfileEmbedding = inngest.createFunction(
         const text = buildProfileText({
           headline: seeker.headline,
           skills: seeker.skills,
-          experience: seeker.experience as unknown[],
-          education: seeker.education as unknown[],
+          experience: parseExperience(seeker.experience),
+          education: parseEducation(seeker.education),
           location: seeker.location,
         })
 

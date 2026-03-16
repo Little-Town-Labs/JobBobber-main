@@ -1,6 +1,7 @@
 "use client"
 
 import { trpc } from "@/lib/trpc/client"
+import { useBillingGetSubscription } from "@/lib/trpc/hooks"
 
 interface PricingTableProps {
   userType: "JOB_SEEKER" | "EMPLOYER"
@@ -9,12 +10,7 @@ interface PricingTableProps {
 export function PricingTable({ userType }: PricingTableProps) {
   const { data: plans, isLoading: plansLoading } = trpc.billing.getPlans.useQuery({ userType })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const subQuery = (trpc.billing.getSubscription as any).useQuery() as {
-    data: { planId: string; status: string } | null | undefined
-    isLoading: boolean
-  }
-  const { data: subscription, isLoading: subLoading } = subQuery
+  const { data: subscription, isLoading: subLoading } = useBillingGetSubscription()
 
   const checkout = trpc.billing.createCheckoutSession.useMutation()
 

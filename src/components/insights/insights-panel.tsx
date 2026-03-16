@@ -1,19 +1,18 @@
 "use client"
 
-import { trpc } from "@/lib/trpc/client"
+import { useState } from "react"
+import { useInsightsGetSeeker, useInsightsGetEmployer, useInsightsRefresh } from "@/lib/trpc/hooks"
 
 interface InsightsPanelProps {
   variant: "seeker" | "employer"
 }
 
 export function InsightsPanel({ variant }: InsightsPanelProps) {
-  const queryHook =
-    variant === "seeker" ? trpc.insights.getSeekerInsights : trpc.insights.getEmployerInsights
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, isLoading } = (queryHook as any).useQuery()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const refreshMutation = (trpc.insights.refreshInsights as any).useMutation()
+  const seekerQuery = useInsightsGetSeeker()
+  const employerQuery = useInsightsGetEmployer()
+  const { data, isLoading } = variant === "seeker" ? seekerQuery : employerQuery
+  const refreshMutation = useInsightsRefresh()
+  const [now] = useState(() => Date.now())
 
   if (isLoading) {
     return (
@@ -51,9 +50,8 @@ export function InsightsPanel({ variant }: InsightsPanelProps) {
   const { strengths, weaknesses, recommendations, metrics, trendDirection, generatedAt } =
     data as InsightsData
 
-  const isStale = generatedAt
-    ? Date.now() - new Date(generatedAt).getTime() > 30 * 24 * 60 * 60 * 1000
-    : false
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+  const isStale = generatedAt ? now - new Date(generatedAt).getTime() > THIRTY_DAYS_MS : false
 
   const hasAiInsights = strengths.length > 0 || weaknesses.length > 0
 

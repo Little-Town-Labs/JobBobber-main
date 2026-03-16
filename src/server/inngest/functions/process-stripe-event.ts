@@ -174,6 +174,7 @@ export const processStripeEvent = inngest.createFunction(
     const { stripeEventId, type, payload } = event.data as StripeWebhookInput
 
     return await step.run("process-event", async () => {
+      // Extended Prisma client type is not assignable to base PrismaClient parameter
       return processStripeWebhookEvent(db as unknown as PrismaClient, {
         stripeEventId,
         type,

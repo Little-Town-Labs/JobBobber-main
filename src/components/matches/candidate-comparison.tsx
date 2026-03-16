@@ -2,10 +2,23 @@
 
 import { trpc } from "@/lib/trpc/client"
 import { ConfidenceBadge } from "@/components/matches/confidence-badge"
+import { useMatchesGetForComparison } from "@/lib/trpc/hooks"
 
 interface CandidateComparisonProps {
   jobPostingId: string
   matchIds: string[]
+}
+
+interface ComparisonCandidate {
+  matchId: string
+  confidenceScore: string
+  matchSummary: string
+  seekerName: string
+  seekerSkills: string[]
+  seekerExperienceLevel: string | null
+  seekerLocation: string | null
+  employerStatus: string
+  createdAt: string
 }
 
 const GRID_COLS: Record<number, string> = {
@@ -17,26 +30,8 @@ const GRID_COLS: Record<number, string> = {
 export function CandidateComparison({ jobPostingId, matchIds }: CandidateComparisonProps) {
   const utils = trpc.useUtils()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: candidates, isLoading } = (trpc.matches.getForComparison as any).useQuery(
-    { jobPostingId, matchIds },
-    { enabled: matchIds.length >= 2 },
-  ) as {
-    data:
-      | Array<{
-          matchId: string
-          confidenceScore: string
-          matchSummary: string
-          seekerName: string
-          seekerSkills: string[]
-          seekerExperienceLevel: string | null
-          seekerLocation: string | null
-          employerStatus: string
-          createdAt: string
-        }>
-      | undefined
-    isLoading: boolean
-  }
+  const { data: rawCandidates, isLoading } = useMatchesGetForComparison({ jobPostingId, matchIds })
+  const candidates = rawCandidates as ComparisonCandidate[] | undefined
 
   const updateStatus = trpc.matches.updateStatus.useMutation() as {
     mutateAsync: (input: { matchId: string; status: "ACCEPTED" | "DECLINED" }) => Promise<unknown>

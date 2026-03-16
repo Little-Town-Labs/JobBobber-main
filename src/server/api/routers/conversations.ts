@@ -16,7 +16,8 @@ import {
 } from "@/server/api/trpc"
 import { assertFlagEnabled, CONVERSATION_LOGS } from "@/lib/flags"
 import { redactConversationMessages } from "@/lib/redaction"
-import type { ConversationMessage } from "@/lib/conversation-schemas"
+import { safeParseJsonArray } from "@/lib/schemas/prisma-json"
+import { conversationMessageSchema } from "@/lib/conversation-schemas"
 
 const statusEnum = z.enum(["IN_PROGRESS", "COMPLETED_MATCH", "COMPLETED_NO_MATCH", "TERMINATED"])
 
@@ -164,7 +165,7 @@ export const conversationsRouter = createTRPCRouter({
       }
 
       const rawMessages = Array.isArray(conversation.messages)
-        ? (conversation.messages as unknown as ConversationMessage[])
+        ? safeParseJsonArray(conversationMessageSchema, conversation.messages)
         : []
       const messages = redactConversationMessages(rawMessages)
 

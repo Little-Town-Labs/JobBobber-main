@@ -1,6 +1,6 @@
 "use client"
 
-import { trpc } from "@/lib/trpc/client"
+import { useDashboardGetPostingMetrics } from "@/lib/trpc/hooks"
 
 interface PostingMetrics {
   totalConversations: number
@@ -23,12 +23,7 @@ interface PostingMetricsCardProps {
 }
 
 export function PostingMetricsCard({ jobPostingId }: PostingMetricsCardProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const query = (trpc.dashboard.getPostingMetrics as any).useQuery({ jobPostingId }) as {
-    data: PostingMetrics | undefined
-    isLoading: boolean
-  }
-  const { data, isLoading } = query
+  const { data, isLoading } = useDashboardGetPostingMetrics({ jobPostingId })
 
   if (isLoading) {
     return (

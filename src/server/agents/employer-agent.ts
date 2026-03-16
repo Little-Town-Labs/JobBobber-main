@@ -10,6 +10,7 @@ import { generateObject } from "ai"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { agentEvaluationSchema, type AgentEvaluation } from "@/lib/matching-schemas"
+import type { ExperienceEntry, EducationEntry } from "@/lib/schemas/prisma-json"
 import { buildSandboxBlock } from "./prompt-sandbox"
 
 // ---------------------------------------------------------------------------
@@ -35,8 +36,8 @@ export interface CandidateInput {
   name: string
   headline: string | null
   skills: string[]
-  experience: unknown[]
-  education: unknown[]
+  experience: ExperienceEntry[]
+  education: EducationEntry[]
   location: string | null
   profileCompleteness: number
 }

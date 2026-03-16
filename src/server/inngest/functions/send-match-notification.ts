@@ -19,6 +19,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
 async function getClerkEmail(clerkUserId: string): Promise<string | null> {
   try {
+    // Clerk v5 changed clerkClient from direct export to factory function
     const client = await (clerkClient as unknown as () => Promise<unknown>)()
     const c = client as {
       users: { getUser: (id: string) => Promise<{ emailAddresses: { emailAddress: string }[] }> }
@@ -131,6 +132,7 @@ export const sendMutualAcceptNotification = inngest.createFunction(
       db.seekerSettings.findUnique({ where: { seekerId } }),
     )
 
+    // Prisma model name accessed dynamically — TypeScript can't verify at compile time
     const dbAny = db as unknown as Record<
       string,
       { findUnique: (args: unknown) => Promise<unknown> }

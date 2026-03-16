@@ -26,7 +26,7 @@ export const generatePostingEmbedding = inngest.createFunction(
     const { jobPostingId, employerId } = parsed.data
 
     return generateAndStoreEmbedding({
-      step: step as unknown as EmbeddingStepConfig["step"],
+      step: step as unknown as EmbeddingStepConfig["step"], // Inngest SDK step type doesn't match EmbeddingStepConfig
       fetchStepName: "fetch-context",
       fetchContext: async () => {
         const posting = await db.jobPosting.findUnique({

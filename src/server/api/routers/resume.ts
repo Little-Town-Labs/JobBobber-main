@@ -270,7 +270,7 @@ export const resumeRouter = createTRPCRouter({
         const cache = await ctx.db.extractionCache.create({
           data: {
             seekerId: ctx.seeker.id,
-            proposed: object as unknown as Prisma.InputJsonValue,
+            proposed: object as unknown as Prisma.InputJsonValue, // Zod output not assignable to Prisma's restrictive InputJsonValue
             expiresAt: new Date(Date.now() + EXTRACTION_TTL_MS),
           },
         })
@@ -331,7 +331,7 @@ export const resumeRouter = createTRPCRouter({
       data.skills = proposed["skills"]
     }
 
-    // Recompute completeness with merged data
+    // Narrowing Record<string, unknown> fields for completeness computation
     const merged = {
       name: ctx.seeker.name,
       headline: (data.headline as string | null | undefined) ?? ctx.seeker.headline,

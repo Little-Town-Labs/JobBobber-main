@@ -48,5 +48,5 @@ export async function POST(request: Request): Promise<Response> {
       // The client calls confirmUpload after the direct PUT completes, which
       // validates and stores the blob URL on the JobSeeker row.
     },
-  }) as unknown as Response
+  }) as unknown as Response // Vercel Blob SDK handleUpload return type doesn't match Response
 }

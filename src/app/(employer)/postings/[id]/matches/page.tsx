@@ -4,6 +4,7 @@ import { useState } from "react"
 import dynamic from "next/dynamic"
 import { useParams, useSearchParams } from "next/navigation"
 import { trpc } from "@/lib/trpc/client"
+import { useMatchesListForPosting } from "@/lib/trpc/hooks"
 import { MatchList } from "@/components/matches/match-list"
 import { WorkflowStatus } from "@/components/matches/workflow-status"
 import { PostingMetricsCard } from "@/components/dashboard/posting-metrics-card"
@@ -46,8 +47,7 @@ export default function PostingMatchesPage() {
     jobPostingId: params.id,
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tRPC type inference overflow (TS2589)
-  const matchesQuery = (trpc.matches.listForPosting as any).useQuery({
+  const { data: matchesData, isLoading: loadingMatches } = useMatchesListForPosting({
     jobPostingId: params.id,
     ...(statusFilter !== "ALL" ? { status: statusFilter } : {}),
     sort,
@@ -55,15 +55,6 @@ export default function PostingMatchesPage() {
       ? { confidenceLevel: filters.confidenceLevel as ("STRONG" | "GOOD" | "POTENTIAL")[] }
       : {}),
   })
-  /* eslint-disable @typescript-eslint/no-explicit-any -- tRPC returns correct shape at runtime */
-  const { data: matchesRawData, isLoading: loadingMatches } = matchesQuery as {
-    data: any
-    isLoading: boolean
-  }
-  const matchesData = matchesRawData as
-    | { items: any[]; nextCursor: string | null; hasMore: boolean }
-    | undefined
-  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const { data: workflowStatus, isLoading: loadingWorkflow } =
     trpc.matches.getWorkflowStatus.useQuery({ jobPostingId: params.id })
@@ -89,7 +80,9 @@ export default function PostingMatchesPage() {
     )
   }
 
-  const allMatchIds = matchesData?.items.map((m) => m.id) ?? []
+  // Narrowing paginated response shape — direct property access triggers TS2589 on the deep router output type
+  const items = (matchesData as { items?: Array<{ id: string }> } | undefined)?.items ?? []
+  const allMatchIds = items.map((m) => m.id)
   const isAllSelected =
     allMatchIds.length > 0 && allMatchIds.every((id) => selectedIds.includes(id))
 

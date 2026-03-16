@@ -23,6 +23,7 @@ import { agentEvaluationSchema } from "@/lib/conversation-schemas"
 import { computeConfidence } from "@/lib/matching-schemas"
 import type { PrivateValues } from "@/server/agents/privacy-filter"
 import { filterPrivateValues } from "@/server/agents/privacy-filter"
+import { parseExperience, parseEducation } from "@/lib/schemas/typed-mappers"
 
 const MAX_TURNS = 10
 const MIN_TURNS_BEFORE_DECISION = 3
@@ -201,8 +202,8 @@ export function buildConversationWorkflow() {
         name: seeker.name,
         headline: seeker.headline,
         skills: seeker.skills,
-        experience: seeker.experience as unknown[],
-        education: seeker.education as unknown[],
+        experience: parseExperience(seeker.experience),
+        education: parseEducation(seeker.education),
         location: seeker.location,
         profileCompleteness: seeker.profileCompleteness,
       }

@@ -1,7 +1,7 @@
 import "server-only"
 import { initTRPC, TRPCError } from "@trpc/server"
-import { auth } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
+import { getAuth } from "@/lib/auth"
 import { inngest } from "@/lib/inngest"
 import type { Employer, EmployerMember, JobSeeker } from "@prisma/client"
 
@@ -36,12 +36,7 @@ interface CreateContextOptions {
 }
 
 export async function createTRPCContext({ req: _req }: CreateContextOptions): Promise<TRPCContext> {
-  const { userId, orgId, orgRole, sessionClaims } = await (auth() as unknown as Promise<{
-    userId: string | null
-    orgId: string | null
-    orgRole: "org:admin" | "org:member" | null
-    sessionClaims?: { metadata?: { role?: "JOB_SEEKER" | "EMPLOYER"; hasByokKey?: boolean } }
-  }>)
+  const { userId, orgId, orgRole, sessionClaims } = await getAuth()
 
   return {
     db,
@@ -49,7 +44,7 @@ export async function createTRPCContext({ req: _req }: CreateContextOptions): Pr
     userId: userId ?? null,
     orgId: orgId ?? null,
     orgRole: orgRole ?? null,
-    userRole: (sessionClaims?.metadata?.role as "JOB_SEEKER" | "EMPLOYER" | undefined) ?? null,
+    userRole: sessionClaims?.metadata?.role ?? null,
     hasByokKey: sessionClaims?.metadata?.hasByokKey ?? false,
   }
 }
@@ -144,6 +139,7 @@ const enforceEmployer = t.middleware(async ({ ctx, next }) => {
 })
 
 const enforceJobPoster = t.middleware(async ({ ctx, next }) => {
+  // tRPC middleware context is additive — member is set by enforceEmployer but not reflected in this middleware's ctx type
   const member = (ctx as unknown as { member: EmployerMember }).member
   if (member.role === "VIEWER") {
     throw new TRPCError({ code: "FORBIDDEN", message: "Job Poster or Admin role required" })

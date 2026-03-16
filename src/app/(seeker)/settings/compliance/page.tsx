@@ -2,31 +2,18 @@
 
 import { useState } from "react"
 import { trpc } from "@/lib/trpc/client"
+import { useComplianceGetMfaStatus, useComplianceGetDeletionStatus } from "@/lib/trpc/hooks"
 
 export default function SeekerCompliancePage() {
   const [confirmText, setConfirmText] = useState("")
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tRPC type inference overflow (TS2589)
-  const mfaStatus = (trpc.compliance.getMfaStatus as any).useQuery() as {
-    data: { mfaEnabled: boolean; shouldPrompt: boolean } | undefined
-    isLoading: boolean
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tRPC type inference overflow (TS2589)
-  const deletionStatus = (trpc.compliance.getDeletionStatus as any).useQuery() as {
-    data:
-      | {
-          hasPendingDeletion: boolean
-          request: { id: string; scheduledAt: string } | null
-        }
-      | undefined
-    isLoading: boolean
-  }
+  const mfaStatus = useComplianceGetMfaStatus()
+  const deletionStatus = useComplianceGetDeletionStatus()
 
   const exportMutation = trpc.compliance.exportMyData.useQuery(undefined, {
     enabled: false,
     retry: false,
-  }) as unknown as { refetch: () => Promise<{ data: unknown }>; isFetching: boolean }
+  }) as unknown as { refetch: () => Promise<{ data: unknown }>; isFetching: boolean } // tRPC useQuery with enabled:false returns incompatible shape
 
   const requestDeletion = trpc.compliance.requestDeletion.useMutation()
   const cancelDeletion = trpc.compliance.cancelDeletion.useMutation()

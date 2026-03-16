@@ -10,6 +10,7 @@ import { embed } from "ai"
 import { createOpenAI } from "@ai-sdk/openai"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import type { ExperienceEntry, EducationEntry } from "@/lib/schemas/prisma-json"
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -44,8 +45,8 @@ export const postingEmbeddingEventSchema = z.object({
 interface ProfileInput {
   headline: string | null
   skills: string[]
-  experience: unknown[]
-  education: unknown[]
+  experience: ExperienceEntry[]
+  education: EducationEntry[]
   location: string | null
 }
 

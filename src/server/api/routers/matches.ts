@@ -363,19 +363,23 @@ export const matchesRouter = createTRPCRouter({
         },
       })
 
-      return matches.map((m) => ({
-        matchId: m.id,
-        confidenceScore: m.confidenceScore,
-        matchSummary: m.matchSummary,
-        evaluationData: m.evaluationData,
-        seekerName: (m as unknown as { seeker: { name: string } }).seeker?.name ?? "Unknown",
-        seekerSkills: (m as unknown as { seeker: { skills: string[] } }).seeker?.skills ?? [],
-        seekerExperienceLevel: null as string | null,
-        seekerLocation:
-          (m as unknown as { seeker: { location: string | null } }).seeker?.location ?? null,
-        employerStatus: m.employerStatus,
-        createdAt: m.createdAt.toISOString(),
-      }))
+      return matches.map((m) => {
+        const seeker = (
+          m as { seeker: { name: string; skills: string[]; location: string | null } }
+        ).seeker
+        return {
+          matchId: m.id,
+          confidenceScore: m.confidenceScore,
+          matchSummary: m.matchSummary,
+          evaluationData: m.evaluationData,
+          seekerName: seeker?.name ?? "Unknown",
+          seekerSkills: seeker?.skills ?? [],
+          seekerExperienceLevel: null as string | null,
+          seekerLocation: seeker?.location ?? null,
+          employerStatus: m.employerStatus,
+          createdAt: m.createdAt.toISOString(),
+        }
+      })
     }),
 
   /** Bulk accept or decline multiple matches (Feature 17) */

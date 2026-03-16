@@ -18,6 +18,7 @@ import {
 import { scoreToConfidence, MATCH_SCORE_THRESHOLD } from "@/lib/matching-schemas"
 import { AGENT_CONVERSATIONS, VECTOR_SEARCH } from "@/lib/flags"
 import { findSimilarCandidates } from "@/lib/embeddings"
+import { parseExperience, parseEducation } from "@/lib/schemas/typed-mappers"
 
 const BATCH_SIZE = 10
 
@@ -164,8 +165,8 @@ export const evaluateCandidates = inngest.createFunction(
               name: seeker.name,
               headline: seeker.headline,
               skills: seeker.skills,
-              experience: seeker.experience as unknown[],
-              education: seeker.education as unknown[],
+              experience: parseExperience(seeker.experience),
+              education: parseEducation(seeker.education),
               location: seeker.location,
               profileCompleteness: seeker.profileCompleteness,
             }
@@ -223,8 +224,8 @@ export const evaluateCandidates = inngest.createFunction(
             name: seeker.name,
             headline: seeker.headline,
             skills: seeker.skills,
-            experience: seeker.experience as unknown[],
-            education: seeker.education as unknown[],
+            experience: parseExperience(seeker.experience),
+            education: parseEducation(seeker.education),
             location: seeker.location,
             profileCompleteness: seeker.profileCompleteness,
           }

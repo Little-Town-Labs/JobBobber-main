@@ -1,57 +1,20 @@
 "use client"
 
 import { trpc } from "@/lib/trpc/client"
+import {
+  useBillingGetSubscription,
+  useBillingGetUsage,
+  useBillingGetPaymentHistory,
+} from "@/lib/trpc/hooks"
 
 interface BillingDashboardProps {
   userType: "JOB_SEEKER" | "EMPLOYER"
 }
 
 export function BillingDashboard({ userType }: BillingDashboardProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const subQuery = (trpc.billing.getSubscription as any).useQuery() as {
-    data:
-      | {
-          planId: string
-          planName: string
-          status: string
-          monthlyPrice: number
-          currentPeriodEnd: string
-          cancelAtPeriodEnd: boolean
-        }
-      | null
-      | undefined
-    isLoading: boolean
-  }
-  const { data: subscription, isLoading: subLoading } = subQuery
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const usageQuery = (trpc.billing.getUsage as any).useQuery() as {
-    data:
-      | {
-          conversationsThisMonth: number
-          conversationLimit: number | null
-          activePostings: number
-          postingLimit: number | null
-        }
-      | undefined
-    isLoading: boolean
-  }
-  const { data: usage, isLoading: usageLoading } = usageQuery
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const historyQuery = (trpc.billing.getPaymentHistory as any).useQuery() as {
-    data:
-      | Array<{
-          id: string
-          date: string
-          amount: number
-          status: string
-          invoiceUrl: string | null
-        }>
-      | undefined
-    isLoading: boolean
-  }
-  const { data: payments, isLoading: historyLoading } = historyQuery
+  const { data: subscription, isLoading: subLoading } = useBillingGetSubscription()
+  const { data: usage, isLoading: usageLoading } = useBillingGetUsage()
+  const { data: payments, isLoading: historyLoading } = useBillingGetPaymentHistory()
 
   const checkout = trpc.billing.createCheckoutSession.useMutation()
   const portal = trpc.billing.createPortalSession.useMutation()

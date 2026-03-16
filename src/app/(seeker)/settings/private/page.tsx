@@ -2,27 +2,14 @@
 
 import { useState } from "react"
 import { trpc } from "@/lib/trpc/client"
+import { useSettingsGetSeekerSettings } from "@/lib/trpc/hooks"
 
 export default function SeekerPrivateSettingsPage() {
   const utils = trpc.useUtils()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tRPC type inference overflow (TS2589)
-  const settingsQuery = (trpc.settings.getSeekerSettings as any).useQuery() as {
-    data:
-      | {
-          minSalary: number | null
-          salaryRules: unknown
-          dealBreakers: string[]
-          priorities: string[]
-          exclusions: string[]
-          customPrompt: string | null
-        }
-      | null
-      | undefined
-    isLoading: boolean
-    error: { data?: { code?: string } } | null
-  }
-  const { data: settings, isLoading, error } = settingsQuery
+  const settingsQuery = useSettingsGetSeekerSettings()
+  const { data: settings, isLoading } = settingsQuery
+  const error = settingsQuery.error as { message: string; data?: { code?: string } } | null
 
   const updateSettings = trpc.settings.updateSeekerSettings.useMutation({
     onSuccess: () => {
@@ -39,17 +26,19 @@ export default function SeekerPrivateSettingsPage() {
   const [initialized, setInitialized] = useState(false)
 
   // Populate form once data loads (React 18+ batches these setState calls)
-  if (settings && !initialized) {
-    setMinSalary(settings.minSalary?.toString() ?? "")
+  // Narrow to plain object to avoid TS2589 on deep RouterOutputs type
+  const settingsData = settings as Record<string, unknown> | undefined
+  if (settingsData && !initialized) {
+    setMinSalary((settingsData.minSalary as number | null)?.toString() ?? "")
     setSalaryRulesText(
-      typeof settings.salaryRules === "object" && settings.salaryRules
-        ? ((settings.salaryRules as Record<string, unknown>).type?.toString() ?? "")
+      typeof settingsData.salaryRules === "object" && settingsData.salaryRules
+        ? ((settingsData.salaryRules as Record<string, unknown>).type?.toString() ?? "")
         : "",
     )
-    setDealBreakers((settings.dealBreakers ?? []).join("\n"))
-    setPriorities((settings.priorities ?? []).join("\n"))
-    setExclusions((settings.exclusions ?? []).join("\n"))
-    setCustomPrompt(settings.customPrompt ?? "")
+    setDealBreakers(((settingsData.dealBreakers as string[]) ?? []).join("\n"))
+    setPriorities(((settingsData.priorities as string[]) ?? []).join("\n"))
+    setExclusions(((settingsData.exclusions as string[]) ?? []).join("\n"))
+    setCustomPrompt((settingsData.customPrompt as string) ?? "")
     setInitialized(true)
   }
 

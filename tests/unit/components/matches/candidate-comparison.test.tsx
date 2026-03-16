@@ -9,6 +9,10 @@ const { mockGetForComparison, mockUpdateStatus } = vi.hoisted(() => ({
   mockUpdateStatus: vi.fn(),
 }))
 
+vi.mock("@/lib/trpc/hooks", () => ({
+  useMatchesGetForComparison: (...args: unknown[]) => mockGetForComparison(...args),
+}))
+
 vi.mock("@/lib/trpc/client", () => ({
   trpc: {
     useUtils: () => ({
@@ -17,9 +21,6 @@ vi.mock("@/lib/trpc/client", () => ({
       },
     }),
     matches: {
-      getForComparison: {
-        useQuery: (...args: unknown[]) => mockGetForComparison(...args),
-      },
       updateStatus: {
         useMutation: () => ({
           mutateAsync: mockUpdateStatus,
@@ -200,9 +201,9 @@ describe("CandidateComparison", () => {
 
     render(<CandidateComparison jobPostingId="post_99" matchIds={["m1", "m2"]} />)
 
-    expect(mockGetForComparison).toHaveBeenCalledWith(
-      { jobPostingId: "post_99", matchIds: ["m1", "m2"] },
-      expect.anything(),
-    )
+    expect(mockGetForComparison).toHaveBeenCalledWith({
+      jobPostingId: "post_99",
+      matchIds: ["m1", "m2"],
+    })
   })
 })

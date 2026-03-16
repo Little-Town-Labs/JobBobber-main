@@ -115,16 +115,19 @@ function makeCandidateFixture(name: string): CandidateInput {
       {
         title: "Senior Software Engineer",
         company: "Tech Corp",
+        startDate: "2019-01-01",
         years: 5,
       },
       {
         title: "Software Engineer",
         company: "Startup Inc",
+        startDate: "2016-06-01",
         years: 3,
       },
     ],
     education: [
       {
+        institution: "State University",
         degree: "B.S. Computer Science",
         school: "State University",
         year: 2016,

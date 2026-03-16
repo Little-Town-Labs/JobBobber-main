@@ -1,17 +1,14 @@
 "use client"
 
 import { trpc } from "@/lib/trpc/client"
+import { useComplianceGetMfaStatus } from "@/lib/trpc/hooks"
 
 /**
  * Dismissible banner prompting users to enable MFA.
  * Renders nothing if MFA is already enabled or prompt was dismissed.
  */
 export function MfaPromptBanner() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tRPC type inference overflow (TS2589)
-  const mfaStatus = (trpc.compliance.getMfaStatus as any).useQuery() as {
-    data: { mfaEnabled: boolean; shouldPrompt: boolean } | undefined
-    isLoading: boolean
-  }
+  const mfaStatus = useComplianceGetMfaStatus()
 
   const dismissMfa = trpc.compliance.dismissMfaPrompt.useMutation()
 

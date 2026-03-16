@@ -146,6 +146,7 @@ export const jobSeekersRouter = createTRPCRouter({
       if (input.urls !== undefined) data.profileUrls = input.urls
 
       // Merge with existing seeker to compute fresh completeness score
+      // Narrowing Record<string, unknown> fields for completeness computation
       const merged = {
         name: (data.name as string | undefined) ?? ctx.seeker.name,
         headline: (data.headline as string | null | undefined) ?? ctx.seeker.headline,

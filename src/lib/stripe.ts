@@ -29,6 +29,7 @@ export function getStripe(): Stripe {
 /** @deprecated Use getStripe() for lazy initialization */
 export const stripe = new Proxy({} as Stripe, {
   get(_target, prop) {
+    // Proxy pattern requires dynamic property access — TypeScript can't type this
     return (getStripe() as unknown as Record<string | symbol, unknown>)[prop]
   },
 })

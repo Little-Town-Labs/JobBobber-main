@@ -1,6 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client"
-import { auth } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
+import { getAuth } from "@/lib/auth"
 
 /**
  * POST /api/employer/logo/upload
@@ -12,11 +12,7 @@ import { db } from "@/lib/db"
  * Logo URL is persisted via tRPC employers.updateLogo after upload.
  */
 export async function POST(request: Request): Promise<Response> {
-  const { userId, orgId, orgRole } = await (auth() as unknown as Promise<{
-    userId: string | null
-    orgId: string | null
-    orgRole: string | null
-  }>)
+  const { userId, orgId, orgRole } = await getAuth()
   if (!userId) {
     return new Response("Unauthorized", { status: 401 })
   }
@@ -47,5 +43,5 @@ export async function POST(request: Request): Promise<Response> {
     onUploadCompleted: async () => {
       // Intentionally empty — URL persisted via tRPC employers.updateLogo.
     },
-  }) as unknown as Response
+  }) as unknown as Response // Vercel Blob SDK handleUpload return type doesn't match Response
 }

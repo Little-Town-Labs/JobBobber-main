@@ -1,34 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { trpc } from "@/lib/trpc/client"
-
-interface PostingSummary {
-  id: string
-  title: string
-  status: string
-  matchCounts: { total: number; pending: number; accepted: number; declined: number }
-  matchRate: number
-  conversationMetrics: { total: number; inProgress: number; completed: number }
-}
-
-interface PipelineSummary {
-  postings: PostingSummary[]
-  totals: {
-    totalPostings: number
-    totalMatches: number
-    totalPending: number
-    totalAccepted: number
-  }
-}
+import { useDashboardGetPipelineSummary } from "@/lib/trpc/hooks"
 
 export function PipelineView() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const query = (trpc.dashboard.getPipelineSummary as any).useQuery() as {
-    data: PipelineSummary | undefined
-    isLoading: boolean
-  }
-  const { data, isLoading } = query
+  const { data, isLoading } = useDashboardGetPipelineSummary()
 
   if (isLoading) {
     return (

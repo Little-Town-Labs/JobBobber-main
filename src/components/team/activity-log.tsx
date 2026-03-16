@@ -1,10 +1,9 @@
 "use client"
 
-import { trpc } from "@/lib/trpc/client"
+import { useTeamActivityLog } from "@/lib/trpc/hooks"
 
 export function ActivityLog() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const activityQuery = (trpc.team.getActivityLog as any).useInfiniteQuery(
+  const activityQuery = useTeamActivityLog(
     { limit: 20 },
     {
       getNextPageParam: (lastPage: { nextCursor: string | null }) => lastPage.nextCursor,
@@ -22,7 +21,9 @@ export function ActivityLog() {
     )
   }
 
-  const allItems = data?.pages?.flatMap((page: { items: ActivityEntry[] }) => page.items) ?? []
+  // useInfiniteQuery returns a paginated shape that TypeScript can't infer through the typed hook wrapper
+  const paginatedData = data as unknown as { pages: Array<{ items: ActivityEntry[] }> } | undefined
+  const allItems = paginatedData?.pages?.flatMap((page) => page.items) ?? []
 
   if (allItems.length === 0) {
     return (

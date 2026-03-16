@@ -52,8 +52,8 @@ describe("buildProfileText", () => {
       headline: "Senior Software Engineer",
       skills: ["TypeScript", "React", "Node.js"],
       experience: [
-        { title: "Lead Dev", company: "Acme", years: 3 },
-        { title: "Junior Dev", company: "Startup", years: 2 },
+        { title: "Lead Dev", company: "Acme", startDate: "2020-01-01", years: 3 },
+        { title: "Junior Dev", company: "Startup", startDate: "2018-01-01", years: 2 },
       ],
       education: [{ degree: "BS Computer Science", institution: "MIT" }],
       location: "San Francisco, CA",

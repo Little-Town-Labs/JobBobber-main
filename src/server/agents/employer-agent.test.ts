@@ -58,8 +58,8 @@ const CANDIDATE = {
   name: "Jane Doe",
   headline: "Full-Stack Developer",
   skills: ["TypeScript", "React", "Node.js", "PostgreSQL"],
-  experience: [{ title: "Senior Dev", company: "Acme", years: 3 }],
-  education: [{ degree: "BS Computer Science", school: "MIT" }],
+  experience: [{ title: "Senior Dev", company: "Acme", startDate: "2020-01-01", years: 3 }],
+  education: [{ institution: "MIT", degree: "BS Computer Science", school: "MIT" }],
   location: "San Francisco, CA",
   profileCompleteness: 0.85,
 }

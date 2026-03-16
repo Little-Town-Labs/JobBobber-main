@@ -2,34 +2,35 @@
 
 import { useState } from "react"
 import { trpc } from "@/lib/trpc/client"
+import {
+  useTeamListMembers,
+  useTeamListInvitations,
+  useTeamInvite,
+  useTeamUpdateRole,
+  useTeamRemoveMember,
+  useTeamRevokeInvitation,
+} from "@/lib/trpc/hooks"
 import { ActivityLog } from "@/components/team/activity-log"
 
 export default function TeamManagementPage() {
   const utils = trpc.useUtils()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: members, isLoading: loadingMembers } = (trpc.team.listMembers as any).useQuery()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const listInvitationsQuery = (trpc.team.listInvitations as any).useQuery()
-  const { data: invitations, isLoading: loadingInvitations } = listInvitationsQuery
+  const { data: members, isLoading: loadingMembers } = useTeamListMembers()
+  const { data: invitations, isLoading: loadingInvitations } = useTeamListInvitations()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const inviteMutation = (trpc.team.invite as any).useMutation({
+  const inviteMutation = useTeamInvite({
     onSuccess: () => {
       utils.team.listInvitations.invalidate()
       setInviteEmail("")
       setInviteRole("VIEWER")
     },
   })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateRoleMutation = (trpc.team.updateRole as any).useMutation({
+  const updateRoleMutation = useTeamUpdateRole({
     onSuccess: () => utils.team.listMembers.invalidate(),
   })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const removeMemberMutation = (trpc.team.removeMember as any).useMutation({
+  const removeMemberMutation = useTeamRemoveMember({
     onSuccess: () => utils.team.listMembers.invalidate(),
   })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const revokeInvitationMutation = (trpc.team.revokeInvitation as any).useMutation({
+  const revokeInvitationMutation = useTeamRevokeInvitation({
     onSuccess: () => utils.team.listInvitations.invalidate(),
   })
 

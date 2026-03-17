@@ -161,7 +161,8 @@ async function assembleEmployerContext(
 
   const employer = member.employer
 
-  const [postings, matches, conversations] = await Promise.all([
+  // Fetch postings and matches in parallel, then conversations (needs posting IDs)
+  const [postings, matches] = await Promise.all([
     db.jobPosting.findMany({
       where: { employerId: employer.id },
       orderBy: { createdAt: "desc" },
@@ -177,15 +178,8 @@ async function assembleEmployerContext(
         jobPosting: { select: { title: true } },
       },
     }),
-    db.agentConversation.findMany({
-      where: { jobPostingId: { in: [] } }, // Will be filled after postings load
-      orderBy: { startedAt: "desc" },
-      take: 10,
-      include: { jobPosting: { select: { title: true } } },
-    }),
   ])
 
-  // Re-fetch conversations with actual posting IDs
   const postingIds = postings.map((p) => p.id)
   const actualConversations =
     postingIds.length > 0
@@ -195,7 +189,7 @@ async function assembleEmployerContext(
           take: 10,
           include: { jobPosting: { select: { title: true } } },
         })
-      : conversations
+      : []
 
   return {
     userName: employer.name,

@@ -38,7 +38,7 @@ function getChatModel(provider: string): string {
 
 export async function POST(request: Request): Promise<Response> {
   // 1. Auth
-  const { userId, sessionClaims } = await getAuth()
+  const { userId, orgId, sessionClaims } = await getAuth()
   if (!userId) {
     return new Response("Unauthorized", { status: 401 })
   }
@@ -69,8 +69,12 @@ export async function POST(request: Request): Promise<Response> {
   let scopeId: string = userId
 
   if (userRole === "EMPLOYER") {
+    // Employer lookup uses orgId (Clerk Organization ID), not userId
+    if (!orgId) {
+      return new Response("Organization membership required.", { status: 403 })
+    }
     const employer = await db.employer.findUnique({
-      where: { clerkOrgId: userId },
+      where: { clerkOrgId: orgId },
       select: { id: true, byokApiKeyEncrypted: true, byokProvider: true },
     })
     if (!employer?.byokApiKeyEncrypted || !employer.byokProvider) {

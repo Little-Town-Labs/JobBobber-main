@@ -165,7 +165,16 @@ export function buildSeekerTools(db: PrismaClient, seekerId: string) {
             OR: words.flatMap((word) => [
               { title: { contains: word, mode: "insensitive" as const } },
               { description: { contains: word, mode: "insensitive" as const } },
-              { requiredSkills: { has: word } },
+              // hasSome with common casings since Prisma string array has doesn't support case-insensitive
+              {
+                requiredSkills: {
+                  hasSome: [
+                    word,
+                    word.toLowerCase(),
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+                  ],
+                },
+              },
             ]),
           },
           include: { employer: { select: { name: true } } },

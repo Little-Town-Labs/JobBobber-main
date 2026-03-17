@@ -6,6 +6,7 @@ import { DefaultChatTransport } from "ai"
 import { useChatGetHistory } from "@/lib/trpc/hooks"
 
 const MAX_INPUT_LENGTH = 5000
+const chatTransport = new DefaultChatTransport({ api: "/api/chat" })
 
 interface ChatInterfaceProps {
   hasByokKey: boolean
@@ -41,7 +42,7 @@ export function ChatInterface({ hasByokKey }: ChatInterfaceProps) {
     status,
     error,
   } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
+    transport: chatTransport,
   })
 
   const isLoading = status === "streaming" || status === "submitted"
@@ -55,10 +56,13 @@ export function ChatInterface({ hasByokKey }: ChatInterfaceProps) {
       role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
       content: m.content,
     }))
-    const historyContents = new Set(fromHistory.map((m) => m.content))
+    // Dedup by ID — history IDs are CUIDs, live IDs are AI SDK UUIDs, so no collisions.
+    // Only filter out live messages whose content+role match a history entry (handles
+    // the case where the same message was persisted and is also in the live state).
+    const historyKeys = new Set(fromHistory.map((m) => `${m.role}:${m.content.slice(0, 50)}`))
     const newChatMessages = chatMessages
       .map((m) => ({ id: m.id, role: m.role as "user" | "assistant", content: getMessageText(m) }))
-      .filter((m) => !historyContents.has(m.content))
+      .filter((m) => !historyKeys.has(`${m.role}:${m.content.slice(0, 50)}`))
     return [...fromHistory, ...newChatMessages]
   }, [historyData, chatMessages])
 
@@ -82,6 +86,24 @@ export function ChatInterface({ hasByokKey }: ChatInterfaceProps) {
         >
           Set Up API Key
         </a>
+      </div>
+    )
+  }
+
+  // Feature flag disabled — getHistory returns NOT_FOUND
+  if (
+    historyQuery.isError &&
+    (historyQuery.error as { data?: { code?: string } })?.data?.code === "NOT_FOUND"
+  ) {
+    return (
+      <div
+        data-testid="chat-coming-soon"
+        className="rounded-lg border border-dashed p-8 text-center"
+      >
+        <h2 className="text-lg font-semibold text-gray-800">Coming Soon</h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Chat with your agent is not yet available. Check back soon!
+        </p>
       </div>
     )
   }

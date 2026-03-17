@@ -16,6 +16,7 @@ import { customPromptsRouter } from "@/server/api/routers/custom-prompts"
 import { billingRouter } from "@/server/api/routers/billing"
 import { dashboardRouter } from "@/server/api/routers/dashboard"
 import { complianceRouter } from "@/server/api/routers/compliance"
+import { chatRouter } from "@/server/api/routers/chat"
 
 /**
  * Root tRPC router — assembles all sub-routers.
@@ -41,6 +42,7 @@ export const appRouter = createTRPCRouter({
   billing: billingRouter,
   dashboard: dashboardRouter,
   compliance: complianceRouter,
+  chat: chatRouter,
 })
 
 /** AppRouter type — used by tRPC client for end-to-end type safety */

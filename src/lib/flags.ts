@@ -105,6 +105,13 @@ export const COMPLIANCE_SECURITY = flag<boolean>({
   decide: () => false,
 })
 
+export const USER_CHAT = flag<boolean>({
+  key: "user-chat",
+  defaultValue: false,
+  description: "Enable user-to-agent chat interface (Feature 19)",
+  decide: () => false,
+})
+
 export const ADVANCED_EMPLOYER_DASHBOARD = flag<boolean>({
   key: "advanced-employer-dashboard",
   defaultValue: false,

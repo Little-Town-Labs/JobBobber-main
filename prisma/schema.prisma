@@ -589,3 +589,27 @@ model DeletionRequest {
   @@index([status])
   @@map("deletion_requests")
 }
+
+// =============================================================================
+// Feature 19: User Chat
+// =============================================================================
+
+enum ChatMessageRole {
+  USER
+  ASSISTANT
+}
+
+/// User-to-agent chat messages.
+/// Separate from AgentConversation (agent-to-agent).
+/// clerkUserId links to Clerk — not a FK (follows existing pattern).
+model ChatMessage {
+  id          String          @id @default(cuid())
+  clerkUserId String
+  role        ChatMessageRole
+  content     String
+  createdAt   DateTime        @default(now())
+
+  @@index([clerkUserId, createdAt(sort: Desc)])
+  @@index([clerkUserId])
+  @@map("chat_messages")
+}

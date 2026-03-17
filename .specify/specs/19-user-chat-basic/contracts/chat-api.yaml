@@ -1,0 +1,95 @@
+# Chat API Contract — 19-user-chat-basic
+#
+# Two API surfaces:
+# 1. Next.js Route Handler (POST /api/chat) — streaming LLM responses
+# 2. tRPC router (chat.*) — message persistence, history, context
+
+openapi: 3.0.0
+info:
+  title: JobBobber Chat API
+  version: 1.0.0
+  description: User-to-agent chat interface
+
+paths:
+  /api/chat:
+    post:
+      summary: Send a chat message and receive a streamed AI response
+      description: |
+        Streaming endpoint using Vercel AI SDK. Decrypts user's BYOK key,
+        assembles agent context from user data, and streams the LLM response.
+        Messages are persisted to ChatMessage table before and after streaming.
+        Rate-limited to 10 messages/minute per user.
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                messages:
+                  type: array
+                  description: Conversation history (Vercel AI SDK format)
+                  items:
+                    type: object
+                    required: [role, content]
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
+                        maxLength: 5000
+      responses:
+        "200":
+          description: Streamed text response (SSE / ReadableStream)
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          description: Not authenticated
+        "403":
+          description: No BYOK key configured
+        "429":
+          description: Rate limit exceeded (10 messages/minute)
+
+# tRPC procedures (type-safe, not OpenAPI — documented here for reference)
+#
+# chat.getHistory
+#   Input: { cursor?: string, limit?: number (default 50, max 100) }
+#   Output: { items: ChatMessage[], nextCursor: string | null, hasMore: boolean }
+#   Middleware: protectedProcedure
+#   Description: Load paginated chat history for the current user
+#
+# chat.clearHistory
+#   Input: none
+#   Output: { deleted: number }
+#   Middleware: protectedProcedure
+#   Description: Delete all chat messages for the current user (future enhancement)
+
+components:
+  schemas:
+    ChatMessage:
+      type: object
+      required: [id, role, content, createdAt]
+      properties:
+        id:
+          type: string
+          description: CUID
+        role:
+          type: string
+          enum: [USER, ASSISTANT]
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    clerkAuth:
+      type: http
+      scheme: bearer
+      description: Clerk session token

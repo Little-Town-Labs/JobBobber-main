@@ -6,6 +6,7 @@ export const RATE_LIMIT_CATEGORIES = {
   read: { requests: 100, window: "1m" },
   write: { requests: 30, window: "1m" },
   agent: { requests: 10, window: "1m" },
+  chat: { requests: 10, window: "1m" },
   webhook: { requests: 200, window: "1m" },
 } as const
 

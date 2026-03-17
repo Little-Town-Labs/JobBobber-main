@@ -45,7 +45,12 @@ export async function executeAccountDeletionHandler(input: DeletionInput): Promi
   })
 
   try {
-    // 4. Terminate active conversations
+    // 4. Delete chat messages (GDPR — no orphaned PII)
+    await db.chatMessage.deleteMany({
+      where: { clerkUserId },
+    })
+
+    // 5. Terminate active conversations
     await db.agentConversation.updateMany({
       where: {
         seeker: { clerkUserId },
@@ -55,7 +60,7 @@ export async function executeAccountDeletionHandler(input: DeletionInput): Promi
     })
 
     if (request.userType === "EMPLOYER" && clerkOrgId) {
-      // 4b. Also terminate employer-side conversations
+      // 5b. Also terminate employer-side conversations
       await db.agentConversation.updateMany({
         where: {
           jobPosting: { employer: { clerkOrgId } },
@@ -64,7 +69,7 @@ export async function executeAccountDeletionHandler(input: DeletionInput): Promi
         data: { status: "TERMINATED" },
       })
 
-      // 5. Close active job postings
+      // 6. Close active job postings
       await db.jobPosting.updateMany({
         where: {
           employer: { clerkOrgId },
@@ -73,18 +78,18 @@ export async function executeAccountDeletionHandler(input: DeletionInput): Promi
         data: { status: "CLOSED" },
       })
 
-      // 6. Delete employer record (cascades to members, postings, settings, etc.)
+      // 7. Delete employer record (cascades to members, postings, settings, etc.)
       await db.employer.delete({
         where: { clerkOrgId },
       })
     } else {
-      // 6. Delete seeker record (cascades to settings, conversations, matches, etc.)
+      // 7. Delete seeker record (cascades to settings, conversations, matches, etc.)
       await db.jobSeeker.delete({
         where: { clerkUserId },
       })
     }
 
-    // 7. Delete Clerk user account
+    // 8. Delete Clerk user account
     const clerk = await clerkClient()
     await clerk.users.deleteUser(clerkUserId)
 
@@ -97,7 +102,7 @@ export async function executeAccountDeletionHandler(input: DeletionInput): Promi
       }
     }
 
-    // 8. Mark as completed
+    // 9. Mark as completed
     await db.deletionRequest.update({
       where: { id: deletionRequestId },
       data: { status: "COMPLETED", executedAt: new Date() },

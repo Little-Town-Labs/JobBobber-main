@@ -3,17 +3,22 @@
 **PRD Source:** `PRD.md`
 **Constitution:** `.specify/memory/constitution.md`
 **Product Roadmap:** `docs/ROADMAP.md`
-**Version:** 1.0
+**Version:** 2.0
 **Created:** 2026-02-22
-**Status:** Ready for speckit-ralph
+**Updated:** 2026-03-16
+**Status:** Phase 4 ready for speckit-ralph
 
 ---
 
 ## Overview
 
-This roadmap breaks the JobBobber PRD into **18 spec-kit features** organized across three
+This roadmap breaks the JobBobber PRD into **37 spec-kit features** organized across five
 implementation phases. Each feature is processed independently through the full
 specify → clarify → plan → tasks → analyze → implement → review pipeline.
+
+Phases 1–3 (18 features) are **complete**. Phases 4–5 (19 features) add user-facing
+interactions, analytics, integrations, and expansion capabilities, ordered by
+highest impact and lowest effort.
 
 **Constitutional Alignment:**
 
@@ -25,13 +30,13 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 - Phased Rollout with Feature Flags (VI) — Vercel Flags SDK
 - Agent Autonomy (VII) — no human-in-loop until interview stage
 
-**Total Features:** 18
-**Phases:** 3 (MVP → Beta → Full Launch)
-**Critical Path:** 1 → 2 → 3 + 4 → 5 → 6 (parallel with 7)
+**Total Features:** 37
+**Phases:** 5 (MVP → Beta → Full Launch → Growth → Expansion)
+**Critical Path (Phase 4):** 19 → 20 → 21 → 22 (chat cluster, sequential)
 
 ---
 
-## Phase 1: MVP (Months 1–3)
+## Phase 1: MVP ✅ COMPLETE
 
 **Goal:** Prove the core matching loop works end-to-end.
 
@@ -47,7 +52,7 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 
 ---
 
-## Phase 2: Beta (Months 4–6)
+## Phase 2: Beta ✅ COMPLETE
 
 **Goal:** Enable full agent-to-agent interaction and private negotiation.
 **Dependency:** Phase 1 complete.
@@ -63,7 +68,7 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 
 ---
 
-## Phase 3: Full Launch (Months 7–12)
+## Phase 3: Full Launch ✅ COMPLETE
 
 **Goal:** Complete platform — billing, enterprise features, compliance, and scale.
 **Dependency:** Phase 2 complete.
@@ -78,415 +83,493 @@ specify → clarify → plan → tasks → analyze → implement → review pipe
 
 ---
 
+## Phase 4: Growth (High Impact, Low-Medium Effort)
+
+**Goal:** User-facing AI interactions, analytics, and quick wins that maximize
+platform value with minimal new infrastructure.
+**Dependency:** Phase 3 complete.
+
+### Features
+
+- [x] 19-user-chat-basic
+- [ ] 20-agent-tool-calling
+- [ ] 21-advanced-chat-with-tools
+- [ ] 22-streaming-structured-outputs
+- [ ] 23-product-analytics
+- [ ] 24-bulk-job-upload
+- [ ] 25-multi-provider-fallback
+- [ ] 26-ai-resume-builder
+- [ ] 27-hiring-metrics
+- [ ] 28-public-rest-api
+- [ ] 29-industry-agent-templates
+
+---
+
+## Phase 5: Expansion (High Effort, External Dependencies)
+
+**Goal:** Platform expansion requiring third-party integrations, new infrastructure,
+or entirely new client applications.
+**Dependency:** Phase 4 features 19–22 recommended but not required.
+
+### Features
+
+- [ ] 30-interview-scheduling
+- [ ] 31-salary-negotiation-assistant
+- [ ] 32-ai-gateway-caching
+- [ ] 33-skills-assessment
+- [ ] 34-reference-checking
+- [ ] 35-video-interview-analysis
+- [ ] 36-mobile-apps
+- [ ] 37-soc2-penetration-testing
+
+---
+
 ## Feature Descriptions
 
-### Phase 1 Features
+### Phase 1–3 Features
 
-#### 1-foundation-infrastructure
-
-**PRD Section:** §10 Technology Stack, §11 Phase 1 MVP
-**Priority:** P0
-**Complexity:** Medium
-**Description:** Bootstrap the full T3 stack — Next.js 15, React 19, tRPC 11, Prisma 5,
-NeonDB (PostgreSQL), Tailwind CSS + shadcn/ui, Clerk, Inngest, Vercel Flags SDK. Configure
-TypeScript strict mode, ESLint, Prettier, Vitest, and CI/CD pipeline. Establish the
-Prisma database schema for all core entities (JobSeeker, Employer, JobPosting, AgentConversation,
-Match, FeedbackInsights). Deploy to Vercel with preview-per-PR.
-
-**Acceptance Criteria:**
-
-- `pnpm dev` runs without errors
-- `pnpm build` succeeds (zero TypeScript errors)
-- Database schema migrated and seeded
-- Vercel preview deployment working
-- All MVP feature flags initialized to OFF
-
-#### 2-authentication-byok
-
-**PRD Section:** §6.1 Authentication & User Management, §Constitution III (BYOK)
-**Priority:** P0
-**Complexity:** Medium
-**Description:** Clerk-based authentication with role selection (Job Seeker vs Employer) at
-sign-up. BYOK API key setup flow: user provides OpenAI or Anthropic API key, system validates
-it against the provider, encrypts it with AES-256 using a user-scoped key, and stores it.
-Display estimated cost range. No platform fallback keys allowed.
-
-**Acceptance Criteria:**
-
-- Job seekers and employers can register and sign in via Clerk
-- Role persisted and enforced in tRPC protected procedures
-- API key validated before saving (live API call)
-- API key encrypted at rest with user-scoped AES-256
-- API key never appears in logs, API responses, or client state
-- Key can be rotated or deleted by the user
-
-#### 3-job-seeker-profile
-
-**PRD Section:** §6.2 Job Seeker Profile, §8.1 Job Seeker Flow
-**Priority:** P0
-**Complexity:** Medium
-**Description:** Multi-step profile creation wizard: basic info, experience, education,
-skills (autocomplete), portfolio URLs, location and relocation preferences. Resume upload
-(PDF/DOCX via Vercel Blob) with AI-assisted field extraction using the user's BYOK key.
-Profile completeness score displayed to the user.
-
-**Acceptance Criteria:**
-
-- Job seeker can create and update a complete profile
-- Resume uploads to Vercel Blob, parsing extracts structured fields
-- Profile completeness score calculated and displayed
-- All structured fields type-safe (Prisma + tRPC + Zod)
-- Private settings schema exists (minSalary, dealBreakers, priorities, exclusions)
-  but is hidden behind Beta feature flag
-
-#### 4-employer-profile-job-posting
-
-**PRD Section:** §6.3 Employer Profile, §8.2 Employer Flow
-**Priority:** P0
-**Complexity:** Medium
-**Description:** Employer company profile (name, description, industry, size, culture, URLs,
-benefits) and single-job-posting creation for MVP (title, description, required skills,
-experience level, employment type, location, public salary range, "why apply"). Job posting
-status management (draft → active → paused → closed → filled).
-
-**Acceptance Criteria:**
-
-- Employer can create and update company profile
-- Employer can create, edit, and manage a job posting
-- Job posting status transitions enforced
-- Private job settings schema exists (truMaxSalary, willingToTrain, urgency)
-  but hidden behind Beta feature flag
-- All data type-safe end-to-end
-
-#### 5-basic-ai-matching
-
-**PRD Section:** §7.1 Agent Types (Employer Agent), §11 Phase 1 MVP
-**Priority:** P0
-**Complexity:** Large
-**Description:** One-directional matching: the Employer Agent evaluates job seeker profiles
-against a job posting. Uses user's BYOK key via Vercel AI SDK. Agent generates a match score
-(0–100) and match reasoning (text) using structured output validated with Zod. Matching
-triggered via Inngest workflow. No agent-to-agent conversation in MVP — employer agent
-evaluates static profiles only.
-
-**Acceptance Criteria:**
-
-- Inngest workflow fires when employer activates a job posting
-- Employer agent evaluates all candidate profiles for the posting
-- Match score and reasoning generated and stored
-- Zod schema validates all agent output (no storing invalid LLM output)
-- BYOK key used exclusively (no platform keys)
-- LLM calls mocked in all tests (no real API calls in test suite)
-- Agent respects ethical guardrails (no discrimination on protected characteristics)
-
-#### 6-match-dashboard
-
-**PRD Section:** §6.5 Dashboard & Notifications, §6.6 Match Delivery
-**Priority:** P1
-**Complexity:** Medium
-**Description:** Job seeker dashboard: view matches sorted by score, filter by status
-(pending/accepted/declined), view match reasoning, accept or decline. Employer dashboard:
-view matched candidates sorted by score, view full candidate profile, accept/reject/request
-more info. Match notification system (email via Inngest). When both parties accept a match,
-employer receives job seeker contact info and availability.
-
-**Acceptance Criteria:**
-
-- Job seeker can view, sort, and filter their matches
-- Employer can view, sort, and filter matched candidates
-- Accept/decline actions update match status atomically
-- When both accept: employer receives contact info (job seeker's consent required)
-- Email notifications sent via Inngest on match creation and status change
-- Confidence score (Strong/Good/Potential) displayed on each match card
-
-#### 7-testing-infrastructure
-
-**PRD Section:** §Constitution II (TDD), Roadmap Testing & Quality
-**Priority:** P0 (Constitutional Requirement)
-**Complexity:** Small
-**Description:** Establish the full testing infrastructure: Vitest configuration, test
-scaffolding helpers, LLM mock utilities (deterministic mocked responses for all agent tests),
-pre-commit hooks, and CI/CD test gates. Playwright E2E setup with critical flow coverage
-(auth, profile creation, matching, match acceptance). 80%+ coverage enforced as a
-non-negotiable gate.
-
-**Acceptance Criteria:**
-
-- `pnpm test` runs all unit + integration tests
-- `pnpm test:e2e` runs Playwright tests against local dev server
-- Coverage report generated; CI fails if below 80%
-- LLM mock utility returns deterministic responses for given inputs
-- Pre-commit hook prevents commits with failing tests
-- All CI gates pass before merge to main
+See Version 1.0 of this document (git history) for full descriptions of features 1–18.
+All 18 features are complete and deployed.
 
 ---
 
-### Phase 2 Features
+### Phase 4 Features
 
-#### 8-private-negotiation-parameters
+#### 19-user-chat-basic
 
-**PRD Section:** §6.2 (Private Settings), §6.3 (Private Job Settings)
-**Priority:** P1
-**Complexity:** Medium
-**Description:** Job seeker private settings UI: minimum salary, salary flexibility rules,
-deal-breakers, priorities ranking, industry/company exclusions. Employer private job settings
-UI: true maximum salary, minimum qualification override, training willingness, urgency,
-priority attributes. Data stored in separate private tables, never exposed via public API,
-accessed only by the user's own agent.
-
-**Acceptance Criteria:**
-
-- Private settings saved separately from public profile (separate DB tables)
-- Private settings never appear in any tRPC response accessible to other users
-- Agent reads private settings only via server-side agent context
-- Behind `PRIVATE_PARAMS` feature flag (Beta rollout)
-- Full test coverage of privacy boundary enforcement
-
-#### 9-agent-to-agent-conversations
-
-**PRD Section:** §7.2 Agent-to-Agent Interaction Model
-**Priority:** P0
-**Complexity:** Large
-**Description:** Full multi-turn automated dialogue between Employer Agent and Job Seeker
-Agent via Inngest resumable workflows. Conversation flow: discovery → initial screening →
-deep evaluation → negotiation alignment → match decision. Agents use private parameters
-strategically without disclosing exact values. All conversations logged to AgentConversation
-table. No human intervention until match is surfaced.
-
-**Acceptance Criteria:**
-
-- Inngest workflow handles full conversation lifecycle (resumable, no timeout)
-- Employer Agent initiates; Job Seeker Agent responds
-- Multi-turn evaluation (minimum 3 turns before match decision)
-- Private params used without disclosure of exact figures
-- Conversation state persisted between turns (resume after interruption)
-- Both agents can reach no-match conclusion (quiet termination, no notification)
-- Agent guardrails enforced: no fabrication, no discrimination, no private disclosure
-- All agent calls mocked in tests
-
-#### 10-two-way-matching
-
-**PRD Section:** §7.2 (Match Decision), §Constitution VII (Agent Autonomy)
+**PRD Section:** §8.1 Job Seeker Flow, §8.2 Employer Flow
 **Priority:** P0
 **Complexity:** Medium
-**Description:** Bidirectional consensus matching — both Employer Agent and Job Seeker Agent
-must independently determine sufficient alignment before a match is surfaced. Builds on
-agent-to-agent conversations. Adds Job Seeker Agent's active evaluation of opportunities
-against private preferences. Match only generated when both agents agree.
+**Impact/Effort:** ★★★★★ — Highest-impact missing feature; closes the gap between
+"AI agents handle everything" and what users can actually interact with today.
+**Description:** User-facing chat interface where seekers and employers can converse
+with their personal AI agent. Uses Vercel AI SDK `useChat()` hook with BYOK key.
+New chat tRPC router for message persistence. Chat agent has read access to user's
+profile, matches, and conversation logs. Foundation for tool calling (Feature 20).
 
 **Acceptance Criteria:**
 
-- Job Seeker Agent evaluates job opportunities against private preferences
-- Match generated only when both agents signal consensus
-- Confidence score (Strong/Good/Potential) calculated from alignment depth
-- Match summary AI-generated and explains both-sided alignment
-- Unilateral no-match is silent (no notification to either party)
-- Agent autonomy fully respected (no human approval mid-negotiation)
+- Chat UI accessible from both seeker and employer dashboards
+- Messages streamed in real-time via Vercel AI SDK
+- Chat agent uses BYOK key (no platform keys)
+- Message history persisted and reloadable
+- Agent has read-only context of user's profile and match status
+- Behind `USER_CHAT` feature flag
+- LLM calls mocked in all tests
 
-#### 11-vector-search
+#### 20-agent-tool-calling
 
-**PRD Section:** §10 Technology Stack (pgvector), §7.4 Profile Validation
-**Priority:** P1
+**PRD Section:** §7.3 Tool Calling
+**Priority:** P0
 **Complexity:** Medium
-**Description:** Enable semantic profile-to-job matching using pgvector (NeonDB extension).
-Generate embeddings for job seeker profiles and job postings using user's BYOK key.
-Employer Agent uses vector similarity search to build initial candidate shortlist before
-initiating conversations. Semantic search replaces naive keyword filtering.
+**Dependency:** 19-user-chat-basic
+**Impact/Effort:** ★★★★★ — Transforms chat from a novelty to a functional interface.
+**Description:** Define callable tools for the chat agent: `searchJobs` (query active
+postings by skills/location), `getProfile` (retrieve user's own profile data),
+`checkMatchStatus` (list current matches with status), `getConversationLog` (read
+agent-to-agent conversation summaries). Tools implemented as tRPC caller invocations
+within the chat route handler. Zod schemas validate all tool inputs/outputs.
 
 **Acceptance Criteria:**
 
-- pgvector extension enabled on NeonDB
-- Profile and job posting embeddings generated and stored on create/update
-- Employer Agent uses cosine similarity search for initial candidate discovery
-- Embedding regenerated on profile or job posting update
-- Search results ranked by similarity; top-N returned for agent evaluation
-- BYOK key used for embedding generation (OpenAI or Anthropic embeddings)
+- Minimum 4 tools defined with Zod input/output schemas
+- Tools invoked by the LLM via Vercel AI SDK tool calling
+- Tool results rendered inline in chat UI
+- Tools respect existing RBAC (seeker tools vs employer tools)
+- No tool can access another user's data
+- All tool calls mocked in tests
 
-#### 12-agent-conversation-logs
+#### 21-advanced-chat-with-tools
 
-**PRD Section:** §6.5 Dashboard (conversation logs), §14 Agent Conversation Data
+**PRD Section:** §8.1 (Advanced Seeker Flow), §8.2 (Advanced Employer Flow)
 **Priority:** P1
 **Complexity:** Small
-**Description:** Transparency feature — users can read the full logs of conversations their
-agent participated in. Read-only view in the dashboard. Private parameters and exact figures
-never shown in logs (redacted at storage time). Users can opt out of their conversation data
-being used for model improvement.
+**Dependency:** 19-user-chat-basic, 20-agent-tool-calling
+**Impact/Effort:** ★★★★☆ — UX polish on existing tool infrastructure.
+**Description:** Enhanced chat experience combining streaming responses with inline
+tool result display. Search results shown as cards, match status as a summary table,
+profile data as structured preview. Adds "suggested actions" after tool results
+(e.g., "Accept this match?" after viewing match details).
 
 **Acceptance Criteria:**
 
-- Conversation messages stored in AgentConversation.messages[] field
-- Job seeker can view conversations their agent participated in
-- Employer can view conversations per candidate per job posting
-- Private parameter values redacted before storage (pattern-matched and removed)
-- Data usage opt-out flag stored and respected
-- Behind `CONVERSATION_LOGS` feature flag
+- Tool results rendered as structured UI components (not raw JSON)
+- Suggested follow-up actions displayed after relevant tool calls
+- Chat maintains context across tool invocations
+- Responsive layout for mobile viewports
 
-#### 13-multi-member-employer-accounts
+#### 22-streaming-structured-outputs
 
-**PRD Section:** §6.3 (EmployerMember), §6.1 (Role Management)
+**PRD Section:** §7.1 (Agent Output)
+**Priority:** P2
+**Complexity:** Small
+**Dependency:** 19-user-chat-basic
+**Impact/Effort:** ★★★☆☆ — Enhancement to chat experience, not a new capability.
+**Description:** Use Vercel AI SDK `streamObject` to progressively render structured
+agent output in the chat UI. Partial results shown as they stream (e.g., match
+evaluation dimensions filling in one by one). Replaces waiting for full response.
+
+**Acceptance Criteria:**
+
+- `streamObject` used for structured agent responses in chat
+- Partial results rendered progressively in UI
+- Graceful fallback if streaming fails (show full result on completion)
+- No change to agent evaluation logic
+
+#### 23-product-analytics
+
+**PRD Section:** §10 Technology Stack (Monitoring)
+**Priority:** P1
+**Complexity:** Small
+**Impact/Effort:** ★★★★☆ — Critical for understanding user behavior before scaling.
+**Description:** Integrate PostHog for product analytics. Install `posthog-js`,
+add PostHog provider to app layout, instrument key events: sign-up, profile
+completion, match created, match accepted/declined, subscription started/cancelled,
+chat message sent. Configure `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST`
+env vars (already defined in `src/lib/env.ts`).
+
+**Acceptance Criteria:**
+
+- PostHog JS SDK installed and provider mounted in app layout
+- Minimum 8 events tracked (sign-up, profile complete, match created, match
+  accepted, match declined, subscription started, subscription cancelled, chat sent)
+- User identification linked to Clerk userId (no PII in events)
+- PostHog disabled in test/development environments
+- Behind `PRODUCT_ANALYTICS` feature flag
+
+#### 24-bulk-job-upload
+
+**PRD Section:** §6.3 Employer Profile (Bulk Operations)
+**Priority:** P1
+**Complexity:** Small
+**Impact/Effort:** ★★★★☆ — High value for enterprise employers with many openings.
+**Description:** CSV upload endpoint for employers to create multiple job postings
+at once. Parse CSV, validate each row against existing `jobPostings.create` input
+schema, show preview with validation errors, create postings in batch. Uses existing
+job posting CRUD — no new data model.
+
+**Acceptance Criteria:**
+
+- CSV file upload UI in employer dashboard
+- CSV parsed and validated against JobPosting Zod schema
+- Preview table shows valid/invalid rows before submission
+- Batch creation via existing tRPC procedure (transactional)
+- Error report downloadable for invalid rows
+- Maximum 100 postings per upload
+
+#### 25-multi-provider-fallback
+
+**PRD Section:** §10 Technology Stack (AI Infrastructure)
+**Priority:** P2
+**Complexity:** Small
+**Impact/Effort:** ★★★☆☆ — Improves reliability; low effort since provider factory exists.
+**Description:** Add Cohere as a third BYOK provider option. Implement automatic
+fallback: if the user's primary provider returns an error (rate limit, outage),
+try the next configured provider before failing. Requires users to optionally
+configure a secondary API key. Extends existing `createProvider` factory in
+`employer-agent.ts`.
+
+**Acceptance Criteria:**
+
+- Cohere SDK added as optional BYOK provider
+- Users can configure primary and secondary API keys
+- Automatic fallback on provider error (429, 500, 503)
+- Fallback logged for user visibility
+- No fallback to platform keys (BYOK maintained)
+- Existing tests updated to cover fallback path
+
+#### 26-ai-resume-builder
+
+**PRD Section:** §8.1 Job Seeker Flow (Full Launch)
 **Priority:** P1
 **Complexity:** Medium
-**Description:** Multi-user employer accounts with role-based access control via Clerk
-Organizations. Roles: Admin (full access, invite/remove members), Job Poster (create/manage
-postings), Viewer (read-only). Admin can invite team members by email. Role enforced at API
-level via tRPC protected procedures.
+**Impact/Effort:** ★★★☆☆ — Unique feature that adds standalone value for seekers.
+**Description:** Generate a formatted resume from the user's JobSeeker profile using
+their BYOK key. LLM creates professional summary, formats experience/education,
+highlights relevant skills. Render to PDF via a server-side PDF generation library.
+Multiple template options (professional, modern, minimal). Users can regenerate
+with different templates.
 
 **Acceptance Criteria:**
 
-- Clerk Organizations used for employer multi-tenancy
-- Admin can invite, remove, and assign roles to team members
-- tRPC procedures enforce role-based access for all employer operations
-- Team activity visible to admins (who posted/reviewed what)
-- Invitation emails sent via Inngest + Clerk webhook
-- Single-user employer accounts from MVP still supported
+- Resume generated from existing profile data via BYOK LLM call
+- Minimum 3 template options
+- PDF export downloadable from dashboard
+- Resume content validated with Zod before rendering
+- Regeneration supported (different template, updated profile)
+- Behind `RESUME_BUILDER` feature flag
+
+#### 27-hiring-metrics
+
+**PRD Section:** §6.5 Employer Dashboard (Advanced Analytics)
+**Priority:** P2
+**Complexity:** Small
+**Impact/Effort:** ★★★☆☆ — Builds on existing dashboard; mostly SQL aggregation.
+**Description:** Add time-to-hire and cost-per-hire metrics to the employer dashboard.
+Track timestamps: posting created → first match → mutual accept → (external: interview
+scheduled). Aggregate across postings for trend analysis. Extends existing
+`dashboard` tRPC router with new query procedures.
+
+**Acceptance Criteria:**
+
+- Time-to-first-match calculated per posting
+- Time-to-mutual-accept calculated per posting
+- Average metrics displayed on employer dashboard
+- Trend over last 30/60/90 days
+- CSV export of metrics data
+
+#### 28-public-rest-api
+
+**PRD Section:** §10 Technology Stack (API for Integrations)
+**Priority:** P2
+**Complexity:** Medium
+**Impact/Effort:** ★★☆☆☆ — Important for ecosystem but not user-facing.
+**Description:** Public REST API wrapping core tRPC procedures for external
+integrations (ATS systems, staffing agencies). API key authentication (separate
+from BYOK keys). Rate-limited endpoints for job postings, matches, and profile
+data. OpenAPI spec generated from Zod schemas. Webhooks for match events.
+
+**Acceptance Criteria:**
+
+- REST endpoints for: list postings, get matches, get profile, webhook subscription
+- API key table with creation/rotation/revocation
+- Rate limiting per API key (separate from user rate limits)
+- OpenAPI 3.0 spec auto-generated
+- Webhook delivery for match.created, match.accepted, match.declined events
+- Behind `PUBLIC_API` feature flag
+
+#### 29-industry-agent-templates
+
+**PRD Section:** §7.1 Agent Types (Industry Specialization)
+**Priority:** P2
+**Complexity:** Medium
+**Impact/Effort:** ★★☆☆☆ — Technically simple but requires domain expertise per industry.
+**Description:** Pre-built agent prompt templates optimized for specific industries:
+technology/engineering, healthcare, finance, sales/marketing. Templates adjust
+evaluation criteria, terminology, and scoring weights. Users select an industry
+template or use the default generic prompt. Templates stored as versioned prompt
+functions.
+
+**Acceptance Criteria:**
+
+- Minimum 4 industry templates defined
+- Template selection in employer job posting settings
+- Templates adjust agent evaluation prompts (not just system message prefix)
+- Default generic template preserved as fallback
+- Templates versioned and auditable
+- Behind `INDUSTRY_TEMPLATES` feature flag
 
 ---
 
-### Phase 3 Features
+### Phase 5 Features
 
-#### 14-aggregate-feedback-insights
+#### 30-interview-scheduling
 
-**PRD Section:** §7.2.1 Aggregate Feedback Insights, §6.5 Dashboard
+**PRD Section:** §8.2 Employer Flow (Interview Stage)
 **Priority:** P1
 **Complexity:** Large
-**Description:** Private AI-generated feedback visible only to the user in their dashboard.
-For job seekers: what makes them attractive, what patterns cause rejections, trends over time.
-For employers: what makes their posting attractive, what causes candidates to decline.
-Derived from aggregated conversation outcomes — never exposes individual conversation details
-or the identity of the other party. FeedbackInsights entity regenerated periodically by Inngest.
+**External Dependency:** Google Calendar API, Microsoft Graph API
+**Impact/Effort:** ★★★☆☆ — High impact but requires OAuth calendar integration.
+**Description:** After mutual match acceptance, enable interview scheduling.
+Calendar OAuth integration (Google Calendar + Outlook) for both parties. Agent
+suggests available time slots based on overlapping availability. Interview
+confirmation emails via Inngest. Timezone-aware scheduling.
 
 **Acceptance Criteria:**
 
-- FeedbackInsights generated from aggregated conversation outcomes (not individual disclosures)
-- Insights visible only to the profile owner (private API endpoint)
-- No individual rejection details or opposing party identity revealed
-- Trend direction (improving/declining/stable) displayed with metrics
-- Regenerated by Inngest on a schedule (or after N new conversations)
-- Content validated with Zod before storage
-- Behind `FEEDBACK_INSIGHTS` feature flag
+- OAuth flow for Google Calendar and Microsoft Outlook
+- Available time slots computed from calendar intersection
+- Interview requests sent via email with accept/decline links
+- Confirmed interviews added to both parties' calendars
+- Timezone display and conversion
+- Behind `INTERVIEW_SCHEDULING` feature flag
 
-#### 15-custom-agent-prompting
+#### 31-salary-negotiation-assistant
 
-**PRD Section:** §6.4 Custom Agent Prompting
+**PRD Section:** §8.1 Job Seeker Flow (Full Launch)
 **Priority:** P2
-**Complexity:** Medium
-**Description:** Advanced feature allowing users to write a custom prompt that influences
-their agent's behavior during agent-to-agent interactions. Prompt is sandboxed — cannot
-override core agent policies, ethical guardrails, or matching rules. Platform provides
-example prompts and guidance. Prompt quality is itself a soft signal of user capability.
-Prompt injection detection required.
-
-**Acceptance Criteria:**
-
-- Custom prompt input available in profile settings (both user types)
-- Prompt injected into agent context within a sandboxed section
-- Core guardrails cannot be overridden by custom prompt
-- Prompt injection / adversarial content detection applied before use
-- Example prompts and guidance shown in UI
-- Prompt stored encrypted at rest
-- Behind `CUSTOM_PROMPTS` feature flag
-
-#### 16-subscription-billing
-
-**PRD Section:** §12 Revenue Model
-**Priority:** P0
 **Complexity:** Large
-**Description:** Full Stripe subscription billing for all tiers. Job Seeker: Free (capped agent
-activity) and Pro ($39/mo — unlimited activity, full features). Employer: Free (1 posting, capped),
-Business ($99/mo — multi-posting, unlimited), Enterprise (custom). Feature flag gating enforces
-tier limits. Billing dashboard shows current plan, usage, and payment history. Stripe webhooks
-handled via Inngest.
+**External Dependency:** Market salary data API (BLS, Levels.fyi, or similar)
+**Impact/Effort:** ★★☆☆☆ — High value but requires external data source.
+**Description:** AI-powered salary recommendations based on user's profile, location,
+industry, and experience level. Market rate comparisons using external salary data.
+Negotiation strategy suggestions generated via BYOK LLM call with market data context.
 
 **Acceptance Criteria:**
 
-- Stripe Checkout and Customer Portal integrated
-- Subscription tiers enforce feature flag access
-- Inngest handles Stripe webhook events (payment, cancellation, upgrade, downgrade)
-- Billing dashboard shows current plan, usage metrics, and payment history
-- Free tier limits enforced at API level (not just UI)
-- Upgrade/downgrade flows work correctly
-- No raw payment data stored (Stripe handles PCI compliance)
-- Introductory beta pricing supported via Stripe coupons
+- External salary data integrated (API or dataset)
+- Salary recommendation based on profile + market data
+- Comparison to market percentiles (25th/50th/75th/90th)
+- Negotiation talking points generated by LLM
+- Data refreshed periodically (weekly or monthly)
+- Behind `SALARY_ASSISTANT` feature flag
 
-#### 17-advanced-employer-dashboard
+#### 32-ai-gateway-caching
 
-**PRD Section:** §6.5 Employer Dashboard, §11 Phase 3
+**PRD Section:** §10 Technology Stack (Performance Optimization)
 **Priority:** P2
-**Complexity:** Medium
-**Description:** Enhanced employer experience: pipeline view across all job postings,
-candidate comparison tool for side-by-side evaluation of matched candidates, bulk operations
-(batch accept/reject, export to CSV), advanced sorting and filtering, per-job-posting metrics
-(conversations, in-progress, match rate). Team activity view for admins.
+**Complexity:** Large
+**Impact/Effort:** ★★☆☆☆ — Reduces user LLM costs but requires new infrastructure.
+**Description:** Implement an LLM caching proxy to reduce redundant API calls.
+Cache identical or semantically similar evaluation requests. Options: Helicone
+(managed), LiteLLM (self-hosted), or custom Redis-based cache. Must maintain
+BYOK key isolation — cache keyed by (user_id, prompt_hash), never sharing
+responses across users.
 
 **Acceptance Criteria:**
 
-- Pipeline view shows all active job postings with match counts and status
-- Candidate comparison: side-by-side view of 2–4 candidates with match details
-- Bulk actions: batch status updates, CSV export of matched candidates
-- Job posting metrics displayed (total conversations, in-progress, match %)
-- Filters: by status, experience level, location type, match confidence
-- Admin sees team activity log
+- LLM responses cached for identical prompts (same user)
+- Cache hit rate tracked and displayed to user
+- Target: 30%+ cache hit rate for repeat evaluations
+- BYOK key isolation maintained (no cross-user cache sharing)
+- Cache TTL configurable (default 24 hours)
+- Cache invalidation on profile/posting update
 
-#### 18-compliance-security
+#### 33-skills-assessment
+
+**PRD Section:** §8.1 Job Seeker Flow (Skills Verification)
+**Priority:** P3
+**Complexity:** Large
+**External Dependency:** Code execution sandbox or third-party API (HackerRank, CodeSignal)
+**Impact/Effort:** ★☆☆☆☆ — High effort, requires secure sandboxing.
+**Description:** Optional skills verification for job seekers. Code challenges
+for engineering roles (sandboxed execution), skills quizzes for other roles
+(LLM-generated and auto-graded), certification URL verification. Results
+displayed as badges on seeker profile. Agent considers verified skills in matching.
+
+**Acceptance Criteria:**
+
+- Sandboxed code execution for engineering challenges (or third-party API)
+- LLM-generated skills quizzes with auto-grading
+- Verification badges displayed on profile
+- Agent prompt includes verification status in evaluation
+- Behind `SKILLS_ASSESSMENT` feature flag
+
+#### 34-reference-checking
+
+**PRD Section:** §8.2 Employer Flow (Due Diligence)
+**Priority:** P3
+**Complexity:** Large
+**External Dependency:** Email/SMS outreach service, legal review (FCRA compliance)
+**Impact/Effort:** ★☆☆☆☆ — Legal complexity outweighs technical complexity.
+**Description:** Automated reference request workflow. Seeker provides reference
+contacts, platform sends structured questionnaire via email. Responses aggregated
+and summarized by LLM. Reference summary visible to employer after mutual match.
+Requires explicit consent flow and FCRA compliance review.
+
+**Acceptance Criteria:**
+
+- Reference contacts provided by seeker (name, email, relationship)
+- Structured questionnaire sent via email (Inngest + Resend)
+- Responses collected and stored securely
+- LLM-generated reference summary for employer
+- Explicit consent from seeker AND reference provider
+- Legal review of FCRA compliance before launch
+- Behind `REFERENCE_CHECKING` feature flag
+
+#### 35-video-interview-analysis
+
+**PRD Section:** §7.1 Agent Types (Advanced Analysis)
+**Priority:** P3
+**Complexity:** Extra Large
+**External Dependency:** Video hosting (Mux/S3), transcription (Whisper/Deepgram), LLM analysis
+**Impact/Effort:** ★☆☆☆☆ — Entirely new infrastructure stack.
+**Description:** AI analysis of recorded video interviews. Video upload/recording,
+automatic transcription, LLM analysis of communication skills and technical
+responses. Bias detection in evaluation. Requires video hosting, transcription
+pipeline, and analysis workflow — all new infrastructure.
+
+**Acceptance Criteria:**
+
+- Video upload or browser-based recording
+- Automatic transcription (Whisper or Deepgram)
+- LLM analysis of communication quality and technical depth
+- Bias detection audit on video analysis output
+- Results visible to employer with seeker consent
+- Behind `VIDEO_ANALYSIS` feature flag
+
+#### 36-mobile-apps
+
+**PRD Section:** §10 Technology Stack (Mobile)
+**Priority:** P3
+**Complexity:** Extra Large
+**External Dependency:** App Store / Google Play submissions, push notification infra (APNs/FCM)
+**Impact/Effort:** ★★☆☆☆ — Large reach but parallel maintenance burden.
+**Description:** Native mobile apps for iOS and Android using React Native (or
+Expo). Core screens: dashboard, matches, chat, profile, settings. Push notifications
+for match events. Shares API layer with web app (tRPC or public REST API).
+
+**Acceptance Criteria:**
+
+- iOS and Android apps published to app stores
+- Core screens: dashboard, matches, chat, profile, notifications
+- Push notifications for match created, mutual accept, chat messages
+- Biometric authentication (Face ID / fingerprint)
+- Offline support for viewing cached matches
+- Shares backend with web app
+
+#### 37-soc2-penetration-testing
 
 **PRD Section:** §14 Security, Privacy & Compliance
 **Priority:** P1
-**Complexity:** Large
-**Description:** Regulatory compliance and security hardening: GDPR data export and right-to-
-deletion (including all agent conversation data), CCPA disclosure and deletion rights, full
-audit logging for sensitive operations, two-factor authentication (Clerk MFA), API rate limiting
-and abuse detection, DDoS protection, penetration testing prep. Bias audit framework for
-agent matching (EEOC compliance). SOC 2 preparation documentation.
+**Complexity:** Medium (procurement, not code)
+**External Dependency:** Third-party security firm
+**Impact/Effort:** ★★★☆☆ — Required for enterprise sales. Not code work.
+**Description:** Engage a third-party security firm to perform SOC 2 Type II audit
+and penetration testing. Remediate critical and high findings. Update
+`docs/soc2-control-mapping.md` with audit results. Provides enterprise customers
+with compliance assurance.
 
 **Acceptance Criteria:**
 
-- Users can export all their data (GDPR Article 20) via self-service
-- Users can delete all their data (GDPR Article 17 / CCPA); cascading deletion confirmed
-- Audit log captures all sensitive operations (profile access, key rotation, match decisions)
-- Clerk MFA enabled and encouraged for all users
-- Rate limiting applied to all public-facing API endpoints
-- Bias audit checklist documented and run against agent evaluation logic
-- SOC 2 control mapping documented (readiness for audit)
-- Penetration test performed by third party; critical findings resolved
+- Third-party penetration test completed
+- All critical findings remediated
+- All high findings remediated or documented with timeline
+- SOC 2 Type II audit report obtained
+- `docs/soc2-control-mapping.md` updated with audit results
+- Compliance badge/documentation available for enterprise prospects
 
 ---
 
 ## Dependency Graph
 
 ```
-1-foundation-infrastructure
-  └─ blocks: 2, 3, 4, 5, 6, 7
+Phase 1–3: COMPLETE (features 1–18)
+All Phase 4–5 features depend on Phase 3 completion.
 
-2-authentication-byok
-  └─ blocks: 3, 4, 5
+Phase 4 (sequential chat cluster):
+19-user-chat-basic
+  └─ blocks: 20, 21, 22
+20-agent-tool-calling
+  └─ blocks: 21
+21-advanced-chat-with-tools ──── (requires 19, 20)
+22-streaming-structured-outputs ─ (requires 19)
 
-3-job-seeker-profile ──────────────┐
-4-employer-profile-job-posting ────┤
-  └─ both block: 5                 │
-                                   ▼
-5-basic-ai-matching ──── blocks: 6, 9, 10
-6-match-dashboard ────── blocks: 14, 17
-7-testing-infrastructure ─ (parallel with 3–6, gates all CI)
+Phase 4 (parallel — no internal dependencies):
+23-product-analytics ──────────── (parallel)
+24-bulk-job-upload ────────────── (parallel)
+25-multi-provider-fallback ────── (parallel)
+26-ai-resume-builder ──────────── (parallel)
+27-hiring-metrics ─────────────── (parallel)
+28-public-rest-api ────────────── (parallel)
+29-industry-agent-templates ───── (parallel)
 
-Phase 1 complete → Phase 2:
-8-private-negotiation-parameters ── blocks: 9, 10
-9-agent-to-agent-conversations ──── blocks: 10, 12, 14
-10-two-way-matching ─────────────── blocks: 14
-11-vector-search ────────────────── (parallel with 9–10)
-12-agent-conversation-logs ─────────(parallel with 13)
-13-multi-member-employer-accounts ──(parallel with 9–12)
-
-Phase 2 complete → Phase 3:
-14-aggregate-feedback-insights ─────(requires 9, 10)
-15-custom-agent-prompting ───────────(parallel)
-16-subscription-billing ────────────(parallel, requires 2)
-17-advanced-employer-dashboard ─────(requires 6, 13)
-18-compliance-security ─────────────(parallel, final gate)
+Phase 5 (independent — external dependencies):
+30-interview-scheduling ───────── (parallel, external: Calendar APIs)
+31-salary-negotiation-assistant ── (parallel, external: salary data API)
+32-ai-gateway-caching ─────────── (parallel, new infra)
+33-skills-assessment ──────────── (parallel, external: code sandbox)
+34-reference-checking ─────────── (parallel, external: legal review)
+35-video-interview-analysis ───── (parallel, external: video infra)
+36-mobile-apps ────────────────── (parallel, external: app stores)
+37-soc2-penetration-testing ───── (parallel, external: security firm)
 ```
 
 ---
 
 ## Risk Register
+
+### Phase 1–3 Risks (historical)
 
 | Feature                        | Risk                            | Mitigation                                                      |
 | ------------------------------ | ------------------------------- | --------------------------------------------------------------- |
@@ -497,6 +580,21 @@ Phase 2 complete → Phase 3:
 | 14-aggregate-feedback-insights | Inadvertent disclosure          | Aggregate only; minimum N conversations before insights shown   |
 | 15-custom-agent-prompting      | Adversarial prompt injection    | Sandbox execution; content filtering; injection detection       |
 | 18-compliance-security         | EEOC bias in matching           | Regular bias audits; diverse test cases; third-party assessment |
+
+### Phase 4–5 Risks
+
+| Feature                         | Risk                                  | Mitigation                                                    |
+| ------------------------------- | ------------------------------------- | ------------------------------------------------------------- |
+| 19-user-chat-basic              | Chat used to extract private params   | Agent prompt excludes private data from chat context          |
+| 20-agent-tool-calling           | Tool abuse (excessive API calls)      | Rate limit tool invocations per user session                  |
+| 25-multi-provider-fallback      | Inconsistent results across providers | Normalize output via Zod schema regardless of provider        |
+| 28-public-rest-api              | API key leakage / abuse               | Rate limiting, key rotation, usage monitoring                 |
+| 30-interview-scheduling         | Calendar OAuth token management       | Encrypted token storage, refresh flow, revocation support     |
+| 31-salary-negotiation-assistant | Inaccurate salary data                | Multiple data sources, display confidence ranges, disclaimers |
+| 33-skills-assessment            | Code execution sandbox escape         | Use third-party sandbox service, no self-hosted execution     |
+| 34-reference-checking           | FCRA compliance violations            | Legal review required before launch; consent-first design     |
+| 35-video-interview-analysis     | Bias in video-based evaluation        | Transcript-only analysis option, bias audit framework         |
+| 36-mobile-apps                  | Maintenance burden of 3 clients       | Shared API layer, maximum code reuse via React Native         |
 
 ---
 
@@ -523,6 +621,25 @@ Phase 2 complete → Phase 3:
 - [x] 16-subscription-billing P0
 - [x] 17-advanced-employer-dashboard P2
 - [x] 18-compliance-security P1
+- [x] 19-user-chat-basic P0
+- [ ] 20-agent-tool-calling P0
+- [ ] 21-advanced-chat-with-tools P1
+- [ ] 22-streaming-structured-outputs P2
+- [ ] 23-product-analytics P1
+- [ ] 24-bulk-job-upload P1
+- [ ] 25-multi-provider-fallback P2
+- [ ] 26-ai-resume-builder P1
+- [ ] 27-hiring-metrics P2
+- [ ] 28-public-rest-api P2
+- [ ] 29-industry-agent-templates P2
+- [ ] 30-interview-scheduling P1
+- [ ] 31-salary-negotiation-assistant P2
+- [ ] 32-ai-gateway-caching P2
+- [ ] 33-skills-assessment P3
+- [ ] 34-reference-checking P3
+- [ ] 35-video-interview-analysis P3
+- [ ] 36-mobile-apps P3
+- [ ] 37-soc2-penetration-testing P1
 
 ---
 
@@ -533,32 +650,41 @@ Phase 2 complete → Phase 3:
 - [x] PRD reviewed and approved (v1.1)
 - [x] Constitution ratified (v1.0.0)
 - [x] Tech stack locked (see constitution §Technical Constraints)
-- [x] Features extracted and numbered (18 features)
+- [x] Features extracted and numbered (37 features)
 - [x] Dependencies mapped
-- [ ] First feature spec started (`/speckit-specify 1-foundation-infrastructure`)
 
-### Phase 1 Gate (before Phase 2 begins)
+### Phase 1 Gate ✅ PASSED
 
-- [ ] All 7 MVP features complete and deployed to production
-- [ ] 80%+ test coverage achieved across all MVP code
-- [ ] Zero TypeScript errors in CI
-- [ ] Vercel preview deployments passing for all PRs
-- [ ] Core matching loop demonstrated end-to-end
+- [x] All 7 MVP features complete and deployed
+- [x] 80%+ test coverage achieved
+- [x] Zero TypeScript errors in CI
+- [x] Core matching loop demonstrated end-to-end
 
-### Phase 2 Gate (before Phase 3 begins)
+### Phase 2 Gate ✅ PASSED
 
-- [ ] All 6 Beta features complete
-- [ ] Agent-to-agent conversations stable in production
-- [ ] Two-way matching producing quality results
-- [ ] Beta user feedback incorporated
+- [x] All 6 Beta features complete
+- [x] Agent-to-agent conversations functional
+- [x] Two-way matching operational
 
-### Phase 3 Gate (launch readiness)
+### Phase 3 Gate ✅ PASSED
 
-- [ ] All 5 Full Launch features complete
-- [ ] GDPR/CCPA compliance verified by legal review
-- [ ] Penetration test complete, critical findings resolved
-- [ ] Billing system tested end-to-end with real Stripe keys
-- [ ] SOC 2 readiness documentation complete
+- [x] All 5 Full Launch features complete
+- [x] Billing system integrated with Stripe
+- [x] GDPR/CCPA compliance infrastructure built
+- [x] SOC 2 readiness documentation complete
+
+### Phase 4 Gate (before Phase 5 begins)
+
+- [ ] Chat cluster complete (19, 20, 21)
+- [ ] Product analytics operational (23)
+- [ ] At least 3 additional Phase 4 features complete
+- [ ] User feedback incorporated from chat feature
+
+### Phase 5 Gate (expansion readiness)
+
+- [ ] SOC 2 audit complete (37)
+- [ ] Public API stable (28)
+- [ ] At least 2 Phase 5 features complete
 
 ---
 

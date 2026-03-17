@@ -209,3 +209,21 @@ export function useInsightsGetEmployer() {
     trpc.insights.getEmployerInsights as unknown as AnyQueryHook
   ).useQuery() as TypedQueryResult<RouterOutputs["insights"]["getEmployerInsights"]>
 }
+
+// ---------------------------------------------------------------------------
+// Chat router hooks
+// ---------------------------------------------------------------------------
+
+export function useChatGetHistory(
+  input?: RouterInputs["chat"]["getHistory"],
+  options?: { getNextPageParam?: unknown },
+) {
+  return (trpc.chat.getHistory as unknown as AnyInfiniteQueryHook).useInfiniteQuery(
+    input,
+    options,
+  ) as TypedQueryResult<RouterOutputs["chat"]["getHistory"]> & {
+    hasNextPage: boolean
+    fetchNextPage: () => void
+    isFetchingNextPage: boolean
+  }
+}

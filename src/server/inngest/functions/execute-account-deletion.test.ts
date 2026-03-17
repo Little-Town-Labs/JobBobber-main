@@ -15,6 +15,7 @@ const mockJobPostingUpdateMany = vi.fn()
 const mockJobSeekerDelete = vi.fn()
 const mockEmployerDelete = vi.fn()
 const mockAuditLogCreate = vi.fn()
+const mockChatMessageDeleteMany = vi.fn()
 
 vi.mock("@/lib/db", () => ({
   db: {
@@ -36,6 +37,9 @@ vi.mock("@/lib/db", () => ({
     },
     auditLog: {
       create: (...args: unknown[]) => mockAuditLogCreate(...args),
+    },
+    chatMessage: {
+      deleteMany: (...args: unknown[]) => mockChatMessageDeleteMany(...args),
     },
   },
 }))
@@ -120,6 +124,7 @@ describe("executeAccountDeletionHandler", () => {
   it("sets status to EXECUTING before processing", async () => {
     mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest())
     mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 0 })
     mockConversationUpdateMany.mockResolvedValue({ count: 0 })
     mockJobSeekerDelete.mockResolvedValue({})
     mockClerkDeleteUser.mockResolvedValue({})
@@ -141,6 +146,7 @@ describe("executeAccountDeletionHandler", () => {
   it("terminates active conversations for seeker", async () => {
     mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest())
     mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 0 })
     mockConversationUpdateMany.mockResolvedValue({ count: 2 })
     mockJobSeekerDelete.mockResolvedValue({})
     mockClerkDeleteUser.mockResolvedValue({})
@@ -164,6 +170,7 @@ describe("executeAccountDeletionHandler", () => {
   it("closes active job postings for employer", async () => {
     mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest({ userType: "EMPLOYER" }))
     mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 0 })
     mockConversationUpdateMany.mockResolvedValue({ count: 0 })
     mockJobPostingUpdateMany.mockResolvedValue({ count: 3 })
     mockEmployerDelete.mockResolvedValue({})
@@ -190,6 +197,7 @@ describe("executeAccountDeletionHandler", () => {
   it("deletes JobSeeker record for seeker type", async () => {
     mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest())
     mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 0 })
     mockConversationUpdateMany.mockResolvedValue({ count: 0 })
     mockJobSeekerDelete.mockResolvedValue({})
     mockClerkDeleteUser.mockResolvedValue({})
@@ -210,6 +218,7 @@ describe("executeAccountDeletionHandler", () => {
   it("deletes Employer record for employer type", async () => {
     mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest({ userType: "EMPLOYER" }))
     mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 0 })
     mockConversationUpdateMany.mockResolvedValue({ count: 0 })
     mockJobPostingUpdateMany.mockResolvedValue({ count: 0 })
     mockEmployerDelete.mockResolvedValue({})
@@ -233,6 +242,7 @@ describe("executeAccountDeletionHandler", () => {
   it("deletes Clerk user account", async () => {
     mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest())
     mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 0 })
     mockConversationUpdateMany.mockResolvedValue({ count: 0 })
     mockJobSeekerDelete.mockResolvedValue({})
     mockClerkDeleteUser.mockResolvedValue({})
@@ -248,6 +258,7 @@ describe("executeAccountDeletionHandler", () => {
   it("sets status to COMPLETED on success", async () => {
     mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest())
     mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 0 })
     mockConversationUpdateMany.mockResolvedValue({ count: 0 })
     mockJobSeekerDelete.mockResolvedValue({})
     mockClerkDeleteUser.mockResolvedValue({})
@@ -289,9 +300,55 @@ describe("executeAccountDeletionHandler", () => {
     )
   })
 
+  it("deletes chat messages for the user", async () => {
+    mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest())
+    mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 5 })
+    mockConversationUpdateMany.mockResolvedValue({ count: 0 })
+    mockJobSeekerDelete.mockResolvedValue({})
+    mockClerkDeleteUser.mockResolvedValue({})
+
+    await executeAccountDeletionHandler({
+      deletionRequestId: "del_01",
+      clerkUserId: "user_01",
+    })
+
+    expect(mockChatMessageDeleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { clerkUserId: "user_01" },
+      }),
+    )
+  })
+
+  it("deletes chat messages before deleting user record", async () => {
+    const callOrder: string[] = []
+    mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest())
+    mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockImplementation(() => {
+      callOrder.push("chatMessage.deleteMany")
+      return Promise.resolve({ count: 3 })
+    })
+    mockConversationUpdateMany.mockResolvedValue({ count: 0 })
+    mockJobSeekerDelete.mockImplementation(() => {
+      callOrder.push("jobSeeker.delete")
+      return Promise.resolve({})
+    })
+    mockClerkDeleteUser.mockResolvedValue({})
+
+    await executeAccountDeletionHandler({
+      deletionRequestId: "del_01",
+      clerkUserId: "user_01",
+    })
+
+    expect(callOrder.indexOf("chatMessage.deleteMany")).toBeLessThan(
+      callOrder.indexOf("jobSeeker.delete"),
+    )
+  })
+
   it("logs audit with SYSTEM actor on completion", async () => {
     mockDeletionRequestFindUnique.mockResolvedValue(makeDeletionRequest())
     mockDeletionRequestUpdate.mockResolvedValue({})
+    mockChatMessageDeleteMany.mockResolvedValue({ count: 0 })
     mockConversationUpdateMany.mockResolvedValue({ count: 0 })
     mockJobSeekerDelete.mockResolvedValue({})
     mockClerkDeleteUser.mockResolvedValue({})

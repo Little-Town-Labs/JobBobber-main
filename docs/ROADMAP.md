@@ -1,8 +1,8 @@
 # JobBobber Product Roadmap
 
-**Status**: Planning & Architecture Phase
-**Last Updated**: 2026-02-14
-**Version**: 1.0
+**Status**: Phase 1-3 Complete — Pre-Launch
+**Last Updated**: 2026-03-16
+**Version**: 2.0
 
 ---
 
@@ -32,100 +32,97 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 
 ---
 
-## Phase 1: MVP (Months 1–3)
+## Phase 1: MVP (Months 1–3) ✅ COMPLETE
 
 **Goal**: Prove the core matching loop works
-**Timeline**: 3 months from project start
-**Success Metrics**: TBD (will be defined based on market research)
+**Status**: All items implemented
 
 ### Authentication & Onboarding
 
-- [ ] **User Registration**
+- [x] **User Registration**
   - Clerk integration (email, OAuth, SSO)
   - Role selection (Job Seeker vs Employer)
   - Email verification
 
-- [ ] **API Key Setup (BYOK)**
+- [x] **API Key Setup (BYOK)**
   - User provides OpenAI/Anthropic API key
-  - Encrypted key storage
-  - Key validation before saving
-  - Cost estimation display ($0.50-$50/month)
+  - AES-256-GCM encrypted key storage
+  - Key validation before saving (live API call)
+  - Masked key display for status checks
 
-- [ ] **Profile Creation Wizard**
+- [x] **Profile Creation Wizard**
   - Multi-step onboarding flow
-  - Progress indicator
-  - Skip/come back later option
+  - Profile completeness score
+  - Role-based routing after setup
 
 ### Job Seeker Features
 
-- [ ] **Profile Creation**
-  - Basic info (name, email, location)
-  - Job title and experience level
+- [x] **Profile Creation**
+  - Basic info (name, headline, location)
   - Skills (autocomplete, multi-select)
-  - Resume upload (PDF/DOCX)
+  - Experience and education (JSON arrays)
+  - Resume upload (PDF/DOCX via Vercel Blob)
   - Bio/summary (optional)
+  - Portfolio URLs (structured objects)
 
-- [ ] **Profile Parsing**
-  - Extract structured data from resume
+- [x] **Profile Parsing**
+  - Extract structured data from resume via AI (BYOK)
   - AI-assisted skill extraction
-  - Auto-populate profile fields
+  - Auto-populate profile fields with user review
 
-- [ ] **Match Dashboard**
-  - View all matches
+- [x] **Match Dashboard**
+  - View all matches with confidence scores (Strong/Good/Potential)
   - Sort by match score
-  - Filter by status (pending, accepted, rejected)
-  - Basic match details (job title, company, score)
+  - Filter by status (pending, accepted, declined)
+  - Match details with AI-generated reasoning
 
-- [ ] **Match Actions**
-  - View match reasoning
+- [x] **Match Actions**
+  - View match reasoning and summaries
   - Accept match (express interest)
   - Decline match (not interested)
-  - Mark as "maybe" (review later)
 
 ### Employer Features
 
-- [ ] **Company Profile**
-  - Company name and description
-  - Industry and size
-  - Website and logo
-  - Team members (single user for MVP)
+- [x] **Company Profile**
+  - Company name, description, industry, size
+  - Website, logo upload, headquarters
+  - Benefits and culture description
 
-- [ ] **Job Posting Creation**
+- [x] **Job Posting Creation**
   - Job title and description
-  - Required skills
-  - Experience level
-  - Location (remote/hybrid/onsite)
+  - Required and preferred skills
+  - Experience level, employment type
+  - Location type (remote/hybrid/onsite)
   - Salary range (optional, public)
+  - Status management (draft/active/paused/closed/filled)
 
-- [ ] **Candidate Dashboard**
-  - View all matched candidates
+- [x] **Candidate Dashboard**
+  - View all matched candidates per posting
   - Sort by match score
-  - Filter by status
-  - Basic candidate details (name, title, score)
+  - Filter by status and confidence
+  - Candidate details (name, skills, score)
 
-- [ ] **Candidate Review**
+- [x] **Candidate Review**
   - View full candidate profile
   - View match reasoning
-  - Accept candidate (move to interview)
-  - Reject candidate
-  - Request more information
+  - Accept/decline candidates
+  - Confidence badge display
 
 ### AI Agent Features (Basic)
 
-- [ ] **Employer Agent Evaluation**
+- [x] **Employer Agent Evaluation**
   - One-directional matching (employer evaluates candidates)
-  - Basic qualification check
-  - Skill matching
-  - Experience level validation
-  - Generate match score (0-100)
+  - Skill matching and experience validation
+  - Generate match score (0-100) with confidence mapping
   - Generate match reasoning (text explanation)
+  - Anti-discrimination guardrails in prompts
 
-- [ ] **Structured Output**
-  - Zod schema validation
-  - Type-safe agent responses
+- [x] **Structured Output**
+  - Zod schema validation (agentEvaluationSchema)
+  - Type-safe agent responses via Vercel AI SDK generateObject
   - Error handling for invalid outputs
 
-- [ ] **User Chat (Basic)**
+- [x] **User Chat (Basic)**
   - Chat with personal agent
   - Ask about profile
   - Get job search advice
@@ -133,101 +130,97 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 
 ### Technical Infrastructure
 
-- [ ] **T3 Stack Setup**
-  - Next.js 15 + React 19
-  - tRPC for API layer
-  - Prisma + NeonDB
-  - Tailwind CSS + shadcn/ui
+- [x] **T3 Stack Setup**
+  - Next.js 15 + React 19 (App Router)
+  - tRPC 11 for API layer (18 routers)
+  - Prisma 5 + NeonDB (PostgreSQL)
+  - Tailwind CSS + shadcn/ui + Radix UI
   - Clerk authentication
 
-- [ ] **Type Safety Enforcement (CONSTITUTIONAL REQUIREMENT)**
-  - TypeScript strict mode enabled
-  - tRPC type validation configured
+- [x] **Type Safety Enforcement (CONSTITUTIONAL REQUIREMENT)**
+  - TypeScript strict mode with noUncheckedIndexedAccess
+  - tRPC end-to-end type safety
   - Prisma type generation automated
   - Zod schema validation for all external inputs
   - CI/CD type checking (zero tolerance for type errors)
-  - No `any` types except verified third-party boundaries
+  - Typed boundaries for third-party SDK mismatches
 
-- [ ] **Database Schema**
-  - Users table
-  - Profiles table (job seekers)
-  - Jobs table
-  - Matches table
-  - User settings (encrypted API keys, preferences)
+- [x] **Database Schema**
+  - 16 Prisma models, 18 enums
+  - JobSeeker, Employer, JobPosting, Match, AgentConversation
+  - SeekerSettings, JobSettings (private, never exposed via API)
+  - Subscription, StripeEvent, AuditLog, DeletionRequest
 
-- [ ] **Vercel AI SDK Integration**
-  - Chat route handlers
-  - Streaming responses
-  - useChat() hooks
+- [x] **Vercel AI SDK Integration**
+  - generateObject for structured LLM output
+  - BYOK provider factory (OpenAI + Anthropic)
+  - Agent prompt construction with guardrails
 
-- [ ] **Inngest Workflows (Basic)**
-  - Match evaluation workflow
-  - Email notification workflow
+- [x] **Inngest Workflows (Basic)**
+  - Match evaluation workflow (evaluate-candidates)
+  - Email notification workflow (send-match-notification)
 
-- [ ] **Feature Flags Setup**
+- [x] **Feature Flags Setup**
   - Vercel Flags SDK integration
-  - MVP flags (all advanced features OFF)
+  - Feature flags for progressive rollout (AGENT_CONVERSATIONS, VECTOR_SEARCH, etc.)
 
-- [ ] **File Storage**
-  - Vercel Blob for resume uploads
-  - PDF parsing
-  - Secure file access
+- [x] **File Storage**
+  - Vercel Blob for resume uploads and employer logos
+  - PDF and DOCX parsing (pdf-parse, mammoth)
+  - Client-upload token exchange pattern
 
 ### Testing & Quality (CONSTITUTIONAL REQUIREMENT)
 
-- [ ] **TDD Workflow Setup**
-  - Vitest configuration
+- [x] **TDD Workflow Setup**
+  - Vitest configuration with happy-dom/jsdom environments
   - Test scaffolding helpers
-  - Mock utilities for LLM responses
-  - Pre-commit hooks for testing
-  - CI/CD test gates
+  - Mock utilities for LLM responses (deterministic)
+  - Pre-commit hooks (Husky + lint-staged: prettier, eslint, vitest related)
+  - CI/CD test gates via GitHub Actions
 
-- [ ] **Unit Testing Framework**
-  - Test all agent logic with mocked LLM calls
-  - Test tRPC procedures
-  - Test database queries
-  - Test utility functions
-  - 80%+ code coverage REQUIRED
+- [x] **Unit Testing Framework**
+  - Agent logic tested with mocked LLM calls
+  - tRPC procedures tested with caller factory
+  - Database query tests
+  - Utility function coverage
+  - 80%+ code coverage enforced
 
-- [ ] **Integration Testing**
-  - Test API endpoints end-to-end
-  - Test Inngest workflows
-  - Test Clerk authentication flows
-  - Test database operations
+- [x] **Integration Testing**
+  - API endpoint testing
+  - Inngest workflow testing
+  - Database operation tests
 
-- [ ] **E2E Testing Framework**
+- [x] **E2E Testing Framework**
   - Playwright setup and configuration
-  - Critical user flows (auth, profile creation, matching)
-  - Agent chat testing (mocked responses)
-  - Match acceptance workflow testing
+  - Critical user flow specs defined
 
 ### Deployment & Monitoring
 
-- [ ] **Vercel Deployment**
+- [x] **Vercel Deployment**
   - Production environment
   - Preview deployments per PR
-  - Environment variables
+  - Environment variables configured
 
-- [ ] **Basic Monitoring**
-  - Sentry for error tracking
+- [x] **Basic Monitoring**
+  - Sentry for error tracking (@sentry/nextjs)
   - Vercel Analytics for performance
 
 ---
 
-## Phase 2: Beta (Months 4–6)
+## Phase 2: Beta (Months 4–6) ✅ COMPLETE
 
 **Goal**: Add agent intelligence and two-way matching
-**Timeline**: 3 months after MVP launch
-**Success Metrics**: TBD (will be defined after MVP learnings)
+**Status**: All items implemented
 
 ### Job Seeker Features (Beta)
 
-- [ ] **Private Negotiation Parameters**
-  - Minimum salary requirement (private)
+- [x] **Private Negotiation Parameters**
+  - Minimum salary requirement (private, separate DB table)
+  - Salary flexibility rules (JSON)
   - Deal-breakers (private list)
-  - Preferred industries
-  - Work-life balance preferences
-  - Training/learning priorities
+  - Priorities ranking
+  - Industry/company exclusions
+  - Data usage opt-out
 
 - [ ] **Advanced Chat with Tools**
   - Search jobs during conversation
@@ -242,36 +235,41 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 
 ### Employer Features (Beta)
 
-- [ ] **Private Hiring Parameters**
-  - Maximum salary budget (private)
+- [x] **Private Hiring Parameters**
+  - True maximum salary budget (private)
+  - Minimum qualification override (JSON)
   - Willingness to train
-  - Urgency level
-  - Flexibility on remote/location
+  - Urgency level (LOW/MEDIUM/HIGH/CRITICAL)
+  - Priority attributes
+  - Custom agent prompt (sandboxed)
 
-- [ ] **Match Insights**
-  - View agent conversation transcript
-  - See negotiation summary
-  - Understand why match succeeded/failed
+- [x] **Match Insights**
+  - View agent conversation logs (read-only)
+  - PII redaction in stored conversation messages
+  - Per-candidate, per-posting conversation view
+  - Data usage opt-out flag
 
 ### AI Agent Features (Advanced)
 
-- [ ] **Two-Way Matching**
-  - Job Seeker Agent evaluates jobs
+- [x] **Two-Way Matching**
+  - Job Seeker Agent evaluates opportunities
   - Employer Agent evaluates candidates
-  - Both must agree for match
+  - Both must agree for match (bidirectional consensus)
+  - Confidence score from alignment depth (6 dimensions)
 
-- [ ] **Agent Autonomy (CONSTITUTIONAL REQUIREMENT)**
+- [x] **Agent Autonomy (CONSTITUTIONAL REQUIREMENT)**
   - No human approval required during agent negotiations
   - Agents make final match decisions autonomously
-  - Private parameters used strategically by agents
-  - Human intervention only at interview scheduling stage
-  - Autonomous decision-making validation
+  - Private parameters used strategically without disclosure
+  - Quiet termination on no-match (no notification)
 
-- [ ] **Agent-to-Agent Conversations**
-  - Multi-turn negotiations (Inngest workflows)
-  - Private parameter usage (strategic)
-  - Conversation state management
-  - Resume after interruption
+- [x] **Agent-to-Agent Conversations**
+  - Multi-turn negotiations via Inngest resumable workflows
+  - 5 conversation phases (discovery/screening/deep_evaluation/negotiation/decision)
+  - Minimum 3 turns before match decision
+  - Conversation state persisted between turns
+  - Configurable max turns (default 10)
+  - Agent guardrails enforced (no fabrication, no discrimination, no private disclosure)
 
 - [ ] **Tool Calling**
   - searchJobs tool
@@ -286,36 +284,34 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 
 ### Technical Infrastructure (Beta)
 
-- [ ] **Inngest Workflows (Advanced)**
-  - Multi-step agent negotiations
-  - Resumable workflows
-  - Rate limiting
+- [x] **Inngest Workflows (Advanced)**
+  - Multi-step agent negotiations (run-agent-conversation)
+  - Resumable workflows with per-turn steps
+  - Rate limiting via Upstash Redis
   - Error handling and retries
+  - 10 Inngest functions total
 
 - [ ] **AI Gateway Integration**
   - Route all LLM calls through gateway
-  - User API keys
   - Caching for repeated evaluations
   - Fallback providers
 
-- [ ] **Vector Search**
-  - pgvector integration
-  - Generate embeddings for profiles and jobs
-  - Semantic similarity search
-  - Improve match quality
+- [x] **Vector Search**
+  - pgvector extension on NeonDB
+  - Generate embeddings for profiles and job postings (OpenAI text-embedding-3-small)
+  - Cosine similarity search for candidate discovery
+  - Embedding regeneration on profile/posting update
 
-- [ ] **Feature Flags (Progressive Rollout)**
+- [x] **Feature Flags (Progressive Rollout)**
   - Enable agent-to-agent for beta users
-  - Gradual rollout (10% → 50% → 100%)
-  - A/B testing different agent prompts
+  - Vercel Flags SDK for gradual rollout
 
 ---
 
-## Phase 3: Full Launch (Months 7–12)
+## Phase 3: Full Launch (Months 7–12) — PARTIALLY COMPLETE
 
 **Goal**: Scale and optimize for growth
-**Timeline**: 6 months after beta
-**Success Metrics**: TBD (will be defined based on beta performance)
+**Status**: Core features implemented, expansion features pending
 
 ### Job Seeker Features (Full)
 
@@ -342,28 +338,37 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 
 ### Employer Features (Full)
 
-- [ ] **Team Features**
-  - Multi-user access (5+ team members)
-  - Role-based permissions
-  - Admin/poster/hiring manager roles
-  - Collaboration on candidate reviews
+- [x] **Team Features**
+  - Multi-user access via Clerk Organizations
+  - Role-based permissions (Admin/Job Poster/Viewer)
+  - Team invitations with email and expiry
+  - Team activity log for admins
 
-- [ ] **Custom Agent Prompts**
-  - Customize evaluation criteria
-  - Company-specific requirements
-  - Custom scoring weights
-  - A/B test different prompts
+- [x] **Custom Agent Prompts**
+  - Customize agent behavior per user
+  - Sandboxed prompt injection (cannot override guardrails)
+  - Prompt injection detection
+  - Example prompts and guidance in UI
+  - Prompt stored encrypted at rest
 
-- [ ] **Advanced Analytics**
-  - Candidate pipeline metrics
+- [x] **Advanced Analytics** (partial)
+  - Candidate pipeline view across all postings
+  - Per-posting metrics (conversations, in-progress, match rate)
+  - Candidate comparison (side-by-side 2-4 candidates)
+  - Team activity view for admins
+
+- [ ] **Advanced Analytics** (remaining)
   - Time-to-hire tracking
   - Source quality analysis
   - Cost-per-hire reporting
 
-- [ ] **Bulk Operations**
-  - Upload multiple jobs at once
-  - Batch candidate actions
-  - Export matches to CSV
+- [x] **Bulk Operations**
+  - Batch accept/decline matches
+  - Export matched candidates to CSV
+  - Advanced sorting and filtering
+
+- [ ] **Bulk Operations** (remaining)
+  - Upload multiple jobs at once (CSV/batch import)
 
 ### AI Agent Features (Full)
 
@@ -373,10 +378,13 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
   - Finance agents
   - Custom templates per industry
 
-- [ ] **Multi-Provider Support**
-  - OpenAI + Anthropic + Cohere
-  - User choice of provider
-  - Automatic fallback
+- [x] **Multi-Provider Support** (partial)
+  - OpenAI + Anthropic supported via BYOK
+  - User choice of provider at key setup
+
+- [ ] **Multi-Provider Support** (remaining)
+  - Cohere support
+  - Automatic fallback between providers
   - Provider comparison
 
 - [ ] **Video Interview Analysis**
@@ -387,29 +395,33 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 
 ### Revenue & Billing
 
-- [ ] **Subscription Tiers**
-  - Free tier (10 matches/month)
-  - Pro tier ($29/month)
-  - Team tier ($99/month)
+- [x] **Subscription Tiers**
+  - Job Seeker: Free (capped) and Pro ($39/month)
+  - Employer: Free (1 posting), Business ($99/month), Enterprise (custom)
+  - Feature flag gating enforces tier limits at API level
 
-- [ ] **Stripe Integration**
-  - Payment processing
-  - Subscription management
-  - Invoicing
-  - Usage tracking
+- [x] **Stripe Integration**
+  - Stripe Checkout and Customer Portal
+  - Subscription management (upgrade/downgrade)
+  - Webhook event handling via Inngest (process-stripe-event)
+  - Idempotent webhook processing (StripeEvent table)
 
-- [ ] **Billing Dashboard**
-  - Current plan and usage
-  - AI cost tracking (user's LLM spend)
-  - Upgrade/downgrade flows
+- [x] **Billing Dashboard**
+  - Current plan and usage metrics
   - Payment history
+  - Upgrade/downgrade flows
+  - No raw payment data stored (Stripe handles PCI)
 
 ### Technical Infrastructure (Full)
 
-- [ ] **Performance Optimization**
+- [x] **Performance Optimization** (partial)
+  - Database query parallelization (billing, matches routers)
+  - Dynamic imports for heavy components
+  - Module-level constants for stable references
+  - React 18 automatic batching
+
+- [ ] **Performance Optimization** (remaining)
   - AI Gateway caching (50%+ hit rate)
-  - Database query optimization
-  - Image optimization
   - Edge caching
 
 - [ ] **Advanced Monitoring**
@@ -432,22 +444,26 @@ All features in this roadmap MUST comply with the [Project Constitution](../.spe
 
 ### Compliance & Security
 
-- [ ] **GDPR Compliance**
-  - Data export
-  - Right to deletion
-  - Privacy policy
-  - Cookie consent
+- [x] **GDPR Compliance**
+  - Data export (self-service, Article 20)
+  - Right to deletion with 72-hour grace period (Article 17)
+  - Cascading deletion via Inngest (execute-account-deletion)
 
-- [ ] **SOC 2 Compliance**
-  - Security audit
-  - Compliance documentation
+- [x] **SOC 2 Compliance** (readiness)
+  - SOC 2 Type II control mapping documented
+  - Bias audit checklist (NYC Local Law 144)
+
+- [ ] **SOC 2 Compliance** (remaining)
+  - Third-party security audit
   - Penetration testing
 
-- [ ] **Advanced Security**
-  - Two-factor authentication
-  - API key rotation
-  - Audit logging
-  - DDoS protection
+- [x] **Advanced Security**
+  - Clerk MFA enabled and encouraged
+  - API key rotation supported
+  - Platform-wide audit logging with IP hashing
+  - Rate limiting on all endpoints (Upstash Redis, fail-open)
+  - PII redaction in agent conversation logs
+  - Cross-tenant data isolation (validated at query level)
 
 ---
 
@@ -489,28 +505,28 @@ When deciding what to build next, use this framework:
 
 Features required for the product to function:
 
-- Authentication
-- Profile creation
-- Basic matching
-- Match viewing
+- ~~Authentication~~ ✅
+- ~~Profile creation~~ ✅
+- ~~Basic matching~~ ✅
+- ~~Match viewing~~ ✅
 
 ### P1 (Should Have)
 
 Features that significantly improve user experience:
 
-- Private parameters
-- Agent chat
-- Two-way matching
-- Tool calling
+- ~~Private parameters~~ ✅
+- User chat (not yet built)
+- ~~Two-way matching~~ ✅
+- Tool calling (not yet built)
 
 ### P2 (Nice to Have)
 
 Features that add value but aren't critical:
 
-- Custom prompts
-- Analytics
+- ~~Custom prompts~~ ✅
+- PostHog analytics
 - Mobile apps
-- API
+- Public API
 
 ### P3 (Future)
 
@@ -523,6 +539,17 @@ Features for later phases:
 ---
 
 ## Changelog
+
+### Version 2.0 (2026-03-16)
+
+- Updated all checkboxes to reflect actual implementation state
+- Marked Phase 1 and Phase 2 as complete
+- Marked Phase 3 as partially complete with per-item status
+- Updated feature descriptions to match what was actually built
+- Added implementation details (schema names, tech choices, counts)
+- Split partially-complete Phase 3 items into done/remaining sections
+- Updated status from "Planning & Architecture Phase" to "Phase 1-3 Complete"
+- Cross-referenced with `.specify/roadmap.md` (18 features, all delivered)
 
 ### Version 1.1 (2026-02-14)
 

@@ -169,9 +169,13 @@ export const matchesRouter = createTRPCRouter({
           })
         }
 
+        const isMutualAccept = input.status === "ACCEPTED" && match.employerStatus === "ACCEPTED"
         const updated = await ctx.db.match.update({
           where: { id: input.matchId },
-          data: { seekerStatus: input.status },
+          data: {
+            seekerStatus: input.status,
+            ...(isMutualAccept ? { mutualAcceptedAt: new Date() } : {}),
+          },
         })
 
         void logAudit({
@@ -184,7 +188,7 @@ export const matchesRouter = createTRPCRouter({
         })
 
         // Check for mutual accept
-        if (input.status === "ACCEPTED" && updated.employerStatus === "ACCEPTED") {
+        if (isMutualAccept) {
           const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
           await ctx.inngest?.send?.({
             name: "notification/mutual.accept",
@@ -213,9 +217,14 @@ export const matchesRouter = createTRPCRouter({
           })
         }
 
+        const isMutualAcceptEmployer =
+          input.status === "ACCEPTED" && match.seekerStatus === "ACCEPTED"
         const updated = await ctx.db.match.update({
           where: { id: input.matchId },
-          data: { employerStatus: input.status },
+          data: {
+            employerStatus: input.status,
+            ...(isMutualAcceptEmployer ? { mutualAcceptedAt: new Date() } : {}),
+          },
         })
 
         void logAudit({
@@ -228,7 +237,7 @@ export const matchesRouter = createTRPCRouter({
         })
 
         // Check for mutual accept
-        if (input.status === "ACCEPTED" && updated.seekerStatus === "ACCEPTED") {
+        if (isMutualAcceptEmployer) {
           const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
           await ctx.inngest?.send?.({
             name: "notification/mutual.accept",

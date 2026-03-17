@@ -211,6 +211,31 @@ export function useInsightsGetEmployer() {
 }
 
 // ---------------------------------------------------------------------------
+// Hiring Metrics router hooks
+// ---------------------------------------------------------------------------
+
+export function useHiringMetricsGet(input: RouterInputs["hiringMetrics"]["getHiringMetrics"]) {
+  return (trpc.hiringMetrics.getHiringMetrics as unknown as AnyQueryHook).useQuery(
+    input,
+  ) as TypedQueryResult<RouterOutputs["hiringMetrics"]["getHiringMetrics"]>
+}
+
+export function useHiringMetricsExportCsv(options?: { onSuccess?: () => void }) {
+  return (trpc.hiringMetrics.exportCsv as unknown as AnyMutationHook).useMutation(
+    options,
+  ) as TypedMutationResult<
+    RouterInputs["hiringMetrics"]["exportCsv"],
+    RouterOutputs["hiringMetrics"]["exportCsv"]
+  >
+}
+
+export function useHiringMetricsIsEnabled() {
+  return (trpc.hiringMetrics.isEnabled as unknown as AnyQueryHook).useQuery() as TypedQueryResult<
+    RouterOutputs["hiringMetrics"]["isEnabled"]
+  >
+}
+
+// ---------------------------------------------------------------------------
 // Chat router hooks
 // ---------------------------------------------------------------------------
 

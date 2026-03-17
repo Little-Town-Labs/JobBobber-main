@@ -409,6 +409,7 @@ model Match {
   employerSummary    String?
   seekerSummary      String?
   evaluationData     Json?
+  mutualAcceptedAt   DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 

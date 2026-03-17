@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { trpc } from "@/lib/trpc/client"
+import { useHiringMetricsIsEnabled } from "@/lib/trpc/hooks"
 import { CompanyProfileCard } from "@/components/employer/company-profile-card"
 import { JobPostingList } from "@/components/employer/job-posting-list"
 import { InsightsPanel } from "@/components/insights/insights-panel"
@@ -10,6 +11,7 @@ import { PipelineView } from "@/components/dashboard/pipeline-view"
 export default function EmployerDashboardPage() {
   const { data: employer, isLoading: loadingEmployer } = trpc.employers.getMe.useQuery()
   const { data: postingsData, isLoading: loadingPostings } = trpc.jobPostings.listMine.useQuery()
+  const { data: metricsEnabled } = useHiringMetricsIsEnabled()
 
   if (loadingEmployer || loadingPostings) {
     return (
@@ -34,6 +36,11 @@ export default function EmployerDashboardPage() {
           <Link href="/dashboard/team" className="text-blue-600 hover:underline">
             Team
           </Link>
+          {metricsEnabled && (
+            <Link href="/dashboard/metrics" className="text-blue-600 hover:underline">
+              Metrics
+            </Link>
+          )}
         </nav>
       </div>
       <CompanyProfileCard employer={employer} />

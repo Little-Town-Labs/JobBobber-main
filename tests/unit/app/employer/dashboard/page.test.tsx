@@ -30,6 +30,11 @@ vi.mock("@/lib/trpc/client", () => ({
   },
 }))
 
+vi.mock("@/lib/trpc/hooks", () => ({
+  useHiringMetricsIsEnabled: () => ({ data: false, isLoading: false }),
+  useDashboardGetPipelineSummary: () => ({ data: undefined, isLoading: false }),
+}))
+
 vi.mock("@/components/employer/company-profile-card", () => ({
   CompanyProfileCard: ({ employer }: { employer: { name: string } }) => (
     <div data-testid="company-profile-card" data-name={employer.name} />

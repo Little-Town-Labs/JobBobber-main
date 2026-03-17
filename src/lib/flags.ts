@@ -119,6 +119,13 @@ export const AGENT_TOOL_CALLING = flag<boolean>({
   decide: () => false,
 })
 
+export const HIRING_METRICS = flag<boolean>({
+  key: "hiring-metrics",
+  defaultValue: false,
+  description: "Enable hiring metrics dashboard with per-posting analytics (Feature 27)",
+  decide: () => false,
+})
+
 export const ADVANCED_EMPLOYER_DASHBOARD = flag<boolean>({
   key: "advanced-employer-dashboard",
   defaultValue: false,

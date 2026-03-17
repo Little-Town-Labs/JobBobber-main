@@ -47,9 +47,19 @@ vi.mock("@/lib/db", () => ({
   },
 }))
 
+const { mockToolCallingFlag } = vi.hoisted(() => ({
+  mockToolCallingFlag: vi.fn(() => false),
+}))
+
 vi.mock("@/lib/flags", () => ({
   USER_CHAT: vi.fn(() => true),
+  AGENT_TOOL_CALLING: mockToolCallingFlag,
   assertFlagEnabled: vi.fn(),
+}))
+
+vi.mock("@/server/agents/chat-tools", () => ({
+  buildSeekerTools: vi.fn(() => ({ searchJobs: {}, getMyMatches: {} })),
+  buildEmployerTools: vi.fn(() => ({ getCandidates: {}, getMyPostings: {} })),
 }))
 
 import { POST } from "./route"
@@ -221,5 +231,27 @@ describe("POST /api/chat", () => {
     const response = await POST(makeRequest([{ role: "user", content: longMessage }]))
 
     expect(response.status).toBe(400)
+  })
+
+  it("includes tools in streamText when AGENT_TOOL_CALLING flag is enabled", async () => {
+    setupAuthenticatedSeeker()
+    mockToolCallingFlag.mockReturnValue(true)
+
+    await POST(makeRequest(VALID_MESSAGES))
+
+    const streamCall = mockStreamText.mock.calls[0]?.[0]
+    expect(streamCall).toHaveProperty("tools")
+    expect(streamCall).toHaveProperty("maxSteps", 3)
+  })
+
+  it("does NOT include tools when AGENT_TOOL_CALLING flag is disabled", async () => {
+    setupAuthenticatedSeeker()
+    mockToolCallingFlag.mockReturnValue(false)
+
+    await POST(makeRequest(VALID_MESSAGES))
+
+    const streamCall = mockStreamText.mock.calls[0]?.[0]
+    expect(streamCall.tools).toBeUndefined()
+    expect(streamCall.maxSteps).toBeUndefined()
   })
 })

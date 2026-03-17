@@ -15,6 +15,8 @@ import { decrypt } from "@/lib/encryption"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { createProvider } from "@/server/agents/employer-agent"
 import { assembleChatContext, buildChatSystemPrompt } from "@/server/agents/chat-agent"
+import { buildSeekerTools, buildEmployerTools } from "@/server/agents/chat-tools"
+import { AGENT_TOOL_CALLING } from "@/lib/flags"
 
 const MAX_MESSAGE_LENGTH = 5000
 
@@ -115,12 +117,21 @@ export async function POST(request: Request): Promise<Response> {
     })
   }
 
-  // 8. Stream LLM response
+  // 8. Build role-scoped tools (if enabled)
+  const toolCallingEnabled = await AGENT_TOOL_CALLING()
+  const tools = toolCallingEnabled
+    ? userRole === "EMPLOYER"
+      ? buildEmployerTools(db, scopeId)
+      : buildSeekerTools(db, scopeId)
+    : undefined
+
+  // 9. Stream LLM response
   const model = createProvider(provider, apiKey)
   const result = streamText({
     model: model(getChatModel(provider)),
     system: systemPrompt,
     messages,
+    ...(tools ? { tools, maxSteps: 3 } : {}),
     onFinish: async ({ text }) => {
       // 9. Persist assistant message after streaming completes
       if (text) {

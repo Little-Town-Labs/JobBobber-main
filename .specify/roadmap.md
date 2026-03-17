@@ -92,9 +92,9 @@ platform value with minimal new infrastructure.
 ### Features
 
 - [x] 19-user-chat-basic
-- [ ] 20-agent-tool-calling
-- [ ] 21-advanced-chat-with-tools
-- [ ] 22-streaming-structured-outputs
+- [x] 20-agent-tool-calling
+- [x] 21-advanced-chat-with-tools
+- [x] 22-streaming-structured-outputs
 - [ ] 23-product-analytics
 - [ ] 24-bulk-job-upload
 - [ ] 25-multi-provider-fallback
@@ -622,9 +622,9 @@ Phase 5 (independent — external dependencies):
 - [x] 17-advanced-employer-dashboard P2
 - [x] 18-compliance-security P1
 - [x] 19-user-chat-basic P0
-- [ ] 20-agent-tool-calling P0
-- [ ] 21-advanced-chat-with-tools P1
-- [ ] 22-streaming-structured-outputs P2
+- [x] 20-agent-tool-calling P0
+- [x] 21-advanced-chat-with-tools P1
+- [x] 22-streaming-structured-outputs P2
 - [ ] 23-product-analytics P1
 - [ ] 24-bulk-job-upload P1
 - [ ] 25-multi-provider-fallback P2

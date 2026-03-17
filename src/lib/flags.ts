@@ -112,6 +112,13 @@ export const USER_CHAT = flag<boolean>({
   decide: () => false,
 })
 
+export const AGENT_TOOL_CALLING = flag<boolean>({
+  key: "agent-tool-calling",
+  defaultValue: false,
+  description: "Enable tool calling in user chat agent (Feature 20)",
+  decide: () => false,
+})
+
 export const ADVANCED_EMPLOYER_DASHBOARD = flag<boolean>({
   key: "advanced-employer-dashboard",
   defaultValue: false,

@@ -50,9 +50,10 @@ const TREND_TOLERANCE = 0.05 // 5% stable zone
 // ---------------------------------------------------------------------------
 
 function computePostingMetrics(posting: PostingWithMatches): PostingMetric {
-  const { matches } = posting
-  const firstMatch = matches.length > 0 ? matches[0]! : null
-  const firstAccept = matches.find((m) => m.mutualAcceptedAt !== null) ?? null
+  // Defensive sort — callers should pre-sort, but guard against unsorted input
+  const sorted = [...posting.matches].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+  const firstMatch = sorted.length > 0 ? sorted[0]! : null
+  const firstAccept = sorted.find((m) => m.mutualAcceptedAt !== null) ?? null
 
   return {
     id: posting.id,
@@ -62,13 +63,13 @@ function computePostingMetrics(posting: PostingWithMatches): PostingMetric {
     firstMatchAt: firstMatch?.createdAt ?? null,
     firstMutualAcceptAt: firstAccept?.mutualAcceptedAt ?? null,
     timeToFirstMatchMs: firstMatch
-      ? firstMatch.createdAt.getTime() - posting.createdAt.getTime()
+      ? Math.max(0, firstMatch.createdAt.getTime() - posting.createdAt.getTime())
       : null,
     timeToMutualAcceptMs: firstAccept?.mutualAcceptedAt
-      ? firstAccept.mutualAcceptedAt.getTime() - posting.createdAt.getTime()
+      ? Math.max(0, firstAccept.mutualAcceptedAt.getTime() - posting.createdAt.getTime())
       : null,
-    totalMatches: matches.length,
-    totalAccepts: matches.filter(
+    totalMatches: sorted.length,
+    totalAccepts: sorted.filter(
       (m) => m.seekerStatus === "ACCEPTED" && m.employerStatus === "ACCEPTED",
     ).length,
   }

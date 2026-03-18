@@ -422,6 +422,20 @@ export const matchesRouter = createTRPCRouter({
         data: { employerStatus: input.status },
       })
 
+      // Set mutualAcceptedAt on matches where both sides are now ACCEPTED
+      if (input.status === "ACCEPTED") {
+        await ctx.db.match.updateMany({
+          where: {
+            id: { in: input.matchIds },
+            jobPostingId: input.jobPostingId,
+            employerStatus: "ACCEPTED",
+            seekerStatus: "ACCEPTED",
+            mutualAcceptedAt: null,
+          },
+          data: { mutualAcceptedAt: new Date() },
+        })
+      }
+
       const updated = result.count
       const skipped = total - updated
 

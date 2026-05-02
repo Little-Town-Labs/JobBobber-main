@@ -118,7 +118,7 @@ describe("deliverWebhook", () => {
     await deliverWebhook(webhook, eventType, payload)
 
     expect(mockFetch).toHaveBeenCalledOnce()
-     
+
     const [url, init] = mockFetch.mock.calls[0]! as [string, RequestInit]
     expect(url).toBe(webhook.url)
     expect(init.method).toBe("POST")
@@ -130,7 +130,6 @@ describe("deliverWebhook", () => {
 
     await deliverWebhook(webhook, eventType, payload)
 
-     
     const [, init] = mockFetch.mock.calls[0]! as [string, RequestInit]
     const headers = init.headers as Record<string, string>
     expect(headers["X-JobBobber-Signature"]).toMatch(/^sha256=[0-9a-f]{64}$/)
@@ -141,7 +140,6 @@ describe("deliverWebhook", () => {
 
     await deliverWebhook(webhook, eventType, payload)
 
-     
     const [, init] = mockFetch.mock.calls[0]! as [string, RequestInit]
     const headers = init.headers as Record<string, string>
     expect(headers["X-JobBobber-Event"]).toBe(eventType)
@@ -155,7 +153,7 @@ describe("deliverWebhook", () => {
     await deliverWebhook(webhook, eventType, payload)
 
     expect(mockDeliveryCreate).toHaveBeenCalledOnce()
-     
+
     const { data } = mockDeliveryCreate.mock.calls[0]![0] as { data: Record<string, unknown> }
     expect(data.webhookId).toBe(webhook.id)
     expect(data.eventType).toBe(eventType)
@@ -173,7 +171,7 @@ describe("deliverWebhook", () => {
     await deliverWebhook(webhook, eventType, payload)
 
     expect(mockDeliveryCreate).toHaveBeenCalledOnce()
-     
+
     const { data } = mockDeliveryCreate.mock.calls[0]![0] as { data: Record<string, unknown> }
     expect(data.success).toBe(false)
     expect(data.statusCode).toBe(500)
@@ -188,7 +186,7 @@ describe("deliverWebhook", () => {
     await deliverWebhook(webhook, eventType, payload)
 
     expect(mockDeliveryCreate).toHaveBeenCalledOnce()
-     
+
     const { data } = mockDeliveryCreate.mock.calls[0]![0] as { data: Record<string, unknown> }
     expect(data.success).toBe(false)
     expect(data.statusCode).toBeNull()
@@ -229,7 +227,7 @@ describe("deliverWebhook", () => {
     await deliverWebhook(webhook, eventType, payload)
 
     expect(mockWebhookUpdate).toHaveBeenCalledOnce()
-     
+
     const { data } = mockWebhookUpdate.mock.calls[0]![0] as { data: Record<string, unknown> }
     expect(data.lastFiredAt).toBeInstanceOf(Date)
   })
@@ -240,7 +238,7 @@ describe("deliverWebhook", () => {
     await deliverWebhook(webhook, eventType, payload)
 
     expect(mockWebhookUpdate).toHaveBeenCalledOnce()
-     
+
     const { data } = mockWebhookUpdate.mock.calls[0]![0] as { data: Record<string, unknown> }
     expect(data.failCount).toEqual({ increment: 1 })
   })
@@ -251,7 +249,7 @@ describe("deliverWebhook", () => {
     await deliverWebhook(webhook, eventType, payload)
 
     expect(mockWebhookUpdate).toHaveBeenCalledOnce()
-     
+
     const { data } = mockWebhookUpdate.mock.calls[0]![0] as { data: Record<string, unknown> }
     expect(data.failCount).toBe(0)
   })
@@ -261,7 +259,6 @@ describe("deliverWebhook", () => {
 
     await deliverWebhook(webhook, eventType, payload)
 
-     
     const [, init] = mockFetch.mock.calls[0]! as [string, RequestInit]
     const headers = init.headers as Record<string, string>
     const body = init.body as string

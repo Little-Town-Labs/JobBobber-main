@@ -321,9 +321,11 @@ describe("conversations.getById", () => {
 
     expect(result.id).toBe("conv_01")
     expect(result.messages).toHaveLength(2)
+    // messages is typed as `unknown` at the router boundary; cast for assertions
+    const firstMessage = result.messages[0] as { content: string }
     // Verify redaction: dollar amounts stripped
-    expect(result.messages[0]!.content).not.toContain("$100,000")
-    expect(result.messages[0]!.content).toContain("[REDACTED]")
+    expect(firstMessage.content).not.toContain("$100,000")
+    expect(firstMessage.content).toContain("[REDACTED]")
     // Verify evaluation stripped
     expect(result.messages[0]).not.toHaveProperty("evaluation")
     expect(result.messages[0]).not.toHaveProperty("decision")

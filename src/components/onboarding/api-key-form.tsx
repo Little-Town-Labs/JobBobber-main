@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { trpc } from "@/lib/trpc/client"
 
 type StoreKeyResult = {
   success: true
@@ -16,9 +15,9 @@ interface ByokSetupFormProps {
 /**
  * ByokSetupForm — lets the user add or replace their BYOK API key.
  *
- * Validates locally (empty key) then delegates to trpc.byok.storeKey
- * which validates format, verifies against the provider, and stores
- * the encrypted key.
+ * Validates locally (empty key) then calls the tRPC HTTP endpoint for
+ * byok.storeKey which validates format, verifies against the provider,
+ * and stores the encrypted key.
  *
  * @see src/server/api/routers/byok.ts — storeKey mutation
  */
@@ -27,8 +26,7 @@ export function ByokSetupForm({ onSuccess }: ByokSetupFormProps) {
   const [apiKey, setApiKey] = useState("")
   const [validationError, setValidationError] = useState<string | null>(null)
   const [mutationError, setMutationError] = useState<string | null>(null)
-
-  const storeKeyMutation = trpc.byok.storeKey.useMutation()
+  const [isPending, setIsPending] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -40,12 +38,32 @@ export function ByokSetupForm({ onSuccess }: ByokSetupFormProps) {
       return
     }
 
+    setIsPending(true)
     try {
-      const result = await storeKeyMutation.mutateAsync({ provider, apiKey: apiKey.trim() })
+      const res = await fetch("/api/trpc/byok.storeKey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ json: { provider, apiKey: apiKey.trim() } }),
+      })
+      const json = (await res.json()) as {
+        result?: { data?: { json?: StoreKeyResult } }
+        error?: unknown
+      }
+      if (!res.ok || json.error) {
+        setMutationError("Failed to save API key. Please check the key and try again.")
+        return
+      }
+      const result = json.result?.data?.json
+      if (!result) {
+        setMutationError("Unexpected response from server.")
+        return
+      }
       setApiKey("") // Clear plaintext key from state immediately after submission
       onSuccess(result)
     } catch {
       setMutationError("Failed to save API key. Please check the key and try again.")
+    } finally {
+      setIsPending(false)
     }
   }
 
@@ -79,7 +97,7 @@ export function ByokSetupForm({ onSuccess }: ByokSetupFormProps) {
 
       {mutationError && <p role="alert">{mutationError}</p>}
 
-      <button type="submit" disabled={storeKeyMutation.isPending}>
+      <button type="submit" disabled={isPending}>
         Save API Key
       </button>
     </form>

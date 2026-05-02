@@ -1,3 +1,6 @@
+import "server-only"
+import { env } from "@/lib/env"
+
 /**
  * Subscription plan definitions for JobBobber.
  *
@@ -52,7 +55,7 @@ const PLANS: readonly BillingPlan[] = [
       maxConversationsPerMonth: null,
       maxActivePostings: null,
     },
-    stripePriceId: process.env["STRIPE_PRICE_SEEKER_PRO"] ?? "",
+    stripePriceId: env.STRIPE_PRICE_SEEKER_PRO ?? null,
     isEnterprise: false,
   },
   {
@@ -88,7 +91,7 @@ const PLANS: readonly BillingPlan[] = [
       maxConversationsPerMonth: null,
       maxActivePostings: null,
     },
-    stripePriceId: process.env["STRIPE_PRICE_EMPLOYER_BUSINESS"] ?? "",
+    stripePriceId: env.STRIPE_PRICE_EMPLOYER_BUSINESS ?? null,
     isEnterprise: false,
   },
   {

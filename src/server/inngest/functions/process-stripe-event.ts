@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest"
 import { db } from "@/lib/db"
+import { deliverWebhook } from "@/lib/webhooks"
 import type { PrismaClient } from "@prisma/client"
 
 /**
@@ -127,6 +128,16 @@ async function handleSubscriptionEvent(
       cancelAtPeriodEnd: data.cancelAtPeriodEnd,
     },
   })
+
+  if (data.userId) {
+    const webhooks = await db.webhook.findMany({
+      where: { ownerId: data.userId, active: true, events: { has: "SUBSCRIPTION_CHANGED" } },
+    })
+    if (webhooks.length > 0) {
+      const payload = { userId: data.userId, planId: data.planId, status: data.status }
+      await Promise.all(webhooks.map((wh) => deliverWebhook(wh, "SUBSCRIPTION_CHANGED", payload)))
+    }
+  }
 }
 
 /**

@@ -8,14 +8,16 @@
  */
 import { inngest } from "@/lib/inngest"
 import { db } from "@/lib/db"
+import { deliverWebhook } from "@/lib/webhooks"
 import { Resend } from "resend"
 import { clerkClient } from "@clerk/nextjs/server"
+import { env } from "@/lib/env"
 
 function getResend() {
-  return new Resend(process.env.RESEND_API_KEY)
+  return new Resend(env.RESEND_API_KEY)
 }
-const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL ?? "notifications@jobbobber.com"
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+const FROM_EMAIL = env.NOTIFICATION_FROM_EMAIL ?? "notifications@jobbobber.com"
+const APP_URL = env.NEXT_PUBLIC_APP_URL
 
 async function getClerkEmail(clerkUserId: string): Promise<string | null> {
   try {
@@ -98,6 +100,19 @@ export const sendMatchCreatedNotification = inngest.createFunction(
 <p><a href="${APP_URL}/matches">View your matches</a></p>`,
       ),
     )
+
+    await step.run("post-webhooks", async () => {
+      const webhooks = await db.webhook.findMany({
+        where: { ownerId: seekerId, active: true, events: { has: "MATCH_CREATED" } },
+      })
+      const payload = {
+        matchId: event.data.matchId,
+        postingId: jobPostingId,
+        seekerId,
+        status: "CREATED",
+      }
+      await Promise.all(webhooks.map((wh) => deliverWebhook(wh, "MATCH_CREATED", payload)))
+    })
 
     return { status: "COMPLETED", emailSent }
   },
@@ -192,6 +207,28 @@ export const sendMutualAcceptNotification = inngest.createFunction(
         if (sent) emailsSent++
       }
     }
+
+    await step.run("post-webhooks", async () => {
+      const payload = {
+        matchId: event.data.matchId,
+        postingId: jobPostingId,
+        seekerId,
+        employerId,
+        status: "ACCEPTED",
+      }
+      const [seekerWebhooks, employerWebhooks] = await Promise.all([
+        db.webhook.findMany({
+          where: { ownerId: seekerId, active: true, events: { has: "MATCH_ACCEPTED" } },
+        }),
+        db.webhook.findMany({
+          where: { ownerId: employerId, active: true, events: { has: "MATCH_ACCEPTED" } },
+        }),
+      ])
+      await Promise.all([
+        ...seekerWebhooks.map((wh) => deliverWebhook(wh, "MATCH_ACCEPTED", payload)),
+        ...employerWebhooks.map((wh) => deliverWebhook(wh, "MATCH_ACCEPTED", payload)),
+      ])
+    })
 
     return { status: "COMPLETED", emailsSent }
   },

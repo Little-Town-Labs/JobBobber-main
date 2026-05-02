@@ -1,0 +1,821 @@
+openapi: 3.0.3
+info:
+  title: JobBobber API
+  version: 1.0.0
+  description: |
+    Programmatic access to the JobBobber talent matching platform.
+
+    ## Authentication
+
+    All endpoints require an API key passed in the `Authorization` header:
+
+    ```
+    Authorization: Bearer jb_live_<your-api-key>
+    ```
+
+    API keys are created and managed via the registration portal.
+    A key belongs to either a **seeker** or an **employer** account and
+    can only access resources owned by that account.
+
+    ## Rate Limits
+
+    | Plan | Requests/minute |
+    |------|----------------|
+    | Free | 30 |
+    | Pro | 300 |
+    | Business | 1000 |
+
+    Rate limit headers are included on every response:
+    - `X-RateLimit-Limit` — requests allowed per minute
+    - `X-RateLimit-Remaining` — requests remaining in the current window
+    - `X-RateLimit-Reset` — Unix timestamp when the window resets
+
+    ## Pagination
+
+    List endpoints use cursor-based pagination:
+    - Pass `cursor` from the previous response's `meta.nextCursor` to get the next page
+    - `meta.nextCursor` is `null` when there are no more results
+    - Default page size is 20; maximum is 100 via `limit` query param
+
+    ## Envelope Format
+
+    All responses use a consistent envelope:
+
+    ```json
+    {
+      "data": { ... } | [ ... ],
+      "meta": { "total": 42, "nextCursor": "..." }
+    }
+    ```
+
+    Errors use:
+    ```json
+    {
+      "error": {
+        "code": "RATE_LIMIT_EXCEEDED",
+        "message": "You have exceeded the rate limit. Retry after 30 seconds.",
+        "retryAfter": 30
+      }
+    }
+    ```
+
+servers:
+  - url: https://jobbobber.com/api/v1
+    description: Production
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      description: API key obtained from the JobBobber portal
+
+  schemas:
+    # --- Common ---
+    Meta:
+      type: object
+      properties:
+        total:
+          type: integer
+        nextCursor:
+          type: string
+          nullable: true
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: UNAUTHORIZED
+            message:
+              type: string
+            retryAfter:
+              type: integer
+              description: Seconds to wait before retrying (only on 429)
+
+    # --- API Keys ---
+    ApiKey:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        keyPrefix:
+          type: string
+          description: First 8 characters for identification (e.g. "jb_live_")
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ApiKeyCreated:
+      allOf:
+        - $ref: '#/components/schemas/ApiKey'
+        - type: object
+          properties:
+            key:
+              type: string
+              description: Full plaintext key — shown ONCE, not retrievable afterward
+
+    # --- Webhooks ---
+    WebhookEvent:
+      type: string
+      enum:
+        - match.created
+        - match.accepted
+        - match.declined
+        - conversation.completed
+        - subscription.changed
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookEvent'
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastFiredAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # --- Job Postings ---
+    JobPosting:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        experienceLevel:
+          type: string
+          enum: [ENTRY, MID, SENIOR, LEAD, EXECUTIVE]
+        employmentType:
+          type: string
+          enum: [FULL_TIME, PART_TIME, CONTRACT, FREELANCE]
+        location:
+          type: string
+          nullable: true
+        remote:
+          type: boolean
+        salaryMin:
+          type: integer
+          nullable: true
+        salaryMax:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, PAUSED, CLOSED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # --- Matches ---
+    MatchStatus:
+      type: string
+      enum: [PENDING, SEEKER_ACCEPTED, EMPLOYER_ACCEPTED, MUTUAL_ACCEPT, DECLINED]
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: string
+        postingId:
+          type: string
+        postingTitle:
+          type: string
+        confidenceScore:
+          type: string
+          enum: [STRONG, GOOD, FAIR]
+        seekerStatus:
+          $ref: '#/components/schemas/MatchStatus'
+        employerStatus:
+          $ref: '#/components/schemas/MatchStatus'
+        summary:
+          type: string
+          description: AI-generated match summary
+        seekerContact:
+          type: object
+          nullable: true
+          description: Only present after mutual acceptance
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # --- Seeker Profile ---
+    SeekerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        headline:
+          type: string
+          nullable: true
+        skills:
+          type: array
+          items:
+            type: string
+        experienceLevel:
+          type: string
+        location:
+          type: string
+          nullable: true
+        remote:
+          type: boolean
+        completenessScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        agentActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    # --- Employer Profile ---
+    EmployerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        companyName:
+          type: string
+        industry:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        agentActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    # --- Conversations ---
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+        postingId:
+          type: string
+        seekerId:
+          type: string
+        status:
+          type: string
+          enum: [RUNNING, COMPLETED, FAILED, TERMINATED]
+        turnCount:
+          type: integer
+        matchId:
+          type: string
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # --- Insights ---
+    InsightsSummary:
+      type: object
+      properties:
+        totalMatches:
+          type: integer
+        mutualAccepts:
+          type: integer
+        pendingConversations:
+          type: integer
+        averageConfidenceScore:
+          type: number
+        periodDays:
+          type: integer
+
+paths:
+  # ============================================================
+  # API Key Management
+  # ============================================================
+  /keys:
+    get:
+      operationId: listApiKeys
+      summary: List API keys
+      tags: [API Keys]
+      responses:
+        '200':
+          description: List of active API keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: createApiKey
+      summary: Create an API key
+      tags: [API Keys]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label]
+              properties:
+                label:
+                  type: string
+                  maxLength: 64
+      responses:
+        '201':
+          description: Key created — plaintext shown once
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ApiKeyCreated'
+        '422':
+          description: Maximum key limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /keys/{keyId}:
+    delete:
+      operationId: revokeApiKey
+      summary: Revoke an API key
+      tags: [API Keys]
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Key revoked
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================
+  # Webhooks
+  # ============================================================
+  /webhooks:
+    get:
+      operationId: listWebhooks
+      summary: List webhook subscriptions
+      tags: [Webhooks]
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Webhook'
+
+    post:
+      operationId: createWebhook
+      summary: Create a webhook subscription
+      tags: [Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, events]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Must be HTTPS
+                events:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/WebhookEvent'
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Webhook'
+                      - type: object
+                        properties:
+                          secret:
+                            type: string
+                            description: Signing secret — shown once
+
+  /webhooks/{webhookId}:
+    delete:
+      operationId: deleteWebhook
+      summary: Delete a webhook subscription
+      tags: [Webhooks]
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Webhook deleted
+
+  /webhooks/{webhookId}/test:
+    post:
+      operationId: testWebhook
+      summary: Send a test event to a webhook
+      tags: [Webhooks]
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Test event dispatched
+
+  # ============================================================
+  # Job Postings (Employer-scoped)
+  # ============================================================
+  /postings:
+    get:
+      operationId: listPostings
+      summary: List job postings
+      tags: [Job Postings]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, PAUSED, CLOSED]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated postings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JobPosting'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /postings/{postingId}:
+    get:
+      operationId: getPosting
+      summary: Get a single job posting
+      tags: [Job Postings]
+      parameters:
+        - name: postingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job posting
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/JobPosting'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================
+  # Matches
+  # ============================================================
+  /matches:
+    get:
+      operationId: listMatches
+      summary: List all matches
+      tags: [Matches]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/MatchStatus'
+        - name: postingId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated matches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Match'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /matches/{matchId}:
+    get:
+      operationId: getMatch
+      summary: Get a single match
+      tags: [Matches]
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Match detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Match'
+
+  /matches/{matchId}/accept:
+    post:
+      operationId: acceptMatch
+      summary: Accept a match
+      tags: [Matches]
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Match accepted
+
+  /matches/{matchId}/decline:
+    post:
+      operationId: declineMatch
+      summary: Decline a match
+      tags: [Matches]
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Match declined
+
+  # ============================================================
+  # Profile (caller-scoped)
+  # ============================================================
+  /profile:
+    get:
+      operationId: getProfile
+      summary: Get the caller's profile
+      tags: [Profile]
+      description: Returns a SeekerProfile or EmployerProfile depending on key owner type
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    oneOf:
+                      - $ref: '#/components/schemas/SeekerProfile'
+                      - $ref: '#/components/schemas/EmployerProfile'
+
+    patch:
+      operationId: updateProfile
+      summary: Update the caller's profile
+      tags: [Profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Partial update — only provided fields are changed
+      responses:
+        '200':
+          description: Updated profile
+
+  # ============================================================
+  # Conversations
+  # ============================================================
+  /conversations:
+    get:
+      operationId: listConversations
+      summary: List agent conversations
+      tags: [Conversations]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [RUNNING, COMPLETED, FAILED, TERMINATED]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /conversations/{conversationId}:
+    get:
+      operationId: getConversation
+      summary: Get conversation detail and turn log
+      tags: [Conversations]
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversation with redacted turn log
+
+  # ============================================================
+  # Insights & Analytics
+  # ============================================================
+  /insights:
+    get:
+      operationId: getInsights
+      summary: Get matching insights summary
+      tags: [Insights]
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+            maximum: 365
+      responses:
+        '200':
+          description: Insights summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InsightsSummary'
+
+  # ============================================================
+  # Health
+  # ============================================================
+  /health:
+    get:
+      operationId: health
+      summary: API health check
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+
+  # ============================================================
+  # OpenAPI Spec (self-reference)
+  # ============================================================
+  /openapi.json:
+    get:
+      operationId: getOpenApiSpec
+      summary: OpenAPI 3.0 specification
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: OpenAPI spec
+
+components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

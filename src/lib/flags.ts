@@ -119,6 +119,20 @@ export const AGENT_TOOL_CALLING = flag<boolean>({
   decide: () => false,
 })
 
+export const HIRING_METRICS = flag<boolean>({
+  key: "hiring-metrics",
+  defaultValue: false,
+  description: "Enable hiring metrics dashboard with per-posting analytics (Feature 27)",
+  decide: () => false,
+})
+
+export const PUBLIC_API = flag<boolean>({
+  key: "public-api",
+  defaultValue: false,
+  description: "Enable /api/v1/ REST endpoints for external agent access (api-only-pivot)",
+  decide: () => false,
+})
+
 export const ADVANCED_EMPLOYER_DASHBOARD = flag<boolean>({
   key: "advanced-employer-dashboard",
   defaultValue: false,

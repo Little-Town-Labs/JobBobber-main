@@ -1,3 +1,4 @@
+// Not part of the public REST API — org member management, internal UI-only router.
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
 import { clerkClient } from "@clerk/nextjs/server"

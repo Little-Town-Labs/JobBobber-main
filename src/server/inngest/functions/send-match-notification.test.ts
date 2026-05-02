@@ -12,7 +12,12 @@ vi.mock("@/lib/db", () => ({
     employer: { findUnique: vi.fn() },
     seekerSettings: { findUnique: vi.fn() },
     employerSettings: { findUnique: vi.fn() },
+    webhook: { findMany: vi.fn() },
   },
+}))
+
+vi.mock("@/lib/webhooks", () => ({
+  deliverWebhook: vi.fn().mockResolvedValue({ success: true, statusCode: 200 }),
 }))
 
 vi.mock("@/lib/inngest", () => ({
@@ -48,6 +53,7 @@ import {
   sendMutualAcceptNotification,
 } from "./send-match-notification"
 import { db } from "@/lib/db"
+import { deliverWebhook } from "@/lib/webhooks"
 import { clerkClient } from "@clerk/nextjs/server"
 import { Resend } from "resend"
 
@@ -58,7 +64,9 @@ const mockDb = db as unknown as {
   employer: { findUnique: ReturnType<typeof vi.fn> }
   seekerSettings: { findUnique: ReturnType<typeof vi.fn> }
   employerSettings: { findUnique: ReturnType<typeof vi.fn> }
+  webhook: { findMany: ReturnType<typeof vi.fn> }
 }
+const mockDeliverWebhook = vi.mocked(deliverWebhook)
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -141,6 +149,8 @@ describe("send-match-notification: match.created", () => {
         emails: { send: vi.fn().mockResolvedValue({ id: "email_01" }) },
       }
     })
+    // No webhooks by default
+    mockDb.webhook.findMany.mockResolvedValue([])
   })
 
   it("sends email to seeker with match confidence and dashboard link", async () => {
@@ -229,6 +239,8 @@ describe("send-match-notification: mutual.accept", () => {
         emails: { send: vi.fn().mockResolvedValue({ id: "email_01" }) },
       }
     })
+    // No webhooks by default
+    mockDb.webhook.findMany.mockResolvedValue([])
   })
 
   it("sends email to both seeker and employer", async () => {
@@ -364,6 +376,7 @@ describe("send-match-notification: mutual.accept", () => {
 describe("send-match-notification: error resilience", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockDb.webhook.findMany.mockResolvedValue([])
   })
 
   it("email failure does not throw — catches and logs error", async () => {
@@ -400,5 +413,163 @@ describe("send-match-notification: error resilience", () => {
 
     expect(result.status).toBe("COMPLETED")
     expect(result.emailSent).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests: webhook delivery — match.created
+// ---------------------------------------------------------------------------
+
+describe("send-match-notification: webhook delivery for match.created", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    ;(Resend as unknown as ReturnType<typeof vi.fn>).mockImplementation(function () {
+      return {
+        emails: { send: vi.fn().mockResolvedValue({ id: "email_01" }) },
+      }
+    })
+    mockDb.webhook.findMany.mockResolvedValue([])
+  })
+
+  it("fires MATCH_CREATED webhook to seeker's registered webhooks", async () => {
+    const mockWebhook = { id: "wh-1", url: "https://example.com/hook", secret: "s3cr3t" }
+    mockDb.webhook.findMany.mockResolvedValue([mockWebhook])
+    mockDb.jobSeeker.findUnique.mockResolvedValue({
+      id: "seeker-1",
+      userId: "clerk-user-1",
+      name: "Alice",
+    })
+    mockDb.jobPosting.findUnique.mockResolvedValue({ id: "jp-1", title: "Senior Engineer" })
+    mockDb.seekerSettings.findUnique.mockResolvedValue({
+      seekerId: "seeker-1",
+      notifPrefs: { matchCreated: true, mutualAccept: true },
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkInstance = await (clerkClient as any)()
+    clerkInstance.users.getUser.mockResolvedValue({
+      emailAddresses: [{ emailAddress: "seeker@test.com" }],
+    })
+
+    await matchCreatedHandler(makeMatchCreatedEvent())
+
+    expect(mockDeliverWebhook).toHaveBeenCalledWith(
+      mockWebhook,
+      "MATCH_CREATED",
+      expect.objectContaining({ seekerId: "seeker-1", postingId: "jp-1" }),
+    )
+  })
+
+  it("does not fire webhooks when no active MATCH_CREATED subscriptions exist", async () => {
+    mockDb.webhook.findMany.mockResolvedValue([])
+    mockDb.jobSeeker.findUnique.mockResolvedValue({
+      id: "seeker-1",
+      userId: "clerk-user-1",
+      name: "Alice",
+    })
+    mockDb.jobPosting.findUnique.mockResolvedValue({ id: "jp-1", title: "Senior Engineer" })
+    mockDb.seekerSettings.findUnique.mockResolvedValue({
+      seekerId: "seeker-1",
+      notifPrefs: { matchCreated: true, mutualAccept: true },
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkInstance = await (clerkClient as any)()
+    clerkInstance.users.getUser.mockResolvedValue({
+      emailAddresses: [{ emailAddress: "seeker@test.com" }],
+    })
+
+    await matchCreatedHandler(makeMatchCreatedEvent())
+
+    expect(mockDeliverWebhook).not.toHaveBeenCalled()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests: webhook delivery — mutual.accept
+// ---------------------------------------------------------------------------
+
+describe("send-match-notification: webhook delivery for mutual.accept", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    ;(Resend as unknown as ReturnType<typeof vi.fn>).mockImplementation(function () {
+      return {
+        emails: { send: vi.fn().mockResolvedValue({ id: "email_01" }) },
+      }
+    })
+    mockDb.webhook.findMany.mockResolvedValue([])
+  })
+
+  it("fires MATCH_ACCEPTED webhooks to both seeker and employer on mutual accept", async () => {
+    const seekerWebhook = { id: "wh-seeker", url: "https://seeker.example.com/hook", secret: "abc" }
+    const employerWebhook = {
+      id: "wh-emp",
+      url: "https://employer.example.com/hook",
+      secret: "xyz",
+    }
+
+    // Return seeker webhooks on first call, employer webhooks on second
+    mockDb.webhook.findMany
+      .mockResolvedValueOnce([seekerWebhook])
+      .mockResolvedValueOnce([employerWebhook])
+
+    mockDb.jobSeeker.findUnique.mockResolvedValue({
+      id: "seeker-1",
+      userId: "clerk-seeker-1",
+      name: "Alice",
+    })
+    mockDb.employer.findUnique.mockResolvedValue({
+      id: "emp-1",
+      userId: "clerk-emp-1",
+    })
+    mockDb.jobPosting.findUnique.mockResolvedValue({ id: "jp-1", title: "Senior Engineer" })
+    mockDb.seekerSettings.findUnique.mockResolvedValue({
+      seekerId: "seeker-1",
+      notifPrefs: { matchCreated: true, mutualAccept: true },
+    })
+    mockDb.employerSettings.findUnique.mockResolvedValue({
+      employerId: "emp-1",
+      notifPrefs: { matchCreated: true, mutualAccept: true },
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkInstance = await (clerkClient as any)()
+    clerkInstance.users.getUser
+      .mockResolvedValueOnce({ emailAddresses: [{ emailAddress: "seeker@test.com" }] })
+      .mockResolvedValueOnce({ emailAddresses: [{ emailAddress: "employer@test.com" }] })
+
+    await mutualAcceptHandler(makeMutualAcceptEvent())
+
+    expect(mockDeliverWebhook).toHaveBeenCalledWith(
+      seekerWebhook,
+      "MATCH_ACCEPTED",
+      expect.objectContaining({ seekerId: "seeker-1", employerId: "emp-1" }),
+    )
+    expect(mockDeliverWebhook).toHaveBeenCalledWith(
+      employerWebhook,
+      "MATCH_ACCEPTED",
+      expect.objectContaining({ seekerId: "seeker-1", employerId: "emp-1" }),
+    )
+    expect(mockDeliverWebhook).toHaveBeenCalledTimes(2)
+  })
+
+  it("does not fire webhooks when no active MATCH_ACCEPTED subscriptions exist", async () => {
+    mockDb.webhook.findMany.mockResolvedValue([])
+    mockDb.jobSeeker.findUnique.mockResolvedValue({
+      id: "seeker-1",
+      userId: "clerk-seeker-1",
+      name: "Alice",
+    })
+    mockDb.employer.findUnique.mockResolvedValue({ id: "emp-1", userId: "clerk-emp-1" })
+    mockDb.jobPosting.findUnique.mockResolvedValue({ id: "jp-1", title: "Senior Engineer" })
+    mockDb.seekerSettings.findUnique.mockResolvedValue({
+      seekerId: "seeker-1",
+      notifPrefs: { matchCreated: true, mutualAccept: true },
+    })
+    mockDb.employerSettings.findUnique.mockResolvedValue({
+      employerId: "emp-1",
+      notifPrefs: { matchCreated: true, mutualAccept: true },
+    })
+
+    await mutualAcceptHandler(makeMutualAcceptEvent())
+
+    expect(mockDeliverWebhook).not.toHaveBeenCalled()
   })
 })

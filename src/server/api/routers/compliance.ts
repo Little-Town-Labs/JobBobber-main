@@ -1,3 +1,4 @@
+// Not part of the public REST API — GDPR/compliance actions are admin-only, internal router.
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
 import { createTRPCRouter, protectedProcedure, adminProcedure } from "@/server/api/trpc"

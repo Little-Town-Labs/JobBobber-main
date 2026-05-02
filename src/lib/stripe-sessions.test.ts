@@ -29,8 +29,26 @@ const { mockStripe, mockDb } = vi.hoisted(() => ({
 }))
 
 vi.mock("server-only", () => ({}))
-vi.mock("@/lib/stripe", () => ({ stripe: mockStripe }))
+vi.mock("@/lib/stripe", () => ({ stripe: mockStripe, getStripe: () => mockStripe }))
 vi.mock("@/lib/db", () => ({ db: mockDb }))
+vi.mock("@/lib/billing-plans", () => ({
+  getPlanById: vi.fn((id: string) => {
+    const plans: Record<string, unknown> = {
+      seeker_pro: {
+        id: "seeker_pro",
+        stripePriceId: "price_seeker_pro_test",
+        userType: "JOB_SEEKER",
+      },
+      employer_business: {
+        id: "employer_business",
+        stripePriceId: "price_employer_biz_test",
+        userType: "EMPLOYER",
+      },
+      seeker_free: { id: "seeker_free", stripePriceId: null, userType: "JOB_SEEKER" },
+    }
+    return plans[id] ?? null
+  }),
+}))
 
 import { createCheckoutSession, createPortalSession } from "./stripe-sessions"
 

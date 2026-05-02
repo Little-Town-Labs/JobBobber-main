@@ -24,6 +24,14 @@ vi.mock("@/lib/db", () => ({
   },
 }))
 
+// env.ts is cached at module load time before vi.stubEnv runs in beforeEach.
+// Use a lazy proxy so env.CRON_SECRET reads from process.env at access time.
+vi.mock("@/lib/env", () => ({
+  env: new Proxy({} as Record<string, string | undefined>, {
+    get: (_target, prop: string) => process.env[prop],
+  }),
+}))
+
 // ---------------------------------------------------------------------------
 // Import route under test
 // ---------------------------------------------------------------------------

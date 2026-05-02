@@ -7,13 +7,14 @@ import { NextResponse } from "next/server"
  * Public routes (no authentication required):
  *   - Root homepage
  *   - Auth pages (sign-in, sign-up)
+ *   - REST API v1 (auth is handled per-endpoint)
  *   - tRPC API (auth is handled per-procedure by tRPC middleware)
  *   - Inngest webhook endpoint
  *   - Clerk webhook endpoint
+ *   - API docs
  *
- * Onboarding gates (authenticated users only):
+ * Onboarding gate (authenticated users only):
  *   Gate 1: No role set → redirect to /onboarding/role
- *   Gate 2: Role set but no BYOK key → redirect to /setup/api-key
  *   Re-entry prevention: redirect users who revisit completed steps
  *
  * Gate logic is extracted to `resolveOnboardingRedirect` for unit testability.
@@ -22,53 +23,36 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/api/v1(.*)",
   "/api/trpc(.*)",
   "/api/inngest(.*)",
   "/api/webhooks/(.*)",
+  "/docs(.*)",
 ])
 
 export type OnboardingMeta = {
   role?: "JOB_SEEKER" | "EMPLOYER" | null
-  hasByokKey?: boolean
 }
 
 /**
- * Pure function that determines the redirect target for the onboarding gates.
+ * Pure function that determines the redirect target for the onboarding gate.
  *
  * Returns the redirect path string if a redirect is needed, or null to allow
  * the request through. Exported for unit testing.
  *
- * @param pathname - The request pathname (e.g. "/seeker/dashboard")
- * @param meta     - Clerk session claims metadata (role, hasByokKey)
+ * @param pathname - The request pathname (e.g. "/welcome")
+ * @param meta     - Clerk session claims metadata (role)
  */
 export function resolveOnboardingRedirect(pathname: string, meta: OnboardingMeta): string | null {
-  const { role, hasByokKey } = meta
+  const { role } = meta
 
-  // Gate 1: No role → must complete role selection
   if (!role) {
-    if (pathname === "/onboarding/role") return null // allow gate destination
+    if (pathname === "/onboarding/role") return null
     return "/onboarding/role"
   }
 
-  // Role is set —
-
-  // Re-entry prevention: visiting /onboarding/role after role already set
-  if (pathname === "/onboarding/role") {
-    return "/setup/api-key"
-  }
-
-  // Gate 2: Role set but no BYOK key → must set up API key
-  if (!hasByokKey) {
-    if (pathname === "/setup/api-key") return null // allow gate destination
-    return "/setup/api-key"
-  }
-
-  // Both role and BYOK key set —
-
-  // Re-entry prevention: visiting /setup/api-key after fully onboarded
-  if (pathname === "/setup/api-key") {
-    return role === "JOB_SEEKER" ? "/seeker/dashboard" : "/employer/dashboard"
-  }
+  // Role set — re-entry prevention
+  if (pathname === "/onboarding/role") return "/welcome"
 
   return null // allow through
 }

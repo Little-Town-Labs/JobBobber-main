@@ -62,6 +62,34 @@ const updatePostingSchema = z
     },
   )
 
+const publicJobPostingSchema = z.object({
+  id: z.string(),
+  employerId: z.string(),
+  title: z.string(),
+  department: z.string().nullable(),
+  description: z.string(),
+  responsibilities: z.string().nullable(),
+  requiredSkills: z.array(z.string()),
+  preferredSkills: z.array(z.string()),
+  experienceLevel: z.string(),
+  employmentType: z.string(),
+  locationType: z.string(),
+  locationReq: z.string().nullable(),
+  salaryMin: z.number().nullable(),
+  salaryMax: z.number().nullable(),
+  benefits: z.array(z.string()),
+  whyApply: z.string().nullable(),
+  status: z.string(),
+  updatedAt: z.string(),
+  createdAt: z.string().optional(),
+})
+
+const paginatedPostingsSchema = z.object({
+  items: z.array(publicJobPostingSchema),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+})
+
 const listSchema = z
   .object({
     cursor: z.string().optional(),
@@ -101,35 +129,55 @@ export const jobPostingsRouter = createTRPCRouter({
     }
   }),
 
-  list: publicProcedure.input(listSchema).query(async ({ ctx, input }) => {
-    const { cursor, limit = 20, experienceLevel, locationType } = input ?? {}
-    const where = {
-      status: "ACTIVE" as const,
-      ...(experienceLevel ? { experienceLevel } : {}),
-      ...(locationType ? { locationType } : {}),
-    }
-    const items = await ctx.db.jobPosting.findMany({
-      where,
-      orderBy: { updatedAt: "desc" },
-      take: limit + 1,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  list: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/postings",
+        summary: "List active job postings",
+        tags: ["postings"],
+      },
     })
-    const hasMore = items.length > limit
-    const resultItems = hasMore ? items.slice(0, limit) : items
-    return {
-      items: resultItems.map(toPublicJobPosting),
-      nextCursor: hasMore ? resultItems[resultItems.length - 1]!.id : null,
-      hasMore,
-    }
-  }),
+    .input(listSchema)
+    .output(paginatedPostingsSchema)
+    .query(async ({ ctx, input }) => {
+      const { cursor, limit = 20, experienceLevel, locationType } = input ?? {}
+      const where = {
+        status: "ACTIVE" as const,
+        ...(experienceLevel ? { experienceLevel } : {}),
+        ...(locationType ? { locationType } : {}),
+      }
+      const items = await ctx.db.jobPosting.findMany({
+        where,
+        orderBy: { updatedAt: "desc" },
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      })
+      const hasMore = items.length > limit
+      const resultItems = hasMore ? items.slice(0, limit) : items
+      return {
+        items: resultItems.map(toPublicJobPosting),
+        nextCursor: hasMore ? resultItems[resultItems.length - 1]!.id : null,
+        hasMore,
+      }
+    }),
 
   getById: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/postings/{id}",
+        summary: "Get a single job posting",
+        tags: ["postings"],
+      },
+    })
     .input(z.object({ id: z.string().min(1) }))
+    .output(publicJobPostingSchema)
     .query(async ({ ctx, input }) => {
       const posting = await ctx.db.jobPosting.findUnique({
         where: { id: input.id },
       })
-      if (!posting) return null
+      if (!posting) throw new TRPCError({ code: "NOT_FOUND", message: "Posting not found" })
 
       // If caller is the owning employer, return full posting
       let isOwner = false

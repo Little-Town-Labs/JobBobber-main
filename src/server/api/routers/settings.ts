@@ -1,3 +1,4 @@
+// Not part of the public REST API — user settings management, internal UI-only router.
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
 import { type Prisma, type PrismaClient } from "@prisma/client"

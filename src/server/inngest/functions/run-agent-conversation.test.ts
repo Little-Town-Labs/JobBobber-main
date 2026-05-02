@@ -17,7 +17,12 @@ vi.mock("@/lib/db", () => ({
     seekerSettings: { findUnique: vi.fn() },
     jobSettings: { findUnique: vi.fn() },
     match: { create: vi.fn() },
+    webhook: { findMany: vi.fn() },
   },
+}))
+
+vi.mock("@/lib/webhooks", () => ({
+  deliverWebhook: vi.fn().mockResolvedValue({ success: true, statusCode: 200 }),
 }))
 
 vi.mock("@/lib/encryption", () => ({
@@ -34,6 +39,7 @@ vi.mock("ai", () => ({ generateObject: vi.fn() }))
 
 import { db } from "@/lib/db"
 import { decrypt } from "@/lib/encryption"
+import { deliverWebhook } from "@/lib/webhooks"
 import { buildConversationWorkflow } from "./run-agent-conversation"
 
 const mockDb = db as unknown as {
@@ -48,7 +54,9 @@ const mockDb = db as unknown as {
   seekerSettings: { findUnique: ReturnType<typeof vi.fn> }
   jobSettings: { findUnique: ReturnType<typeof vi.fn> }
   match: { create: ReturnType<typeof vi.fn> }
+  webhook: { findMany: ReturnType<typeof vi.fn> }
 }
+const mockDeliverWebhook = vi.mocked(deliverWebhook)
 const mockDecrypt = vi.mocked(decrypt)
 
 // Mock step runner
@@ -141,6 +149,7 @@ describe("buildConversationWorkflow", () => {
     mockDb.agentConversation.create.mockResolvedValue({ id: "conv_1" } as never)
     mockDb.agentConversation.update.mockResolvedValue({ id: "conv_1" } as never)
     mockDb.match.create.mockResolvedValue({ id: "match_1" } as never)
+    mockDb.webhook.findMany.mockResolvedValue([])
     mockDecrypt.mockResolvedValue("sk-decrypted-key")
   }
 
@@ -476,5 +485,70 @@ describe("match creation with evaluations (Task 3.1)", () => {
 
     const matchData = mockDb.match.create.mock.calls[0]![0].data
     expect(matchData.confidenceScore).toBe("GOOD")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests: webhook delivery — conversation.completed
+// ---------------------------------------------------------------------------
+
+describe("run-agent-conversation: webhook delivery for CONVERSATION_COMPLETED", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  function setupMocksWithWebhooks() {
+    mockDb.agentConversation.findFirst.mockResolvedValue(null)
+    mockDb.jobPosting.findUnique.mockResolvedValue(mockPosting as never)
+    mockDb.jobSeeker.findUnique.mockResolvedValue(mockSeeker as never)
+    mockDb.employer.findUnique.mockResolvedValue(mockEmployer as never)
+    mockDb.seekerSettings.findUnique.mockResolvedValue(mockSeekerSettings as never)
+    mockDb.jobSettings.findUnique.mockResolvedValue(mockJobSettings as never)
+    mockDb.agentConversation.create.mockResolvedValue({ id: "conv_1" } as never)
+    mockDb.agentConversation.update.mockResolvedValue({ id: "conv_1" } as never)
+    mockDb.match.create.mockResolvedValue({ id: "match_1" } as never)
+    mockDecrypt.mockResolvedValue("sk-decrypted-key")
+  }
+
+  it("fires CONVERSATION_COMPLETED webhooks to both seeker and employer", async () => {
+    const seekerWebhook = { id: "wh-s", url: "https://seeker.example.com/hook", secret: "s1" }
+    const employerWebhook = { id: "wh-e", url: "https://emp.example.com/hook", secret: "e1" }
+    setupMocksWithWebhooks()
+    // First findMany call → seeker webhooks, second → employer webhooks
+    mockDb.webhook.findMany
+      .mockResolvedValueOnce([seekerWebhook])
+      .mockResolvedValueOnce([employerWebhook])
+
+    const step = createMockStep()
+    const handler = buildConversationWorkflow()
+    await handler({
+      event: { data: { jobPostingId: "jp_1", seekerId: "seeker_1", employerId: "emp_1" } },
+      step,
+    } as never)
+
+    expect(mockDeliverWebhook).toHaveBeenCalledWith(
+      seekerWebhook,
+      "CONVERSATION_COMPLETED",
+      expect.objectContaining({ conversationId: "conv_1", matchId: "jp_1" }),
+    )
+    expect(mockDeliverWebhook).toHaveBeenCalledWith(
+      employerWebhook,
+      "CONVERSATION_COMPLETED",
+      expect.objectContaining({ conversationId: "conv_1", matchId: "jp_1" }),
+    )
+  })
+
+  it("does not fire webhooks when no active CONVERSATION_COMPLETED subscriptions exist", async () => {
+    setupMocksWithWebhooks()
+    mockDb.webhook.findMany.mockResolvedValue([])
+
+    const step = createMockStep()
+    const handler = buildConversationWorkflow()
+    await handler({
+      event: { data: { jobPostingId: "jp_1", seekerId: "seeker_1", employerId: "emp_1" } },
+      step,
+    } as never)
+
+    expect(mockDeliverWebhook).not.toHaveBeenCalled()
   })
 })

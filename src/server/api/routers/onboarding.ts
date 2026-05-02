@@ -1,3 +1,4 @@
+// Not part of the public REST API — one-time UI onboarding flow, internal router.
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
 import { clerkClient } from "@clerk/nextjs/server"
@@ -61,7 +62,6 @@ export const onboardingRouter = createTRPCRouter({
             clerkUserId: ctx.userId,
             name: "", // populated later in profile setup (Feature 3)
             skills: [],
-            urls: [],
           },
         })
         await tx.seekerSettings.create({ data: { seekerId: seeker.id } })

@@ -17,3 +17,4 @@ export {
   createMockProtectedContext,
   createMockOnboardingContext,
 } from "./create-context"
+export { callV1, callV1Authed } from "./rest-client"

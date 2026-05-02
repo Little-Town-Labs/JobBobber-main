@@ -8,6 +8,7 @@
  */
 import { inngest } from "@/lib/inngest"
 import { db } from "@/lib/db"
+import { deliverWebhook } from "@/lib/webhooks"
 import { type Prisma } from "@prisma/client"
 import { decrypt } from "@/lib/encryption"
 import {
@@ -503,6 +504,26 @@ export function buildConversationWorkflow() {
     await step.sendEvent({
       name: "insights/conversation.completed",
       data: { userId: employerId, userType: "EMPLOYER" },
+    })
+
+    await step.run("post-webhooks", async () => {
+      const payload = {
+        conversationId: conversation.id,
+        matchId: jobPostingId,
+        outcome: finalStatus,
+      }
+      const [seekerWebhooks, employerWebhooks] = await Promise.all([
+        db.webhook.findMany({
+          where: { ownerId: seekerId, active: true, events: { has: "CONVERSATION_COMPLETED" } },
+        }),
+        db.webhook.findMany({
+          where: { ownerId: employerId, active: true, events: { has: "CONVERSATION_COMPLETED" } },
+        }),
+      ])
+      await Promise.all([
+        ...seekerWebhooks.map((wh) => deliverWebhook(wh, "CONVERSATION_COMPLETED", payload)),
+        ...employerWebhooks.map((wh) => deliverWebhook(wh, "CONVERSATION_COMPLETED", payload)),
+      ])
     })
 
     return {

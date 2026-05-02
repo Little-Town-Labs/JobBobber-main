@@ -17,6 +17,9 @@ import { billingRouter } from "@/server/api/routers/billing"
 import { dashboardRouter } from "@/server/api/routers/dashboard"
 import { complianceRouter } from "@/server/api/routers/compliance"
 import { chatRouter } from "@/server/api/routers/chat"
+import { hiringMetricsRouter } from "@/server/api/routers/hiring-metrics"
+import { apiKeysRouter } from "@/server/api/routers/apiKeys"
+import { webhooksRouter } from "@/server/api/routers/webhooks"
 
 /**
  * Root tRPC router — assembles all sub-routers.
@@ -43,6 +46,9 @@ export const appRouter = createTRPCRouter({
   dashboard: dashboardRouter,
   compliance: complianceRouter,
   chat: chatRouter,
+  hiringMetrics: hiringMetricsRouter,
+  apiKeys: apiKeysRouter,
+  webhooks: webhooksRouter,
 })
 
 /** AppRouter type — used by tRPC client for end-to-end type safety */

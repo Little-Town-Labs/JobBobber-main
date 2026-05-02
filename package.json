@@ -35,12 +35,10 @@
     "@ai-sdk/react": "^3.0.118",
     "@clerk/nextjs": "^6.21.0",
     "@prisma/client": "^5.22.0",
+    "@scalar/nextjs-api-reference": "^0.10.13",
     "@sentry/nextjs": "^9.0.0",
     "@t3-oss/env-nextjs": "^0.13.10",
-    "@tanstack/react-query": "^5.66.0",
-    "@trpc/client": "^11.0.0",
     "@trpc/next": "^11.0.0",
-    "@trpc/react-query": "^11.0.0",
     "@trpc/server": "^11.0.0",
     "@vercel/blob": "^2.3.0",
     "@vercel/flags": "^3.1.1",
@@ -56,7 +54,9 @@
     "server-only": "^0.0.1",
     "stripe": "^20.4.1",
     "svix": "^1.58.0",
-    "zod": "^4.3.6"
+    "trpc-to-openapi": "^3.2.0",
+    "zod": "^4.3.6",
+    "zod-openapi": "^5.4.6"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -70,6 +70,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@tailwindcss/postcss": "^4.2.4",
+    "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -81,6 +83,7 @@
     "@typescript-eslint/parser": "^8.56.1",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.0.18",
+    "autoprefixer": "^10.5.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.1.6",
     "eslint-config-prettier": "^10.1.8",
@@ -88,7 +91,9 @@
     "husky": "^9.1.7",
     "jsdom": "^28.1.0",
     "lint-staged": "^16.2.7",
+    "postcss": "^8.5.13",
     "prettier": "^3.8.1",
+    "tailwindcss": "^4.2.4",
     "tsx": "^4.21.0",
     "typescript": "^5.0.0",
     "vitest": "^4.0.18"

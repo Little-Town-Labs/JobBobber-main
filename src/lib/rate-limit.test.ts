@@ -127,25 +127,17 @@ describe("checkRateLimit", () => {
     expect(mockLimit).not.toHaveBeenCalled()
   })
 
-  it("fails open when Redis throws", async () => {
+  it("fails closed when Redis throws (returns success:false, does not allow request)", async () => {
     mockLimit.mockRejectedValue(new Error("Redis connection failed"))
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
     const { checkRateLimit } = await import("@/lib/rate-limit")
     const result = await checkRateLimit("user_123", "read")
 
-    expect(result).toEqual({
-      success: true,
-      limit: 100,
-      remaining: 100,
-      reset: 0,
-    })
-    expect(warnSpy).toHaveBeenCalledWith(
-      "Rate limiter unavailable, failing open:",
-      expect.any(Error),
-    )
+    expect(result.success).toBe(false)
+    expect(errorSpy).toHaveBeenCalledWith("Rate limiter error, failing closed:", expect.any(Error))
 
-    warnSpy.mockRestore()
+    errorSpy.mockRestore()
   })
 })
 

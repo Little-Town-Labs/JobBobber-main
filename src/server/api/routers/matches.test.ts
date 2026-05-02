@@ -25,6 +25,7 @@ const BASE_MATCH = {
   employerStatus: "PENDING" as const,
   seekerContactInfo: { name: "Jane", email: "jane@example.com" },
   seekerAvailability: { available: true },
+  mutualAcceptedAt: null,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
 }

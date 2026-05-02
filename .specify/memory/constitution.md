@@ -1,27 +1,35 @@
 <!--
 Sync Impact Report - Constitution Update
 
-Version Change: [NEW] → 1.0.0
-Rationale: Initial constitution creation for JobBobber project
+Version Change: 1.0.0 → 1.0.1 (PATCH)
+Rationale: api-only-pivot amendments — formalize REST/OpenAPI as external
+contract while preserving tRPC as the internal protocol.
 
-Modified Principles: None (initial creation)
+Modified Principles:
+  - Article I (Type Safety First): data flow chain expanded to document
+    the external `External agents → REST/OpenAPI → tRPC procedures → Prisma → DB`
+    path alongside the existing internal `Web UI → tRPC → Prisma → DB` chain.
+
 Added Sections:
+  - Technology Stack: API Protocol Note clarifying tRPC as internal-only
+    transport and REST/OpenAPI (`trpc-to-openapi`) as the external contract
+    for programmatic access via long-lived API keys.
+
+Templates Requiring Updates: None (changes are clarifications, not new gates)
+
+Follow-up TODOs: None
+
+Original ratification (1.0.0):
   - Core Principles (7 principles)
   - Technical Constraints
   - Development Workflow
   - Governance
 
-Templates Requiring Updates:
-  ✅ plan-template.md - Reviewed, aligns with type safety and testing principles
-  ✅ spec-template.md - Reviewed, aligns with phased rollout approach
-  ✅ tasks-template.md - Reviewed, aligns with TDD workflow
-
-Follow-up TODOs: None
-
 Dependencies:
   - Ensure all new features comply with BYOK model
   - Verify feature flags configured before enabling beta features
   - All agent code must use type-safe schemas (Zod)
+  - All public-facing endpoints exposed via /api/v1/ must have OpenAPI metadata
 -->
 
 # JobBobber Constitution
@@ -281,4 +289,4 @@ This constitution defines **what** we must do. The guidance files define **how**
 
 ---
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-14 | **Last Amended**: 2026-02-14
+**Version**: 1.0.1 | **Ratified**: 2026-02-14 | **Last Amended**: 2026-05-02

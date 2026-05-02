@@ -7,11 +7,7 @@ interface MetricsCsvExportProps {
 }
 
 export function MetricsCsvExport({ windowDays }: MetricsCsvExportProps) {
-  const exportCsv = useHiringMetricsExportCsv({
-    onSuccess: () => {
-      // Download handled in mutateAsync callback below
-    },
-  })
+  const exportCsv = useHiringMetricsExportCsv()
 
   async function handleExport() {
     const result = await exportCsv.mutateAsync({ windowDays })
@@ -20,7 +16,9 @@ export function MetricsCsvExport({ windowDays }: MetricsCsvExportProps) {
     const link = document.createElement("a")
     link.href = url
     link.download = result.filename
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
 

@@ -2,6 +2,8 @@
  * Chat history router — cursor-based paginated access to chat messages.
  *
  * Gated behind the USER_CHAT feature flag.
+ *
+ * Not part of the public REST API — UI streaming chat is not suited for REST.
  */
 import { z } from "zod"
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"

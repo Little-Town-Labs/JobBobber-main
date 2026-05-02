@@ -1,6 +1,6 @@
 import "server-only"
 import type Stripe from "stripe"
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 import { getPlanById } from "@/lib/billing-plans"
 import type { PrismaClient } from "@prisma/client"
 
@@ -42,7 +42,7 @@ export async function createCheckoutSession(
     if (seeker.stripeCustomerId) {
       customerId = seeker.stripeCustomerId
     } else {
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         metadata: {
           userId,
           userType: "JOB_SEEKER",
@@ -65,7 +65,7 @@ export async function createCheckoutSession(
     if (employer.stripeCustomerId) {
       customerId = employer.stripeCustomerId
     } else {
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         metadata: {
           userId,
           userType: "EMPLOYER",
@@ -98,7 +98,7 @@ export async function createCheckoutSession(
     ...(couponCode ? { discounts: [{ coupon: couponCode }] } : {}),
   }
 
-  const session = await stripe.checkout.sessions.create(sessionParams)
+  const session = await getStripe().checkout.sessions.create(sessionParams)
 
   return { checkoutUrl: session.url! }
 }
@@ -111,7 +111,7 @@ export async function createPortalSession(customerId: string): Promise<{ portalU
     throw new Error("Stripe customer ID required")
   }
 
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: customerId,
     return_url: `${process.env["NEXT_PUBLIC_APP_URL"] ?? ""}/settings/billing`,
   })

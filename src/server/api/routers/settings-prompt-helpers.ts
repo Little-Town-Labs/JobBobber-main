@@ -3,6 +3,8 @@
  *
  * Extracted to keep the settings router focused and to enable
  * independent testing of the encryption + validation flow.
+ *
+ * Not part of the public REST API — internal helper module, not a standalone router.
  */
 import { TRPCError } from "@trpc/server"
 import { encrypt, decrypt } from "@/lib/encryption"

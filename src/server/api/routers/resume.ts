@@ -1,3 +1,4 @@
+// Not part of the public REST API — internal AI resume extraction pipeline, UI-only router.
 import "server-only"
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"

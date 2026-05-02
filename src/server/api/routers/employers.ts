@@ -7,6 +7,24 @@ import {
 } from "@/server/api/trpc"
 import { toFullEmployer, toPublicEmployer } from "@/server/api/helpers/employer-mapper"
 
+// Output schema for annotated procedures (required by trpc-to-openapi)
+const FullEmployerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  industry: z.string().nullable(),
+  size: z.string().nullable(),
+  culture: z.string().nullable(),
+  headquarters: z.string().nullable(),
+  locations: z.array(z.string()),
+  websiteUrl: z.string().nullable(),
+  urls: z.record(z.string(), z.string()),
+  benefits: z.array(z.string()),
+  logoUrl: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
 const EMPLOYER_SELECT = {
   id: true,
   name: true,
@@ -26,9 +44,20 @@ const EMPLOYER_SELECT = {
 } as const
 
 export const employersRouter = createTRPCRouter({
-  getMe: employerProcedure.query(({ ctx }) => {
-    return toFullEmployer(ctx.employer)
-  }),
+  getMe: employerProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/employer/profile",
+        summary: "Get the authenticated employer's own profile",
+        tags: ["profile"],
+      },
+    })
+    .input(z.void())
+    .output(FullEmployerSchema)
+    .query(({ ctx }) => {
+      return toFullEmployer(ctx.employer)
+    }),
 
   getById: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
@@ -42,6 +71,14 @@ export const employersRouter = createTRPCRouter({
     }),
 
   updateProfile: adminProcedure
+    .meta({
+      openapi: {
+        method: "PATCH",
+        path: "/employer/profile",
+        summary: "Update the authenticated employer's profile",
+        tags: ["profile"],
+      },
+    })
     .input(
       z.object({
         name: z.string().min(1).max(255).optional(),
@@ -59,6 +96,7 @@ export const employersRouter = createTRPCRouter({
         benefits: z.array(z.string().max(255)).max(30).optional(),
       }),
     )
+    .output(FullEmployerSchema)
     .mutation(async ({ ctx, input }) => {
       const updated = await ctx.db.employer.update({
         where: { id: ctx.employer.id },

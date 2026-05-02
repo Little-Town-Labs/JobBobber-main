@@ -21,6 +21,37 @@ import { conversationMessageSchema } from "@/lib/conversation-schemas"
 
 const statusEnum = z.enum(["IN_PROGRESS", "COMPLETED_MATCH", "COMPLETED_NO_MATCH", "TERMINATED"])
 
+// ---------------------------------------------------------------------------
+// Output schemas (required by trpc-to-openapi for annotated procedures)
+// ---------------------------------------------------------------------------
+
+const conversationSummarySchema = z.object({
+  id: z.string(),
+  jobPostingTitle: z.string(),
+  status: statusEnum,
+  messageCount: z.number(),
+  startedAt: z.string(),
+  completedAt: z.string().nullable(),
+  outcome: z.string().nullable(),
+})
+
+const paginatedConversationsSchema = z.object({
+  items: z.array(conversationSummarySchema),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+})
+
+const conversationDetailSchema = z.object({
+  id: z.string(),
+  jobPostingTitle: z.string(),
+  candidateName: z.string().nullable(),
+  status: statusEnum,
+  startedAt: z.string(),
+  completedAt: z.string().nullable(),
+  outcome: z.string().nullable(),
+  messages: z.array(z.unknown()),
+})
+
 const listInput = z
   .object({
     cursor: z.string().optional(),
@@ -32,41 +63,52 @@ const listInput = z
 
 export const conversationsRouter = createTRPCRouter({
   /** List conversations for the authenticated seeker */
-  listForSeeker: seekerProcedure.input(listInput).query(async ({ ctx, input }) => {
-    await assertFlagEnabled(CONVERSATION_LOGS)
-
-    const { cursor, limit, status } = input
-    const where: Record<string, unknown> = { seekerId: ctx.seeker.id }
-    if (status) where.status = status
-
-    const items = await ctx.db.agentConversation.findMany({
-      where,
-      orderBy: { startedAt: "desc" },
-      take: limit + 1,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      include: {
-        jobPosting: { select: { id: true, title: true } },
-        seeker: { select: { id: true, name: true } },
+  listForSeeker: seekerProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/conversations",
+        summary: "List conversations for the authenticated seeker",
+        tags: ["conversations"],
       },
     })
+    .input(listInput)
+    .output(paginatedConversationsSchema)
+    .query(async ({ ctx, input }) => {
+      await assertFlagEnabled(CONVERSATION_LOGS)
 
-    const hasMore = items.length > limit
-    const resultItems = hasMore ? items.slice(0, limit) : items
+      const { cursor, limit, status } = input
+      const where: Record<string, unknown> = { seekerId: ctx.seeker.id }
+      if (status) where.status = status
 
-    return {
-      items: resultItems.map((c) => ({
-        id: c.id,
-        jobPostingTitle: c.jobPosting.title,
-        status: c.status,
-        messageCount: Array.isArray(c.messages) ? c.messages.length : 0,
-        startedAt: c.startedAt.toISOString(),
-        completedAt: c.completedAt?.toISOString() ?? null,
-        outcome: c.outcome,
-      })),
-      nextCursor: hasMore ? resultItems[resultItems.length - 1]!.id : null,
-      hasMore,
-    }
-  }),
+      const items = await ctx.db.agentConversation.findMany({
+        where,
+        orderBy: { startedAt: "desc" },
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        include: {
+          jobPosting: { select: { id: true, title: true } },
+          seeker: { select: { id: true, name: true } },
+        },
+      })
+
+      const hasMore = items.length > limit
+      const resultItems = hasMore ? items.slice(0, limit) : items
+
+      return {
+        items: resultItems.map((c) => ({
+          id: c.id,
+          jobPostingTitle: c.jobPosting.title,
+          status: c.status,
+          messageCount: Array.isArray(c.messages) ? c.messages.length : 0,
+          startedAt: c.startedAt.toISOString(),
+          completedAt: c.completedAt?.toISOString() ?? null,
+          outcome: c.outcome,
+        })),
+        nextCursor: hasMore ? resultItems[resultItems.length - 1]!.id : null,
+        hasMore,
+      }
+    }),
 
   /** List conversations for employer's job posting */
   listForEmployer: employerProcedure
@@ -123,7 +165,16 @@ export const conversationsRouter = createTRPCRouter({
 
   /** Get single conversation with redacted messages */
   getById: protectedProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/conversations/{conversationId}",
+        summary: "Get a single conversation by ID",
+        tags: ["conversations"],
+      },
+    })
     .input(z.object({ conversationId: z.string().min(1) }))
+    .output(conversationDetailSchema)
     .query(async ({ ctx, input }) => {
       await assertFlagEnabled(CONVERSATION_LOGS)
 

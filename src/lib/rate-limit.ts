@@ -70,8 +70,8 @@ export async function checkRateLimit(
       reset: result.reset,
     }
   } catch (error) {
-    console.warn("Rate limiter unavailable, failing open:", error)
-    return { success: true, limit: config.requests, remaining: config.requests, reset: 0 }
+    console.error("Rate limiter error, failing closed:", error)
+    return { success: false, limit: config.requests, remaining: 0, reset: 0 }
   }
 }
 

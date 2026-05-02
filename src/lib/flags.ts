@@ -126,6 +126,13 @@ export const HIRING_METRICS = flag<boolean>({
   decide: () => false,
 })
 
+export const PUBLIC_API = flag<boolean>({
+  key: "public-api",
+  defaultValue: false,
+  description: "Enable /api/v1/ REST endpoints for external agent access (api-only-pivot)",
+  decide: () => false,
+})
+
 export const ADVANCED_EMPLOYER_DASHBOARD = flag<boolean>({
   key: "advanced-employer-dashboard",
   defaultValue: false,

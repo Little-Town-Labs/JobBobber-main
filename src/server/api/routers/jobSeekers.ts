@@ -55,6 +55,28 @@ const UpdateProfileInputSchema = z.object({
 })
 
 // ---------------------------------------------------------------------------
+// Output schemas (required by trpc-to-openapi for annotated procedures)
+// ---------------------------------------------------------------------------
+
+const FullProfileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  headline: z.string().nullable(),
+  bio: z.string().nullable(),
+  resumeUrl: z.string().nullable(),
+  experience: z.array(z.unknown()),
+  education: z.array(z.unknown()),
+  skills: z.array(z.string()),
+  urls: z.array(z.unknown()),
+  location: z.string().nullable(),
+  relocationPreference: z.string().nullable(),
+  profileCompleteness: z.number(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+// ---------------------------------------------------------------------------
 // Output helpers
 // ---------------------------------------------------------------------------
 
@@ -85,9 +107,20 @@ export const jobSeekersRouter = createTRPCRouter({
    * Identity comes from ctx.seeker — injected by seekerProcedure middleware.
    * Omits parsedResume and all SeekerSettings fields.
    */
-  getMe: seekerProcedure.query(({ ctx }) => {
-    return toFullProfile(ctx.seeker)
-  }),
+  getMe: seekerProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/profile",
+        summary: "Get the authenticated seeker's own profile",
+        tags: ["profile"],
+      },
+    })
+    .input(z.void())
+    .output(FullProfileSchema)
+    .query(({ ctx }) => {
+      return toFullProfile(ctx.seeker)
+    }),
 
   /**
    * Returns a public seeker profile by id.
@@ -127,7 +160,16 @@ export const jobSeekersRouter = createTRPCRouter({
    * Recomputes and persists profileCompleteness after writing.
    */
   updateProfile: seekerProcedure
+    .meta({
+      openapi: {
+        method: "PATCH",
+        path: "/profile",
+        summary: "Update the authenticated seeker's profile",
+        tags: ["profile"],
+      },
+    })
     .input(UpdateProfileInputSchema)
+    .output(FullProfileSchema)
     .mutation(async ({ ctx, input }) => {
       // Build the partial update from supplied keys only
       const data: Record<string, unknown> = {}

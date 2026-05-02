@@ -35,6 +35,7 @@ Full-stack type safety from database to UI with zero tolerance for type bypasses
 **Rules:**
 
 - ALL data flows MUST be type-safe: Database (Prisma) → API (tRPC) → UI (TypeScript)
+- Data flow paths: `Web UI → tRPC → Prisma → DB` (internal) and `External agents → REST/OpenAPI → tRPC procedures → Prisma → DB` (external programmatic access)
 - Zod schemas REQUIRED for all external inputs (user input, LLM responses, API calls)
 - NO `any` types except in verified third-party integration boundaries
 - AI agent outputs MUST use structured schemas validated with Zod
@@ -161,6 +162,8 @@ The following stack decisions are locked for consistency:
 - Vercel (hosting + deployment)
 - Vercel Flags SDK (feature rollout)
 - pnpm (package manager)
+
+**API Protocol Note:** tRPC is the internal API protocol (web UI and server-to-server). REST/OpenAPI (`trpc-to-openapi`) is the external contract for programmatic access via API keys.
 
 **Deviation Requires:** Architecture review, documentation update, and explicit justification.
 

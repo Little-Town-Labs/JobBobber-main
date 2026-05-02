@@ -6,6 +6,7 @@
  *
  * @see .specify/specs/14-aggregate-feedback-insights/spec.md
  */
+import { z } from "zod"
 import {
   createTRPCRouter,
   seekerProcedure,
@@ -17,6 +18,27 @@ import {
   INSIGHT_GENERATION_THRESHOLD,
   INSIGHT_REFRESH_RATE_LIMIT_MS,
 } from "@/server/insights/insight-schemas"
+
+// Output schema for annotated procedures (required by trpc-to-openapi)
+const InsightsResponseSchema = z.object({
+  id: z.string().nullable(),
+  strengths: z.array(z.string()),
+  weaknesses: z.array(z.string()),
+  recommendations: z.array(z.string()),
+  metrics: z.object({
+    totalConversations: z.number(),
+    inProgressCount: z.number(),
+    matchRate: z.number(),
+    interviewConversionRate: z.number(),
+  }),
+  trendDirection: z.string(),
+  generatedAt: z.date().nullable(),
+  belowThreshold: z.boolean(),
+  thresholdProgress: z.object({
+    current: z.number(),
+    required: z.number(),
+  }),
+})
 
 /** Shape returned to the client */
 interface InsightsResponse {
@@ -98,42 +120,64 @@ function toResponse(
 
 export const insightsRouter = createTRPCRouter({
   /** Get the seeker's aggregate feedback insights */
-  getSeekerInsights: seekerProcedure.query(async ({ ctx }) => {
-    await assertFlagEnabled(FEEDBACK_INSIGHTS)
+  getSeekerInsights: seekerProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/insights/seeker",
+        summary: "Get aggregate feedback insights for the authenticated seeker",
+        tags: ["insights"],
+      },
+    })
+    .input(z.void())
+    .output(InsightsResponseSchema)
+    .query(async ({ ctx }) => {
+      await assertFlagEnabled(FEEDBACK_INSIGHTS)
 
-    const [record, completedCount] = await Promise.all([
-      ctx.db.feedbackInsights.findUnique({
-        where: { userId_userType: { userId: ctx.seeker.id, userType: "JOB_SEEKER" } },
-      }),
-      ctx.db.agentConversation.count({
-        where: {
-          seekerId: ctx.seeker.id,
-          status: { in: ["COMPLETED_MATCH", "COMPLETED_NO_MATCH", "TERMINATED"] },
-        },
-      }),
-    ])
+      const [record, completedCount] = await Promise.all([
+        ctx.db.feedbackInsights.findUnique({
+          where: { userId_userType: { userId: ctx.seeker.id, userType: "JOB_SEEKER" } },
+        }),
+        ctx.db.agentConversation.count({
+          where: {
+            seekerId: ctx.seeker.id,
+            status: { in: ["COMPLETED_MATCH", "COMPLETED_NO_MATCH", "TERMINATED"] },
+          },
+        }),
+      ])
 
-    return toResponse(record, completedCount)
-  }),
+      return toResponse(record, completedCount)
+    }),
 
   /** Get the employer's aggregate feedback insights */
-  getEmployerInsights: employerProcedure.query(async ({ ctx }) => {
-    await assertFlagEnabled(FEEDBACK_INSIGHTS)
+  getEmployerInsights: employerProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/insights/employer",
+        summary: "Get aggregate feedback insights for the authenticated employer",
+        tags: ["insights"],
+      },
+    })
+    .input(z.void())
+    .output(InsightsResponseSchema)
+    .query(async ({ ctx }) => {
+      await assertFlagEnabled(FEEDBACK_INSIGHTS)
 
-    const [record, completedCount] = await Promise.all([
-      ctx.db.feedbackInsights.findUnique({
-        where: { userId_userType: { userId: ctx.employer.id, userType: "EMPLOYER" } },
-      }),
-      ctx.db.agentConversation.count({
-        where: {
-          jobPosting: { employerId: ctx.employer.id },
-          status: { in: ["COMPLETED_MATCH", "COMPLETED_NO_MATCH", "TERMINATED"] },
-        },
-      }),
-    ])
+      const [record, completedCount] = await Promise.all([
+        ctx.db.feedbackInsights.findUnique({
+          where: { userId_userType: { userId: ctx.employer.id, userType: "EMPLOYER" } },
+        }),
+        ctx.db.agentConversation.count({
+          where: {
+            jobPosting: { employerId: ctx.employer.id },
+            status: { in: ["COMPLETED_MATCH", "COMPLETED_NO_MATCH", "TERMINATED"] },
+          },
+        }),
+      ])
 
-    return toResponse(record, completedCount)
-  }),
+      return toResponse(record, completedCount)
+    }),
 
   /** Manually trigger insight regeneration (rate-limited to 1/hour) */
   refreshInsights: protectedProcedure.mutation(async ({ ctx }) => {

@@ -24,6 +24,7 @@ vi.mock("@/lib/db", () => ({
     seekerSettings: { findUnique: vi.fn() },
     jobSettings: { findUnique: vi.fn() },
     match: { create: vi.fn() },
+    webhook: { findMany: vi.fn().mockResolvedValue([]) },
   },
 }))
 

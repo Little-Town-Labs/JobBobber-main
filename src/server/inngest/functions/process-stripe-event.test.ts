@@ -19,7 +19,14 @@ const { mockDb } = vi.hoisted(() => ({
     jobSeeker: {
       update: vi.fn(),
     },
+    webhook: {
+      findMany: vi.fn(),
+    },
   },
+}))
+
+vi.mock("@/lib/webhooks", () => ({
+  deliverWebhook: vi.fn().mockResolvedValue({ success: true, statusCode: 200 }),
 }))
 
 vi.mock("@/lib/db", () => ({ db: mockDb }))
@@ -31,10 +38,14 @@ vi.mock("@/lib/inngest", () => ({
 }))
 
 import { processStripeWebhookEvent, STRIPE_EVENT_HANDLERS } from "./process-stripe-event"
+import { deliverWebhook } from "@/lib/webhooks"
+
+const mockDeliverWebhook = vi.mocked(deliverWebhook)
 
 describe("process-stripe-event", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockDb.webhook.findMany.mockResolvedValue([])
   })
 
   describe("idempotency", () => {
@@ -269,3 +280,76 @@ function makeInvoiceEvent(subscriptionId: string, customerId: string) {
     },
   }
 }
+
+// ---------------------------------------------------------------------------
+// Tests: webhook delivery — SUBSCRIPTION_CHANGED
+// ---------------------------------------------------------------------------
+
+describe("process-stripe-event: webhook delivery for SUBSCRIPTION_CHANGED", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDb.webhook.findMany.mockResolvedValue([])
+    mockDb.stripeEvent.findUnique.mockResolvedValue(null)
+    mockDb.stripeEvent.create.mockResolvedValue({ id: "internal_1" })
+    mockDb.stripeEvent.update.mockResolvedValue({})
+    mockDb.subscription.upsert.mockResolvedValue({})
+  })
+
+  it("fires SUBSCRIPTION_CHANGED webhook to the affected user's registered webhooks", async () => {
+    const mockWebhook = { id: "wh-1", url: "https://example.com/hook", secret: "s3cr3t" }
+    mockDb.webhook.findMany.mockResolvedValue([mockWebhook])
+
+    await processStripeWebhookEvent(mockDb as never, {
+      stripeEventId: "evt_wh_1",
+      type: "customer.subscription.updated",
+      payload: makeSubscriptionEvent("sub_1", "cus_1", "active", {
+        planId: "seeker_pro",
+        userId: "user_1",
+        userType: "JOB_SEEKER",
+      }),
+    })
+
+    expect(mockDeliverWebhook).toHaveBeenCalledWith(
+      mockWebhook,
+      "SUBSCRIPTION_CHANGED",
+      expect.objectContaining({ userId: "user_1", planId: "seeker_pro" }),
+    )
+  })
+
+  it("does not fire webhooks when no active SUBSCRIPTION_CHANGED subscriptions exist", async () => {
+    mockDb.webhook.findMany.mockResolvedValue([])
+
+    await processStripeWebhookEvent(mockDb as never, {
+      stripeEventId: "evt_wh_2",
+      type: "customer.subscription.updated",
+      payload: makeSubscriptionEvent("sub_1", "cus_1", "active", {
+        planId: "seeker_pro",
+        userId: "user_1",
+        userType: "JOB_SEEKER",
+      }),
+    })
+
+    expect(mockDeliverWebhook).not.toHaveBeenCalled()
+  })
+
+  it("fires SUBSCRIPTION_CHANGED on subscription deletion (status EXPIRED)", async () => {
+    const mockWebhook = { id: "wh-2", url: "https://example.com/hook", secret: "abc" }
+    mockDb.webhook.findMany.mockResolvedValue([mockWebhook])
+
+    await processStripeWebhookEvent(mockDb as never, {
+      stripeEventId: "evt_wh_3",
+      type: "customer.subscription.deleted",
+      payload: makeSubscriptionEvent("sub_2", "cus_1", "canceled", {
+        planId: "seeker_pro",
+        userId: "user_2",
+        userType: "JOB_SEEKER",
+      }),
+    })
+
+    expect(mockDeliverWebhook).toHaveBeenCalledWith(
+      mockWebhook,
+      "SUBSCRIPTION_CHANGED",
+      expect.objectContaining({ userId: "user_2", status: "EXPIRED" }),
+    )
+  })
+})

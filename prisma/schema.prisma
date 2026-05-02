@@ -129,7 +129,6 @@ model JobSeeker {
   experience           Json[]   @default([])
   education            Json[]   @default([])
   skills               String[]
-  urls                 String[] // DEPRECATED in Feature 3 — use profileUrls instead
   profileUrls          Json[]   @default([]) // Structured URL objects: { id, label, url }
   location             String?
   relocationPreference String?
@@ -613,4 +612,72 @@ model ChatMessage {
   @@index([clerkUserId, createdAt(sort: Desc)])
   @@index([clerkUserId])
   @@map("chat_messages")
+}
+
+// =============================================================================
+// API Keys & Webhooks (api-only-pivot)
+// =============================================================================
+
+enum OwnerType {
+  SEEKER
+  EMPLOYER
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  label       String
+  keyHash     String    @unique
+  keyPrefix   String
+  ownerId     String
+  ownerType   OwnerType
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+
+  @@index([ownerId])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+enum WebhookEvent {
+  MATCH_CREATED
+  MATCH_ACCEPTED
+  MATCH_DECLINED
+  CONVERSATION_COMPLETED
+  SUBSCRIPTION_CHANGED
+}
+
+model Webhook {
+  id          String         @id @default(cuid())
+  url         String
+  events      WebhookEvent[]
+  secret      String
+  ownerId     String
+  ownerType   OwnerType
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  lastFiredAt DateTime?
+  failCount   Int            @default(0)
+
+  deliveries WebhookDelivery[]
+
+  @@index([ownerId])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id           String       @id @default(cuid())
+  webhookId    String
+  eventType    WebhookEvent
+  payload      Json
+  statusCode   Int?
+  success      Boolean
+  attemptedAt  DateTime     @default(now())
+  durationMs   Int?
+  errorMessage String?
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@map("webhook_deliveries")
 }

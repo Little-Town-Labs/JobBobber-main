@@ -1,5 +1,6 @@
 import "server-only"
 import { initTRPC, TRPCError } from "@trpc/server"
+import type { OpenApiMeta } from "trpc-to-openapi"
 import { db } from "@/lib/db"
 import { getAuth } from "@/lib/auth"
 import { inngest } from "@/lib/inngest"
@@ -53,18 +54,21 @@ export async function createTRPCContext({ req: _req }: CreateContextOptions): Pr
 // tRPC initialisation
 // ---------------------------------------------------------------------------
 
-const t = initTRPC.context<TRPCContext>().create({
-  errorFormatter({ shape, error }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        // Never expose stack traces outside development
-        stack: process.env["NODE_ENV"] === "development" ? error.cause?.stack : undefined,
-      },
-    }
-  },
-})
+const t = initTRPC
+  .context<TRPCContext>()
+  .meta<OpenApiMeta>()
+  .create({
+    errorFormatter({ shape, error }) {
+      return {
+        ...shape,
+        data: {
+          ...shape.data,
+          // Never expose stack traces outside development
+          stack: process.env["NODE_ENV"] === "development" ? error.cause?.stack : undefined,
+        },
+      }
+    },
+  })
 
 export const createTRPCRouter = t.router
 export const createCallerFactory = t.createCallerFactory

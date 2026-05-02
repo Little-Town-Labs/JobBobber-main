@@ -6,8 +6,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-// First test cold-starts dynamic imports (~8s on WSL)
-vi.setConfig({ testTimeout: 15_000 })
+// First test cold-starts dynamic imports (~8–15s on WSL under full-suite load)
+vi.setConfig({ testTimeout: 30_000 })
 
 // ---------------------------------------------------------------------------
 // Mocks

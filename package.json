@@ -35,6 +35,7 @@
     "@ai-sdk/react": "^3.0.118",
     "@clerk/nextjs": "^6.21.0",
     "@prisma/client": "^5.22.0",
+    "@scalar/nextjs-api-reference": "^0.10.13",
     "@sentry/nextjs": "^9.0.0",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tanstack/react-query": "^5.66.0",
@@ -57,7 +58,9 @@
     "server-only": "^0.0.1",
     "stripe": "^20.4.1",
     "svix": "^1.58.0",
-    "zod": "^4.3.6"
+    "trpc-to-openapi": "^3.2.0",
+    "zod": "^4.3.6",
+    "zod-openapi": "^5.4.6"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

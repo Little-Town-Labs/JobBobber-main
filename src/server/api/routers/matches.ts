@@ -17,6 +17,29 @@ import { ADVANCED_EMPLOYER_DASHBOARD, assertFlagEnabled } from "@/lib/flags"
 import { logActivity } from "@/lib/activity-log"
 import { logAudit } from "@/lib/audit"
 
+const matchResponseSchema = z.object({
+  id: z.string(),
+  conversationId: z.string().nullable(),
+  jobPostingId: z.string(),
+  seekerId: z.string(),
+  employerId: z.string(),
+  confidenceScore: z.string(),
+  matchSummary: z.string().nullable(),
+  seekerStatus: z.string(),
+  employerStatus: z.string(),
+  seekerContactInfo: z.unknown().nullable(),
+  seekerAvailability: z.unknown().nullable(),
+  isMutualAccept: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+const paginatedMatchesSchema = z.object({
+  items: z.array(matchResponseSchema),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+})
+
 export const matchesRouter = createTRPCRouter({
   /** List matches for a specific job posting (employer view) */
   listForPosting: employerProcedure
@@ -68,6 +91,14 @@ export const matchesRouter = createTRPCRouter({
 
   /** List matches for the authenticated seeker */
   listForSeeker: seekerProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/matches",
+        summary: "List matches for the authenticated seeker",
+        tags: ["matches"],
+      },
+    })
     .input(
       z
         .object({
@@ -78,6 +109,7 @@ export const matchesRouter = createTRPCRouter({
         })
         .optional(),
     )
+    .output(paginatedMatchesSchema)
     .query(async ({ ctx, input }) => {
       const { cursor, limit = 20, status, sort } = input ?? {}
 
@@ -104,7 +136,16 @@ export const matchesRouter = createTRPCRouter({
 
   /** Get a single match by ID */
   getById: protectedProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/matches/{id}",
+        summary: "Get a single match",
+        tags: ["matches"],
+      },
+    })
     .input(z.object({ id: z.string().min(1) }))
+    .output(matchResponseSchema.nullable())
     .query(async ({ ctx, input }) => {
       const isSeeker = ctx.userRole === "JOB_SEEKER"
       const isEmployer = ctx.userRole === "EMPLOYER"
@@ -119,7 +160,7 @@ export const matchesRouter = createTRPCRouter({
             : Promise.resolve(null),
       ])
 
-      if (!match) return null
+      if (!match) throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
 
       // Ownership check: must be the seeker or the employer
       if (isSeeker) {
@@ -137,7 +178,7 @@ export const matchesRouter = createTRPCRouter({
       return toMatchResponse(match)
     }),
 
-  /** Accept or decline a match (for either party) */
+  /** Accept or decline a match (for either party) — tRPC callers use this */
   updateStatus: protectedProcedure
     .input(
       z.object({
@@ -145,117 +186,7 @@ export const matchesRouter = createTRPCRouter({
         status: z.enum(["ACCEPTED", "DECLINED"]),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const match = await ctx.db.match.findUnique({ where: { id: input.matchId } })
-      if (!match) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
-      }
-
-      const isSeeker = ctx.userRole === "JOB_SEEKER"
-      const isEmployer = ctx.userRole === "EMPLOYER"
-
-      // Determine which side is updating
-      if (isSeeker) {
-        const seeker = await ctx.db.jobSeeker.findUnique({
-          where: { clerkUserId: ctx.userId },
-        })
-        if (!seeker || seeker.id !== match.seekerId) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
-        }
-        if (match.seekerStatus !== "PENDING") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Cannot change status from ${match.seekerStatus}`,
-          })
-        }
-
-        const isMutualAccept = input.status === "ACCEPTED" && match.employerStatus === "ACCEPTED"
-        const updated = await ctx.db.match.update({
-          where: { id: input.matchId },
-          data: {
-            seekerStatus: input.status,
-            ...(isMutualAccept ? { mutualAcceptedAt: new Date() } : {}),
-          },
-        })
-
-        void logAudit({
-          actorId: ctx.userId,
-          actorType: "JOB_SEEKER",
-          action: `match.${input.status.toLowerCase()}`,
-          entityType: "Match",
-          entityId: input.matchId,
-          result: "SUCCESS",
-        })
-
-        // Check for mutual accept
-        if (isMutualAccept) {
-          const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
-          await ctx.inngest?.send?.({
-            name: "notification/mutual.accept",
-            data: {
-              matchId: match.id,
-              seekerId: match.seekerId,
-              employerId: match.employerId,
-              jobPostingId: match.jobPostingId,
-            },
-          })
-          return toMatchResponse(populated)
-        }
-
-        return toMatchResponse(updated)
-      } else if (isEmployer && ctx.orgId) {
-        const employer = await ctx.db.employer.findUnique({
-          where: { clerkOrgId: ctx.orgId },
-        })
-        if (!employer || employer.id !== match.employerId) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
-        }
-        if (match.employerStatus !== "PENDING") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Cannot change status from ${match.employerStatus}`,
-          })
-        }
-
-        const isMutualAcceptEmployer =
-          input.status === "ACCEPTED" && match.seekerStatus === "ACCEPTED"
-        const updated = await ctx.db.match.update({
-          where: { id: input.matchId },
-          data: {
-            employerStatus: input.status,
-            ...(isMutualAcceptEmployer ? { mutualAcceptedAt: new Date() } : {}),
-          },
-        })
-
-        void logAudit({
-          actorId: ctx.userId,
-          actorType: "EMPLOYER",
-          action: `match.${input.status.toLowerCase()}`,
-          entityType: "Match",
-          entityId: input.matchId,
-          result: "SUCCESS",
-        })
-
-        // Check for mutual accept
-        if (isMutualAcceptEmployer) {
-          const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
-          await ctx.inngest?.send?.({
-            name: "notification/mutual.accept",
-            data: {
-              matchId: match.id,
-              seekerId: match.seekerId,
-              employerId: match.employerId,
-              jobPostingId: match.jobPostingId,
-            },
-          })
-          return toMatchResponse(populated)
-        }
-
-        return toMatchResponse(updated)
-      }
-
-      throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
-    }),
+    .mutation(({ ctx, input }) => acceptOrDecline(ctx, input.matchId, input.status)),
 
   /** Get matching workflow status for a posting */
   getWorkflowStatus: employerProcedure
@@ -462,7 +393,134 @@ export const matchesRouter = createTRPCRouter({
 
       return { updated, skipped, total }
     }),
+
+  /** Accept a match (REST endpoint — delegates to shared acceptOrDecline logic) */
+  accept: protectedProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: "/matches/{matchId}/accept",
+        summary: "Accept a match",
+        tags: ["matches"],
+      },
+    })
+    .input(z.object({ matchId: z.string().min(1) }))
+    .output(matchResponseSchema)
+    .mutation(({ ctx, input }) => acceptOrDecline(ctx, input.matchId, "ACCEPTED")),
+
+  /** Decline a match (REST endpoint — delegates to shared acceptOrDecline logic) */
+  decline: protectedProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: "/matches/{matchId}/decline",
+        summary: "Decline a match",
+        tags: ["matches"],
+      },
+    })
+    .input(z.object({ matchId: z.string().min(1) }))
+    .output(matchResponseSchema)
+    .mutation(({ ctx, input }) => acceptOrDecline(ctx, input.matchId, "DECLINED")),
 })
+
+/** Shared accept/decline logic used by both updateStatus (tRPC) and accept/decline (REST). */
+async function acceptOrDecline(
+  ctx: {
+    userId: string
+    orgId: string | null
+    userRole: string | null
+    db: PrismaClient
+    inngest: { send?: (e: unknown) => Promise<unknown> } | null
+  },
+  matchId: string,
+  status: "ACCEPTED" | "DECLINED",
+) {
+  const match = await ctx.db.match.findUnique({ where: { id: matchId } })
+  if (!match) throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
+
+  const isSeeker = ctx.userRole === "JOB_SEEKER"
+  const isEmployer = ctx.userRole === "EMPLOYER"
+
+  if (isSeeker) {
+    const seeker = await ctx.db.jobSeeker.findUnique({ where: { clerkUserId: ctx.userId } })
+    if (!seeker || seeker.id !== match.seekerId) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
+    }
+    if (match.seekerStatus !== "PENDING") {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Cannot change status from ${match.seekerStatus}`,
+      })
+    }
+    const isMutual = status === "ACCEPTED" && match.employerStatus === "ACCEPTED"
+    const updated = await ctx.db.match.update({
+      where: { id: matchId },
+      data: { seekerStatus: status, ...(isMutual ? { mutualAcceptedAt: new Date() } : {}) },
+    })
+    void logAudit({
+      actorId: ctx.userId,
+      actorType: "JOB_SEEKER",
+      action: `match.${status.toLowerCase()}`,
+      entityType: "Match",
+      entityId: matchId,
+      result: "SUCCESS",
+    })
+    if (isMutual) {
+      const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
+      await ctx.inngest?.send?.({
+        name: "notification/mutual.accept",
+        data: {
+          matchId: match.id,
+          seekerId: match.seekerId,
+          employerId: match.employerId,
+          jobPostingId: match.jobPostingId,
+        },
+      })
+      return toMatchResponse(populated)
+    }
+    return toMatchResponse(updated)
+  } else if (isEmployer && ctx.orgId) {
+    const employer = await ctx.db.employer.findUnique({ where: { clerkOrgId: ctx.orgId } })
+    if (!employer || employer.id !== match.employerId) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
+    }
+    if (match.employerStatus !== "PENDING") {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Cannot change status from ${match.employerStatus}`,
+      })
+    }
+    const isMutual = status === "ACCEPTED" && match.seekerStatus === "ACCEPTED"
+    const updated = await ctx.db.match.update({
+      where: { id: matchId },
+      data: { employerStatus: status, ...(isMutual ? { mutualAcceptedAt: new Date() } : {}) },
+    })
+    void logAudit({
+      actorId: ctx.userId,
+      actorType: "EMPLOYER",
+      action: `match.${status.toLowerCase()}`,
+      entityType: "Match",
+      entityId: matchId,
+      result: "SUCCESS",
+    })
+    if (isMutual) {
+      const populated = await populateContactInfo(ctx.db, updated.id, match.seekerId)
+      await ctx.inngest?.send?.({
+        name: "notification/mutual.accept",
+        data: {
+          matchId: match.id,
+          seekerId: match.seekerId,
+          employerId: match.employerId,
+          jobPostingId: match.jobPostingId,
+        },
+      })
+      return toMatchResponse(populated)
+    }
+    return toMatchResponse(updated)
+  }
+
+  throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
+}
 
 /** Populate contact info on mutual accept */
 async function populateContactInfo(db: PrismaClient, matchId: string, seekerId: string) {

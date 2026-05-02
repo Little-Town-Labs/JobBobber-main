@@ -5,6 +5,8 @@
  * All procedures gated behind ADVANCED_EMPLOYER_DASHBOARD feature flag.
  *
  * @see .specify/specs/17-advanced-employer-dashboard/spec.md
+ *
+ * Not part of the public REST API — aggregated UI data, internal employer dashboard router.
  */
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"

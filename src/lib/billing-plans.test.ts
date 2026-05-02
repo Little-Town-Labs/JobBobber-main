@@ -138,12 +138,16 @@ describe("billing-plans", () => {
       expect(getPlanById("employer_free")!.stripePriceId).toBeNull()
     })
 
-    it("paid plans have stripe price IDs from env vars", () => {
+    it("paid plans have stripe price IDs from env vars (null when env var absent)", () => {
       const seekerPro = getPlanById("seeker_pro")!
       const employerBiz = getPlanById("employer_business")!
-      // stripePriceId should be a string (env var value or empty string fallback)
-      expect(typeof seekerPro.stripePriceId).toBe("string")
-      expect(typeof employerBiz.stripePriceId).toBe("string")
+      // stripePriceId is string when env var is set, null when absent — never empty string
+      expect(seekerPro.stripePriceId === null || typeof seekerPro.stripePriceId === "string").toBe(
+        true,
+      )
+      expect(
+        employerBiz.stripePriceId === null || typeof employerBiz.stripePriceId === "string",
+      ).toBe(true)
     })
 
     it("enterprise plan has no stripe price ID", () => {

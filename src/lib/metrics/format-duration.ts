@@ -6,6 +6,9 @@ const MS_PER_DAY = 24 * MS_PER_HOUR
  * Format a duration in milliseconds to a human-readable string.
  * Returns null for null input.
  *
+ * Minutes are only shown when the duration is less than one day — for
+ * multi-day durations, hour-level precision is sufficient for dashboard KPIs.
+ *
  * Examples: "< 1 hour", "2 hours 15 minutes", "3 days 4 hours", "1 day"
  */
 export function formatDuration(ms: number | null): string | null {

@@ -2,6 +2,8 @@
  * Hiring metrics router — per-posting time-based hiring analytics.
  *
  * @see .specify/specs/27-hiring-metrics/spec.md
+ *
+ * Not part of the public REST API — internal employer analytics, UI-only router.
  */
 import { z } from "zod"
 import type { PrismaClient } from "@prisma/client"
@@ -123,6 +125,8 @@ async function computeMetricsForWindow(
   windowStart: Date,
   windowEnd: Date,
 ) {
+  // No pagination: acceptable at current scale (<200 postings per employer per window).
+  // Add cursor pagination if median employer posting volume exceeds ~500/window.
   const postings = await db.jobPosting.findMany({
     where: {
       employerId,

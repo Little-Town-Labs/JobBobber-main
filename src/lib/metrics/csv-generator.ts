@@ -54,7 +54,7 @@ export function generateMetricsCsv(postings: PostingMetric[]): string {
   for (const p of postings) {
     const fields = [
       escapeField(p.title),
-      p.status,
+      escapeField(p.status),
       formatDate(p.createdAt),
       formatDate(p.firstMatchAt),
       formatDate(p.firstMutualAcceptAt),

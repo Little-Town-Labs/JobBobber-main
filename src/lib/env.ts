@@ -35,6 +35,23 @@ export const env = createEnv({
     SENTRY_DSN: z.string().url().optional(),
     SENTRY_AUTH_TOKEN: z.string().optional(),
 
+    // Stripe (billing)
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1),
+    STRIPE_PRICE_SEEKER_PRO: z.string().min(1),
+    STRIPE_PRICE_EMPLOYER_BUSINESS: z.string().min(1),
+
+    // Upstash Redis (rate limiting)
+    UPSTASH_REDIS_REST_URL: z.string().url(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+
+    // Email (Resend)
+    RESEND_API_KEY: z.string().optional(),
+    NOTIFICATION_FROM_EMAIL: z.string().optional(),
+
+    // Cron job authentication
+    CRON_SECRET: z.string().optional(),
+
     // Vercel Flags
     FLAGS_SECRET: z.string().optional(),
   },
@@ -44,6 +61,7 @@ export const env = createEnv({
    * All must have NEXT_PUBLIC_ prefix.
    */
   client: {
+    NEXT_PUBLIC_APP_URL: z.string().url(),
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
     NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1),
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().min(1),
@@ -74,7 +92,17 @@ export const env = createEnv({
     ENCRYPTION_IV_SALT: process.env["ENCRYPTION_IV_SALT"],
     SENTRY_DSN: process.env["SENTRY_DSN"],
     SENTRY_AUTH_TOKEN: process.env["SENTRY_AUTH_TOKEN"],
+    STRIPE_SECRET_KEY: process.env["STRIPE_SECRET_KEY"],
+    STRIPE_WEBHOOK_SECRET: process.env["STRIPE_WEBHOOK_SECRET"],
+    STRIPE_PRICE_SEEKER_PRO: process.env["STRIPE_PRICE_SEEKER_PRO"],
+    STRIPE_PRICE_EMPLOYER_BUSINESS: process.env["STRIPE_PRICE_EMPLOYER_BUSINESS"],
+    UPSTASH_REDIS_REST_URL: process.env["UPSTASH_REDIS_REST_URL"],
+    UPSTASH_REDIS_REST_TOKEN: process.env["UPSTASH_REDIS_REST_TOKEN"],
+    RESEND_API_KEY: process.env["RESEND_API_KEY"],
+    NOTIFICATION_FROM_EMAIL: process.env["NOTIFICATION_FROM_EMAIL"],
+    CRON_SECRET: process.env["CRON_SECRET"],
     FLAGS_SECRET: process.env["FLAGS_SECRET"],
+    NEXT_PUBLIC_APP_URL: process.env["NEXT_PUBLIC_APP_URL"],
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"],
     NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env["NEXT_PUBLIC_CLERK_SIGN_IN_URL"],
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env["NEXT_PUBLIC_CLERK_SIGN_UP_URL"],

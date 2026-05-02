@@ -1,5 +1,6 @@
 import "server-only"
 import { createCipheriv, createDecipheriv, createHmac } from "crypto"
+import { env } from "@/lib/env"
 
 /**
  * AES-256-GCM encryption for BYOK (Bring Your Own Key) API key storage.
@@ -37,7 +38,7 @@ const IV_BYTES = 12
 const AUTH_TAG_BYTES = 16
 
 function getKey(): Buffer {
-  const hex = process.env["ENCRYPTION_KEY"]
+  const hex = env.ENCRYPTION_KEY
   if (!hex || hex.length !== 64) {
     throw new Error("ENCRYPTION_KEY must be 64 hex characters (32 bytes)")
   }
@@ -45,7 +46,7 @@ function getKey(): Buffer {
 }
 
 function deriveIv(scopeId: string, fieldName: EncryptionField = "default"): Buffer {
-  const salt = process.env["ENCRYPTION_IV_SALT"]
+  const salt = env.ENCRYPTION_IV_SALT
   if (!salt) {
     throw new Error("ENCRYPTION_IV_SALT is required")
   }

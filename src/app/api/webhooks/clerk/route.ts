@@ -2,6 +2,7 @@ import "server-only"
 import { Webhook } from "svix"
 import { headers } from "next/headers"
 import { db } from "@/lib/db"
+import { env } from "@/lib/env"
 
 /**
  * Clerk webhook handler.
@@ -84,10 +85,7 @@ export async function POST(req: Request): Promise<Response> {
     return new Response("Missing svix headers", { status: 400 })
   }
 
-  const webhookSecret = process.env["CLERK_WEBHOOK_SECRET"]
-  if (!webhookSecret) {
-    return new Response("Webhook secret not configured", { status: 500 })
-  }
+  const webhookSecret = env.CLERK_WEBHOOK_SECRET
 
   const body = await req.text()
   const wh = new Webhook(webhookSecret)
@@ -114,7 +112,6 @@ export async function POST(req: Request): Promise<Response> {
           clerkUserId: id,
           name: displayName,
           skills: [],
-          urls: [],
           // TODO Feature 3: populate full profile fields from Clerk data
         },
         update: {},

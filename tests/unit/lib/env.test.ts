@@ -26,8 +26,17 @@ describe("env validation", () => {
     process.env["CLERK_WEBHOOK_SECRET"] = "whsec_test"
     process.env["INNGEST_SIGNING_KEY"] = "signkey-test"
     process.env["INNGEST_EVENT_KEY"] = "eventkey-test"
-    process.env["ENCRYPTION_KEY"] = "a".repeat(64) // 64 hex chars = 32 bytes
+    process.env["ENCRYPTION_KEY"] = "a".repeat(64)
     process.env["ENCRYPTION_IV_SALT"] = "test-salt-value-ok"
+    // Stripe (api-only-pivot: Task 0.4)
+    process.env["STRIPE_SECRET_KEY"] = "sk_test_stripe"
+    process.env["STRIPE_WEBHOOK_SECRET"] = "whsec_stripe_test"
+    process.env["STRIPE_PRICE_SEEKER_PRO"] = "price_seeker_pro_test"
+    process.env["STRIPE_PRICE_EMPLOYER_BUSINESS"] = "price_employer_biz_test"
+    // Upstash (api-only-pivot: Task 0.4)
+    process.env["UPSTASH_REDIS_REST_URL"] = "https://fake.upstash.io"
+    process.env["UPSTASH_REDIS_REST_TOKEN"] = "fake-upstash-token"
+    process.env["NEXT_PUBLIC_APP_URL"] = "http://localhost:3000"
     process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] = "pk_test_abc"
     process.env["NEXT_PUBLIC_CLERK_SIGN_IN_URL"] = "/sign-in"
     process.env["NEXT_PUBLIC_CLERK_SIGN_UP_URL"] = "/sign-up"
@@ -37,6 +46,8 @@ describe("env validation", () => {
     const { env } = await import("@/lib/env")
     expect(env.DATABASE_URL).toBe("postgresql://test:test@localhost/testdb")
     expect(env.CLERK_SECRET_KEY).toBe("sk_test_abc123")
+    expect(env.STRIPE_SECRET_KEY).toBe("sk_test_stripe")
+    expect(env.UPSTASH_REDIS_REST_URL).toBe("https://fake.upstash.io")
     expect(env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY).toBe("pk_test_abc")
   })
 

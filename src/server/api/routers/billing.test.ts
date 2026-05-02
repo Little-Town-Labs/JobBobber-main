@@ -23,7 +23,7 @@ const { mockDb, mockCreateCheckout, mockCreatePortal, mockStripe } = vi.hoisted(
 vi.mock("@/lib/db", () => ({ db: mockDb }))
 vi.mock("@/lib/inngest", () => ({ inngest: null }))
 vi.mock("server-only", () => ({}))
-vi.mock("@/lib/stripe", () => ({ stripe: mockStripe }))
+vi.mock("@/lib/stripe", () => ({ getStripe: () => mockStripe }))
 vi.mock("@/lib/stripe-sessions", () => ({
   createCheckoutSession: mockCreateCheckout,
   createPortalSession: mockCreatePortal,

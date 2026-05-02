@@ -1,10 +1,11 @@
+// Not part of the public REST API — internal subscription management router.
 import { z } from "zod"
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"
 import { SUBSCRIPTION_BILLING, assertFlagEnabled } from "@/lib/flags"
 import { getPlansForUserType, getPlanForUser, getPlanById } from "@/lib/billing-plans"
 import { checkConversationLimit, checkPostingLimit } from "@/lib/plan-limits"
 import { createCheckoutSession, createPortalSession } from "@/lib/stripe-sessions"
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 import { logAudit } from "@/lib/audit"
 
 async function getStripeCustomerId(
@@ -124,7 +125,7 @@ export const billingRouter = createTRPCRouter({
     )
     if (!stripeCustomerId) return []
 
-    const invoices = await stripe.invoices.list({
+    const invoices = await getStripe().invoices.list({
       customer: stripeCustomerId,
       limit: 24,
     })

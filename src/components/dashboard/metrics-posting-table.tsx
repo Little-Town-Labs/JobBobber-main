@@ -34,6 +34,12 @@ type SortKey =
   | "totalAccepts"
 type SortDir = "asc" | "desc"
 
+const STATUS_COLORS: Record<string, string> = {
+  ACTIVE: "bg-green-100 text-green-700",
+  CLOSED: "bg-gray-100 text-gray-600",
+  DRAFT: "bg-yellow-100 text-yellow-700",
+}
+
 const COLUMN_HEADERS: { key: SortKey; label: string }[] = [
   { key: "title", label: "Title" },
   { key: "status", label: "Status" },
@@ -164,7 +170,9 @@ export function MetricsPostingTable({ postings, aggregates }: MetricsPostingTabl
             >
               <td className="py-3 pr-4 font-medium">{posting.title}</td>
               <td className="py-3 pr-4">
-                <span className="inline-block rounded px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700">
+                <span
+                  className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[posting.status] ?? "bg-gray-100 text-gray-600"}`}
+                >
                   {posting.status}
                 </span>
               </td>

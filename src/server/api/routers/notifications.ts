@@ -2,6 +2,8 @@
  * Notifications router — notification preferences for seekers and employers.
  *
  * @see .specify/specs/6-match-dashboard/spec.md — US-7, FR-11
+ *
+ * Not part of the public REST API — internal notification delivery, UI-only router.
  */
 import { z } from "zod"
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"

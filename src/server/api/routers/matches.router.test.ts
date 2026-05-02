@@ -220,11 +220,10 @@ describe("matches.getById", () => {
     await expect(caller.matches.getById({ id: "match_01" })).rejects.toThrow()
   })
 
-  it("returns null for non-existent match", async () => {
+  it("throws NOT_FOUND for non-existent match", async () => {
     mockMatchFindUnique.mockResolvedValue(null)
     const caller = await makeMatchesCaller()
-    const result = await caller.matches.getById({ id: "nope" })
-    expect(result).toBeNull()
+    await expect(caller.matches.getById({ id: "nope" })).rejects.toThrow("Match not found")
   })
 })
 

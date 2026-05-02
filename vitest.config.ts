@@ -7,7 +7,11 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    env: {
+      SKIP_ENV_VALIDATION: "true",
+    },
     setupFiles: ["./tests/setup.ts"],
+    maxWorkers: 2,
     exclude: ["**/node_modules/**", "**/.next/**", "**/tests/e2e/**"],
     coverage: {
       provider: "v8",

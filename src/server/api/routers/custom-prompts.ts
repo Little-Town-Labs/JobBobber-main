@@ -2,6 +2,8 @@
  * Custom Prompts router — example prompts and dry-run validation.
  *
  * @see .specify/specs/15-custom-agent-prompting/spec.md
+ *
+ * Not part of the public REST API — internal agent configuration, UI-only router.
  */
 import { z } from "zod"
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"

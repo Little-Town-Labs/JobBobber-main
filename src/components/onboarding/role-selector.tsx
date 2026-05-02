@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { trpc } from "@/lib/trpc/client"
 
 /**
  * RoleSelectorForm — lets a new user choose Job Seeker or Employer.
@@ -18,8 +17,7 @@ export function RoleSelectorForm() {
   const [companyName, setCompanyName] = useState("")
   const [validationError, setValidationError] = useState<string | null>(null)
   const [mutationError, setMutationError] = useState<string | null>(null)
-
-  const setRoleMutation = trpc.onboarding.setRole.useMutation()
+  const [isPending, setIsPending] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,13 +34,33 @@ export function RoleSelectorForm() {
       return
     }
 
+    const input = role === "EMPLOYER" ? { role, companyName: companyName.trim() } : { role }
+
+    setIsPending(true)
     try {
-      const result = await setRoleMutation.mutateAsync(
-        role === "EMPLOYER" ? { role, companyName: companyName.trim() } : { role },
-      )
-      router.push(result.redirectTo)
+      const res = await fetch("/api/trpc/onboarding.setRole", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ json: input }),
+      })
+      const json = (await res.json()) as {
+        result?: { data?: { json?: { redirectTo: string } } }
+        error?: unknown
+      }
+      if (!res.ok || json.error) {
+        setMutationError("Failed to create account. Please try again.")
+        return
+      }
+      const redirectTo = json.result?.data?.json?.redirectTo
+      if (!redirectTo) {
+        setMutationError("Unexpected response from server.")
+        return
+      }
+      router.push(redirectTo)
     } catch {
       setMutationError("Failed to create account. Please try again.")
+    } finally {
+      setIsPending(false)
     }
   }
 
@@ -91,7 +109,7 @@ export function RoleSelectorForm() {
 
       {mutationError && <p role="alert">{mutationError}</p>}
 
-      <button type="submit" disabled={setRoleMutation.isPending}>
+      <button type="submit" disabled={isPending}>
         Continue
       </button>
     </form>

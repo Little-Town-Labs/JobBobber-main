@@ -6,57 +6,29 @@
  * and from the ApiKeyManager when adding/changing a key:
  * - Provider selection (openai / anthropic)
  * - API key input
- * - Form submission → trpc.byok.storeKey mutation
+ * - Form submission → fetch POST to /api/trpc/byok.storeKey
  * - Success callback invocation
  * - Error display on failure
  * - Loading state during submission
- *
- * Tests must FAIL before the component exists.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-
-// ---------------------------------------------------------------------------
-// Hoisted mocks
-// ---------------------------------------------------------------------------
-
-const { mockUseMutation, mockMutateAsync } = vi.hoisted(() => ({
-  mockUseMutation: vi.fn(),
-  mockMutateAsync: vi.fn(),
-}))
-
-vi.mock("@/lib/trpc/client", () => ({
-  trpc: {
-    byok: {
-      storeKey: {
-        useMutation: mockUseMutation,
-      },
-    },
-  },
-}))
-
-// ---------------------------------------------------------------------------
-// Import component under test
-// ---------------------------------------------------------------------------
-
 import { ByokSetupForm } from "@/components/onboarding/api-key-form"
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
+function makeFetchResponse(body: unknown, ok = true) {
+  return Promise.resolve({
+    ok,
+    json: () => Promise.resolve(body),
+  } as Response)
+}
 
 describe("ByokSetupForm", () => {
   const mockOnSuccess = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseMutation.mockReturnValue({
-      mutateAsync: mockMutateAsync,
-      isPending: false,
-      isError: false,
-      error: null,
-    })
+    vi.stubGlobal("fetch", vi.fn())
   })
 
   it("renders provider selection and API key input", () => {
@@ -87,28 +59,28 @@ describe("ByokSetupForm", () => {
 
   it("submits with selected provider and api key", async () => {
     const user = userEvent.setup()
-    mockMutateAsync.mockResolvedValue({
-      success: true,
-      provider: "openai",
-      maskedKey: "sk-pro...abcd",
-    })
+    const result = { success: true, provider: "openai", maskedKey: "sk-pro...abcd" }
+    vi.mocked(fetch).mockReturnValue(makeFetchResponse({ result: { data: { json: result } } }))
     render(<ByokSetupForm onSuccess={mockOnSuccess} />)
 
     await user.type(screen.getByLabelText(/api key/i), "sk-proj-testkey123")
     await user.click(screen.getByRole("button", { name: /save|add|submit/i }))
 
     await waitFor(() => {
-      expect(mockMutateAsync).toHaveBeenCalledWith({
-        provider: "openai",
-        apiKey: "sk-proj-testkey123",
-      })
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/trpc/byok.storeKey",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("sk-proj-testkey123"),
+        }),
+      )
     })
   })
 
   it("calls onSuccess callback with result after successful submission", async () => {
     const user = userEvent.setup()
     const result = { success: true as const, provider: "openai", maskedKey: "sk-pro...abcd" }
-    mockMutateAsync.mockResolvedValue(result)
+    vi.mocked(fetch).mockReturnValue(makeFetchResponse({ result: { data: { json: result } } }))
     render(<ByokSetupForm onSuccess={mockOnSuccess} />)
 
     await user.type(screen.getByLabelText(/api key/i), "sk-proj-testkey123")
@@ -119,9 +91,25 @@ describe("ByokSetupForm", () => {
     })
   })
 
-  it("displays an error alert when the mutation fails", async () => {
+  it("displays an error alert when the fetch fails with a network error", async () => {
     const user = userEvent.setup()
-    mockMutateAsync.mockRejectedValue(new Error("Invalid API key"))
+    vi.mocked(fetch).mockRejectedValue(new Error("Network error"))
+    render(<ByokSetupForm onSuccess={mockOnSuccess} />)
+
+    await user.type(screen.getByLabelText(/api key/i), "sk-invalid")
+    await user.click(screen.getByRole("button", { name: /save|add|submit/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument()
+    })
+    expect(mockOnSuccess).not.toHaveBeenCalled()
+  })
+
+  it("displays an error alert when the server returns an error", async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetch).mockReturnValue(
+      makeFetchResponse({ error: { message: "Invalid API key" } }, false),
+    )
     render(<ByokSetupForm onSuccess={mockOnSuccess} />)
 
     await user.type(screen.getByLabelText(/api key/i), "sk-invalid")
@@ -142,27 +130,33 @@ describe("ByokSetupForm", () => {
     await waitFor(() => {
       expect(screen.getByText(/api key is required/i)).toBeInTheDocument()
     })
-    expect(mockMutateAsync).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
-  it("disables the submit button while pending", () => {
-    mockUseMutation.mockReturnValue({
-      mutateAsync: mockMutateAsync,
-      isPending: true,
-      isError: false,
-      error: null,
-    })
+  it("disables the submit button while pending", async () => {
+    // Use a promise that doesn't resolve to keep isPending = true
+    let resolveFetch!: (v: Response) => void
+    vi.mocked(fetch).mockReturnValue(
+      new Promise<Response>((resolve) => {
+        resolveFetch = resolve
+      }),
+    )
+    const user = userEvent.setup()
     render(<ByokSetupForm onSuccess={mockOnSuccess} />)
+
+    await user.type(screen.getByLabelText(/api key/i), "sk-proj-testkey123")
+    await user.click(screen.getByRole("button", { name: /save|add|submit/i }))
+
     expect(screen.getByRole("button", { name: /save|add|submit/i })).toBeDisabled()
+
+    // Cleanup — resolve the hanging promise
+    resolveFetch({ ok: true, json: async () => ({ result: { data: { json: null } } }) } as Response)
   })
 
   it("clears the API key input after successful submission", async () => {
     const user = userEvent.setup()
-    mockMutateAsync.mockResolvedValue({
-      success: true as const,
-      provider: "openai",
-      maskedKey: "sk-pro...abcd",
-    })
+    const result = { success: true as const, provider: "openai", maskedKey: "sk-pro...abcd" }
+    vi.mocked(fetch).mockReturnValue(makeFetchResponse({ result: { data: { json: result } } }))
     render(<ByokSetupForm onSuccess={mockOnSuccess} />)
 
     await user.type(screen.getByLabelText(/api key/i), "sk-proj-testkey123")
@@ -177,7 +171,7 @@ describe("ByokSetupForm", () => {
 
   it("does not call onSuccess when submission fails", async () => {
     const user = userEvent.setup()
-    mockMutateAsync.mockRejectedValue(new Error("Network error"))
+    vi.mocked(fetch).mockRejectedValue(new Error("Network error"))
     render(<ByokSetupForm onSuccess={mockOnSuccess} />)
 
     await user.type(screen.getByLabelText(/api key/i), "sk-proj-testkey123")

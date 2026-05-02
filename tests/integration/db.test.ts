@@ -42,7 +42,6 @@ describe.skipIf(!hasDb)("Prisma client singleton", () => {
         clerkUserId: testClerkId,
         name: "Test Seeker",
         skills: ["TypeScript"],
-        urls: [],
       },
     })
     expect(seeker.id).toBeDefined()
@@ -58,7 +57,6 @@ describe.skipIf(!hasDb)("Prisma client singleton", () => {
           clerkUserId: testClerkId, // duplicate
           name: "Duplicate Seeker",
           skills: [],
-          urls: [],
         },
       }),
     ).rejects.toThrow()

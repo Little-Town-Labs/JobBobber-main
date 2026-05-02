@@ -178,7 +178,7 @@ describe.skipIf(!hasDb)("Integration: byok round-trip (JOB_SEEKER)", () => {
 
     // Create the seeker + settings directly (T5.2 focuses on byok, not re-testing setRole)
     const seeker = await db.jobSeeker.create({
-      data: { clerkUserId: testUserId, name: "", skills: [], urls: [] },
+      data: { clerkUserId: testUserId, name: "", skills: [] },
     })
     seekerId = seeker.id
     await db.seekerSettings.create({ data: { seekerId } })

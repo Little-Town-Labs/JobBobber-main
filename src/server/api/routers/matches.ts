@@ -11,6 +11,7 @@ import {
   protectedProcedure,
   seekerProcedure,
   employerProcedure,
+  type TRPCContext,
 } from "@/server/api/trpc"
 import { toMatchResponse } from "@/server/api/helpers/match-mapper"
 import { ADVANCED_EMPLOYER_DASHBOARD, assertFlagEnabled } from "@/lib/flags"
@@ -425,16 +426,13 @@ export const matchesRouter = createTRPCRouter({
 
 /** Shared accept/decline logic used by both updateStatus (tRPC) and accept/decline (REST). */
 async function acceptOrDecline(
-  ctx: {
-    userId: string
-    orgId: string | null
-    userRole: string | null
-    db: PrismaClient
-    inngest: { send?: (e: unknown) => Promise<unknown> } | null
-  },
+  ctx: Pick<TRPCContext, "userId" | "orgId" | "userRole" | "db" | "inngest">,
   matchId: string,
   status: "ACCEPTED" | "DECLINED",
 ) {
+  // Caller is wrapped by protectedProcedure → userId is guaranteed non-null
+  const userId = ctx.userId!
+
   const match = await ctx.db.match.findUnique({ where: { id: matchId } })
   if (!match) throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
 
@@ -442,7 +440,7 @@ async function acceptOrDecline(
   const isEmployer = ctx.userRole === "EMPLOYER"
 
   if (isSeeker) {
-    const seeker = await ctx.db.jobSeeker.findUnique({ where: { clerkUserId: ctx.userId } })
+    const seeker = await ctx.db.jobSeeker.findUnique({ where: { clerkUserId: userId } })
     if (!seeker || seeker.id !== match.seekerId) {
       throw new TRPCError({ code: "NOT_FOUND", message: "Match not found" })
     }
@@ -458,7 +456,7 @@ async function acceptOrDecline(
       data: { seekerStatus: status, ...(isMutual ? { mutualAcceptedAt: new Date() } : {}) },
     })
     void logAudit({
-      actorId: ctx.userId,
+      actorId: userId,
       actorType: "JOB_SEEKER",
       action: `match.${status.toLowerCase()}`,
       entityType: "Match",
@@ -496,7 +494,7 @@ async function acceptOrDecline(
       data: { employerStatus: status, ...(isMutual ? { mutualAcceptedAt: new Date() } : {}) },
     })
     void logAudit({
-      actorId: ctx.userId,
+      actorId: userId,
       actorType: "EMPLOYER",
       action: `match.${status.toLowerCase()}`,
       entityType: "Match",

@@ -40,6 +40,8 @@
     "@t3-oss/env-nextjs": "^0.13.10",
     "@trpc/next": "^11.0.0",
     "@trpc/server": "^11.0.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "@vercel/blob": "^2.3.0",
     "@vercel/flags": "^3.1.1",
     "ai": "^6.0.99",
